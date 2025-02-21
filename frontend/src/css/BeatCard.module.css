@@ -1,0 +1,74 @@
+.card {
+    background-color: #1a1a1a; /* Card background */
+    border: 1px solid #333333; /* Subtle border */
+    border-radius: 10px; /* Rounded edges */
+    overflow: hidden;
+    text-align: center;
+    padding: 1.5rem 1rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* Depth effect */
+    transition: all 0.3s ease;
+    position: relative;
+  }
+  
+  .card:hover {
+    transform: translateY(-5px); /* Hover effect for lift */
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5); /* Stronger shadow */
+  }
+  
+  .coverImage {
+    width: 100%;
+    height: auto;
+    border-radius: 5px;
+    margin-bottom: 1rem;
+  }
+  
+  .title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #ffffff; /* White text */
+    margin: 0.5rem 0;
+  }
+  
+  .artist {
+    font-size: 0.9rem;
+    color: #aaaaaa; /* Subtle gray */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+  }
+  
+  .artist .verified {
+    color: #3b82f6; /* Verified badge in blue */
+    font-size: 1rem;
+  }
+  
+  .priceTag {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #ffba00; /* Highlight price in theme color */
+    margin: 0.5rem 0;
+  }
+  
+  .audioPlayer {
+    margin: 1rem 0;
+    width: 100%;
+  }
+  
+  .buyBtn {
+    background-color: #ffba00;
+    border: none;
+    border-radius: 5rem;
+    color: #0f0f0f;
+    padding: 0.6rem 1.2rem;
+    font-size: 1rem;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+  
+  .buyBtn:hover {
+    background-color: #e48f0f;
+    transform: scale(1.05);
+  }
+  

@@ -1,0 +1,52 @@
+.filters {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+  
+  .filterSelect,
+  .filterInput {
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    border: 1px solid #333333; /* Subtle border */
+    border-radius: 5px;
+    background-color: #1a1a1a; /* Match the dark theme */
+    color: #e4e4e4; /* Light text for inputs */
+    outline: none;
+    transition: all 0.2s ease;
+  }
+  
+  .filterSelect:focus,
+  .filterInput:focus {
+    border-color: #ffba00; /* Highlighted border */
+    background-color: #262626;
+  }
+  
+  .filterSelect option {
+    background-color: #1a1a1a; /* Dropdown options match theme */
+    color: #e4e4e4;
+  }
+  
+  .filterInput::placeholder {
+    color: #777777; /* Placeholder text in subtle gray */
+  }
+  
+  .filterButton {
+    background-color: #ffba00;
+    border: none;
+    border-radius: 5rem;
+    color: #0f0f0f;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+  
+  .filterButton:hover {
+    background-color: #e48f0f;
+    transform: scale(1.05);
+  }
+  

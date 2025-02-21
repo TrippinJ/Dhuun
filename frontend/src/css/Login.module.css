@@ -1,0 +1,211 @@
+/* Global Resets */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 100vh;
+}
+
+/* Wrapper Styles */
+.wrapper {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px;
+    height: 440px;
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 20px;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    transition: height 0.2s ease;
+    background-color: #fff;
+}
+
+.wrapper .active {
+    height: 520px;
+}
+
+/* Form Box Styles */
+.formBox {
+    width: 100%;
+    padding: 40px;
+}
+
+.formBox.login {
+    transition: transform 0.18s ease;
+    transform: translateX(0);
+}
+
+.active .formBox.login {
+    transition: none;
+    transform: translateX(-400px);
+}
+
+.formBox.register {
+    position: absolute;
+    transition: none;
+    transform: translateX(400px);
+}
+
+.active .formBox .register {
+    transition: transform 0.18s ease;
+    transform: translateX(0);
+}
+
+/* Close Button Styles */
+.iconClose {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 45px;
+    height: 45px;
+    background: #162938;
+    font-size: 2em;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-bottom-left-radius: 20px;
+    cursor: pointer;
+    z-index: 1;
+}
+
+/* Input Box Styles */
+.inputBox {
+    position: relative;
+    width: 100%;
+    height: 50px;
+    border-bottom: 2px solid #162938;
+    margin: 30px 0;
+}
+
+.inputBox input {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 1em;
+    color: #162938;
+    font-weight: 600;
+    padding: 0 35px 0 5px;
+}
+
+.inputBox label {
+    position: absolute;
+    top: 50%;
+    left: 5px;
+    transform: translateY(-50%);
+    font-size: 1em;
+    color: #162938;
+    font-weight: 500;
+    pointer-events: none;
+    transition: 0.5s;
+}
+
+.inputBox input:focus ~ label,
+.inputBox input:valid ~ label {
+    top: -5px;
+}
+
+.inputBox .icon {
+    position: absolute;
+    right: 8px;
+    font-size: 1.2em;
+    color: #162938;
+    line-height: 57px;
+}
+
+/* Toggle Password Styles */
+.togglePassword {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2em;
+    color: #162938;
+    cursor: pointer;
+}
+
+/* Button Styles */
+.btn {
+    width: 100%;
+    height: 45px;
+    background: #162938;
+    border: none;
+    outline: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1em;
+    color: #fff;
+    font-weight: 500;
+    transition: transform 0.2s ease;
+}
+
+.btn:hover {
+    transform: scale(1.05);
+}
+
+/* Google Login Styles */
+.googleLogin {
+    text-align: center;
+    margin-top: 20px;
+    align-items: center;
+}
+
+.googleBtn {
+    justify-content: center;
+    padding: 12px 24px;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: transform 0.2s ease, background-color 0.3s ease;
+    background-color: #db4437;
+    margin-top: 10px;
+}
+
+.googleBtn:hover {
+    background-color: #c1351d;
+    transform: scale(1.05);
+}
+
+/* Login Register Styles */
+.loginRegister {
+    font-size: 0.9em;
+    color: #162938;
+    text-align: center;
+    font-weight: 500;
+    margin: 25px 0 10px;
+}
+
+.loginRegister p a {
+    color: #162938;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.loginRegister p a:hover {
+    text-decoration: underline;
+}
+
+/* Error Message Styles */
+.errorMessage {
+    color: red;
+    font-size: 0.9em;
+    margin: 10px 0;
+    text-align: center;
+}
