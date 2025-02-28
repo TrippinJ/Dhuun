@@ -17,6 +17,7 @@ router.post(
     body("phonenumber", "Phone number is required").notEmpty(),
     body("email", "Valid email is required").isEmail(),
     body("password", "Password must be at least 6 characters").isLength({ min: 6 }),
+    body("role", "Role is required").notEmpty(),
   ],
   async (req, res) => {
     try {
@@ -106,5 +107,35 @@ function authenticateUser(req, res, next) {
 router.get("/test", (req, res) => {
   res.send("Auth route is working!");
 });
+
+router.post("/google-login", async (req, res) => {
+  try {
+    const { name, email, googleId, avatar } = req.body;
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // If user doesn't exist, create a new one
+      user = new User({
+        name,
+        email,
+        googleId,
+        avatar, 
+        password: "google-auth", // Placeholder since Google handles authentication
+      });
+
+      await user.save();
+    }
+
+    // Generate JWT token
+    const payload = { user: { id: user.id } };
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1h" });
+
+    res.json({ token, user });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 module.exports = router;

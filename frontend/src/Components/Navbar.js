@@ -256,9 +256,9 @@ const Navbar = () => {
         <a
           href="#"
           className="primary-link"
-          onClick={() => navigate("/Register")} // Navigate to Register page
+          onClick={() => navigate("/Login")} // Navigate to Register page
         >
-          Sign Up
+          Log In
         </a>
         <a href="/cart">
           <BsCart2 className="navbar-cart-icon" />
@@ -266,7 +266,7 @@ const Navbar = () => {
         {/* Update button to navigate to the Login page */}
         <button
           className="primary-button"
-          onClick={() => navigate("/login")} // Navigate to /login on click
+          onClick={() => navigate("/chooserole")} 
         >
           Start Your Journey
         </button>

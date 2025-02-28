@@ -35,7 +35,7 @@ const Login = () => {
       localStorage.setItem("user", JSON.stringify(response.data.user));
 
       alert("Login successful!");
-      navigate("/"); // Redirect to home
+      navigate("/dashboard"); // Redirect to home
     } catch (error) {
       setErrorMessage(error.response?.data?.message || "Invalid credentials. Try again.");
     }
@@ -57,9 +57,28 @@ const Login = () => {
         });
 
         console.log("Google User Info:", data);
+
+         // Send data to backend for storing user info
+      const backendResponse = await API.post("/api/auth/google-login", {
+        name: data.name,
+        email: data.email,
+        googleId: data.sub, // Unique Google ID
+        avatar: data.picture, // Profile picture URL
+      });
+
+      // Store token and user details
+      localStorage.setItem("token", backendResponse.data.token);
+      localStorage.setItem("user", JSON.stringify(backendResponse.data.user));
+
         alert(`Welcome, ${data.name}`);
         localStorage.setItem("user", JSON.stringify(data)); 
-        navigate("/"); 
+        // navigate("/dashboard"); 
+        // Redirect users based on role
+    if (response.data.user.role === "seller") {
+      navigate("/seller-dashboard");
+    } else {
+      navigate("/buyer-dashboard");
+    }
       } catch (error) {
         console.error("Google login failed:", error);
         setErrorMessage("Google login failed. Please try again.");

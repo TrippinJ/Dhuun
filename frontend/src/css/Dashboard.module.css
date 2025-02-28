@@ -1,0 +1,231 @@
+/* Dashboard Layout */
+.dashboardContainer {
+  display: flex;
+  height: 100vh;
+  min-width: 100vw;
+  overflow-x: hidden;
+  background-color: #f7f7f7;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 250px;
+  height: 100vh;
+  background-color: #1c093c;
+  color: white;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: all 0.3s ease-in-out;
+}
+
+
+.profileSection {
+  text-align: center;
+}
+
+.profileIcon {
+  font-size: 60px;
+  color: #aaa;
+}
+
+.role {
+  font-size: 14px;
+  color: #bbb;
+}
+
+nav ul {
+  list-style: none;
+  padding: 0;
+  width: 100%;
+}
+
+nav ul li {
+  padding: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: background 0.3s ease-in-out;
+}
+
+nav ul li:hover,
+nav ul .active {
+  background-color: #6a0dad;
+  border-radius: 5px;
+}
+
+nav ul li svg {
+  font-size: 18px;
+}
+
+/* Main Content */
+.mainContent {
+  flex-grow: 1;
+  padding: 30px;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.uploadBtn {
+  background-color: #6a0dad;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.uploadBtn:hover {
+  background-color: #5a0cac;
+}
+
+/* Profile Overview */
+.profileOverview {
+  display: flex;
+  gap: 20px;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.profileCard {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex: 1;
+}
+
+.profileImage {
+  font-size: 50px;
+  color: #aaa;
+}
+
+.stats {
+  display: flex;
+  gap: 30px;
+  flex: 2;
+  justify-content: space-around;
+}
+
+.stats div {
+  text-align: center;
+}
+
+.stats h4 {
+  font-size: 16px;
+  margin: 0;
+}
+
+.stats p {
+  font-size: 18px;
+  font-weight: bold;
+  color: #6a0dad;
+}
+
+/* Tools Section */
+.sectionTitle {
+  margin-top: 30px;
+}
+
+.toolsSection {
+  display: flex;
+  gap: 15px;
+  margin-top: 15px;
+  flex-wrap: wrap;
+}
+
+.toolCard {
+  flex-grow: 1;
+  padding: 15px;
+  border: none;
+  border-radius: 8px;
+  background-color: white;
+  cursor: pointer;
+  transition: transform 0.2s;
+  text-align: center;
+}
+
+.toolCard:hover {
+  transform: scale(1.05);
+}
+
+/* Upgrade Box */
+.upgradeBox {
+  background-color: #6a0dad;
+  color: white;
+  padding: 20px;
+  text-align: center;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+
+.upgradeBtn {
+  background-color: white;
+  color: #6a0dad;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.upgradeBtn:hover {
+  background-color: #ddd;
+}
+
+/* 📌 Responsive Design for Mobile */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 200px;
+  }
+
+  .profileIcon {
+    font-size: 50px;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboardContainer {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    text-align: center;
+  }
+
+  nav ul {
+    display: flex;
+    justify-content: space-around;
+  }
+
+  .mainContent {
+    padding: 20px;
+  }
+
+  .profileOverview {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .stats {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .toolsSection {
+    flex-direction: column;
+  }
+
+  .toolCard {
+    width: 100%;
+  }
+}

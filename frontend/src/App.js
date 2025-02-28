@@ -11,6 +11,8 @@ import Navbar from "./Components/Navbar";
 import Login from "./pages/Login"
 import Register from "./pages/Register"; 
 import BeatExplorePage from "./pages/BeatExplorePage";
+import Dashboard from "./pages/Dashboard";
+import ChooseRole from "./pages/ChooseRole";
 
 function App() {
   return (
@@ -33,13 +35,11 @@ function App() {
             }
           />
 
-          {/* Login Page */}
           <Route path="/Login" element={<Login />} />
-
-          {/* Register Page */}
           <Route path="/Register" element={<Register />} />
-          
           <Route path="/explore" element={<BeatExplorePage />} />
+          <Route path="/dashboard" element={<Dashboard/>}/>
+          <Route path="/chooserole" element={<ChooseRole/>}/>
         </Routes>
       </BrowserRouter>
     </div>
