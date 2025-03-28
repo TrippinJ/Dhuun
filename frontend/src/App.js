@@ -61,7 +61,7 @@ function App() {
           />
           
           {/* Public Music Routes */}
-          <Route path="/explore" element={<BeatExplorePage />} />
+          <Route path="/BeatExplorePage" element={<BeatExplorePage />} />
         </Routes>
       </BrowserRouter>
     </div>

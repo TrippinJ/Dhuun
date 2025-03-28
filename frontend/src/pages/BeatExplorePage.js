@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/api";
 import styles from "../css/BeatExplorePage.module.css";
-import { FaCartPlus, FaDownload, FaSearch, FaHeart } from "react-icons/fa";
+import { FaCartPlus, FaPlay, FaSearch, FaHeart } from "react-icons/fa";
 import NavbarBeatExplore from '../Components/NavbarBeatExplore';
 
 const BeatExplorePage = () => {
@@ -17,6 +17,7 @@ const BeatExplorePage = () => {
   const [maxPrice, setMaxPrice] = useState(0);
   const [cartItems, setCartItems] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
+  const [displayMode, setDisplayMode] = useState("row"); // 'row' or 'grid'
   const itemsPerPage = 6; // Show 6 beats per page
 
   const navigate = useNavigate();
@@ -139,9 +140,9 @@ const BeatExplorePage = () => {
     }
   };
 
-  const handleDownload = (beatId) => {
-    console.log(`Download beat with ID: ${beatId}`);
-    // Implement download functionality here
+  const handlePlayPreview = (beatId) => {
+    console.log(`Playing beat with ID: ${beatId}`);
+    // Implement audio preview functionality here
   };
 
   const handlePageChange = (pageNumber) => {
@@ -164,6 +165,10 @@ const BeatExplorePage = () => {
     // Search is already handled by the filterBeatsByKeyword function
   };
 
+  const toggleDisplayMode = () => {
+    setDisplayMode(displayMode === "row" ? "grid" : "row");
+  };
+
   if (loading) {
     return <div className={styles.loading}>Loading beats...</div>;
   }
@@ -177,7 +182,7 @@ const BeatExplorePage = () => {
       <NavbarBeatExplore />
       
       <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>🎶 Explore Beats</h1>
+        <h1 className={styles.pageTitle}>Explore Beats</h1>
         
         {/* Search bar */}
         <form onSubmit={handleSearch} className={styles.searchForm}>
@@ -197,6 +202,17 @@ const BeatExplorePage = () => {
       <div className={styles.contentContainer}>
         {/* Filters sidebar */}
         <div className={styles.filterSidebar}>
+          {/* Display mode toggle */}
+          <div className={styles.filterSection}>
+            <h3 className={styles.filterTitle}>View Mode</h3>
+            <button 
+              onClick={toggleDisplayMode} 
+              className={styles.modeToggleButton}
+            >
+              {displayMode === "row" ? "Switch to Grid View" : "Switch to List View"}
+            </button>
+          </div>
+
           {/* Category filter */}
           <div className={styles.filterSection}>
             <h3 className={styles.filterTitle}>Categories</h3>
@@ -234,50 +250,80 @@ const BeatExplorePage = () => {
           </div>
         </div>
 
-        {/* Main content - Beat grid */}
+        {/* Main content */}
         <div className={styles.mainContent}>
           {errorMessage && <div className={styles.errorMessage}>{errorMessage}</div>}
           
-          {/* Beats grid */}
-          <div className={styles.grid}>
-            {displayedBeats.length > 0 ? (
-              displayedBeats.map((beat) => (
-                <div key={beat._id} className={styles.card}>
-                  <div className={styles.cardImage}>
+          {displayMode === "grid" ? (
+            /* Grid View */
+            <div className={styles.grid}>
+              {displayedBeats.length > 0 ? (
+                displayedBeats.map((beat) => (
+                  <div key={beat._id} className={styles.card}>
+                    <div className={styles.cardImage}>
+                      <img
+                        src={beat.coverImage || "/default-cover.jpg"}
+                        alt={beat.title}
+                        className={styles.cover}
+                      />
+                      {beat.discount && (
+                        <div className={styles.discountBadge}>
+                          {beat.discount}% OFF
+                        </div>
+                      )}
+                    </div>
+                    <div className={styles.cardInfo}>
+                      <h3>{beat.title}</h3>
+                      <p className={styles.artist}>{beat.artist}</p>
+                      <p className={styles.price}>${beat.price}</p>
+                      {beat.category && <p className={styles.category}>{beat.category}</p>}
+                    </div>
+                    <div className={styles.cardActions}>
+                      <button className={styles.buyButton} onClick={() => handleBuy(beat)}>
+                        <FaCartPlus /> Add to Cart
+                      </button>
+                      <button className={styles.downloadButton} onClick={() => handlePlayPreview(beat._id)}>
+                        <FaPlay /> Play
+                      </button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className={styles.noBeats}>No beats match your search criteria</div>
+              )}
+            </div>
+          ) : (
+            /* Row View (based on your original style) */
+            <div className={styles.beatList}>
+              {displayedBeats.length > 0 ? (
+                displayedBeats.map((beat) => (
+                  <div key={beat._id} className={styles.beatRow}>
                     <img
                       src={beat.coverImage || "/default-cover.jpg"}
                       alt={beat.title}
-                      className={styles.cover}
+                      className={styles.coverArt}
                     />
-                    {beat.discount && (
-                      <div className={styles.discountBadge}>
-                        {beat.discount}% OFF
-                      </div>
-                    )}
+                    <div className={styles.beatInfo}>
+                      <h3>{beat.title}</h3>
+                      <p className={styles.artist}>{beat.artist}</p>
+                      {beat.category && <p className={styles.category}>{beat.category}</p>}
+                      <p className={styles.price}>${beat.price}</p>
+                    </div>
+                    <div className={styles.controls}>
+                      <button className={styles.playButton} onClick={() => handlePlayPreview(beat._id)}>
+                        <FaPlay /> Play
+                      </button>
+                      <button className={styles.cartButton} onClick={() => handleBuy(beat)}>
+                        <FaCartPlus /> Add to Cart
+                      </button>
+                    </div>
                   </div>
-                  <div className={styles.cardInfo}>
-                    <h3>{beat.title}</h3>
-                    <p className={styles.artist}>{beat.artist}</p>
-                    <p className={styles.price}>${beat.price}</p>
-                    {beat.category && <p className={styles.category}>{beat.category}</p>}
-                  </div>
-                  <div className={styles.cardActions}>
-                    <button className={styles.buyButton} onClick={() => handleBuy(beat)}>
-                      <FaCartPlus /> Add to Cart
-                    </button>
-                    <button className={styles.downloadButton} onClick={() => handleDownload(beat._id)}>
-                      <FaDownload /> Preview
-                    </button>
-                    <button className={styles.favoriteButton}>
-                      <FaHeart /> Favorite
-                    </button>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className={styles.noBeats}>No beats match your search criteria</div>
-            )}
-          </div>
+                ))
+              ) : (
+                <div className={styles.noBeats}>No beats match your search criteria</div>
+              )}
+            </div>
+          )}
 
           {/* Pagination */}
           {pageCount > 1 && (
