@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import styles from "../css/Login.module.css"; 
+import styles from "../css/Login.module.css";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { useGoogleLogin } from "@react-oauth/google"; 
+import { useGoogleLogin } from "@react-oauth/google";
 import axios from "axios";
-import API from "../api/api"; 
+import API from "../api/api";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -21,11 +21,12 @@ const Login = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  // Handle form submission (Login Request)
+  /// Handle form submission (Login Request)
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
+      console.log("Logging in with:", formData.email);
       const response = await API.post("/api/auth/login", formData, {
         headers: { "Content-Type": "application/json" },
       });
@@ -34,9 +35,23 @@ const Login = () => {
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("user", JSON.stringify(response.data.user));
 
-      alert("Login successful!");
-      navigate("/dashboard"); // Redirect to home
+      // Log user data to verify role
+      console.log("User data:", response.data.user);
+      console.log("User role:", response.data.user.role);
+
+      // Improved role check with fallback
+      const userRole = response.data.user.role?.toLowerCase() || "buyer";
+      console.log("Redirecting based on role:", userRole);
+
+      if (userRole === "seller") {
+        console.log("Redirecting to Dashboard");
+        navigate("/Dashboard");
+      } else {
+        console.log("Redirecting to BeatExplorePage");
+        navigate("/BeatExplorePage");
+      }
     } catch (error) {
+      console.error("Login error:", error);
       setErrorMessage(error.response?.data?.message || "Invalid credentials. Try again.");
     }
   };
@@ -58,27 +73,33 @@ const Login = () => {
 
         console.log("Google User Info:", data);
 
-         // Send data to backend for storing user info
-      const backendResponse = await API.post("/api/auth/google-login", {
-        name: data.name,
-        email: data.email,
-        googleId: data.sub, // Unique Google ID
-        avatar: data.picture, // Profile picture URL
-      });
+        // Send data to backend for storing user info
+        const backendResponse = await API.post("/api/auth/google-login", {
+          name: data.name,
+          email: data.email,
+          googleId: data.sub, // Unique Google ID
+          avatar: data.picture, // Profile picture URL
+        });
 
-      // Store token and user details
-      localStorage.setItem("token", backendResponse.data.token);
-      localStorage.setItem("user", JSON.stringify(backendResponse.data.user));
+        // Log backend response after it's received
+        console.log("Backend response:", backendResponse.data);
+        console.log("User role from backend:", backendResponse.data.user.role);
 
-        alert(`Welcome, ${data.name}`);
-        localStorage.setItem("user", JSON.stringify(data)); 
-        // navigate("/dashboard"); 
-        // Redirect users based on role
-    if (response.data.user.role === "seller") {
-      navigate("/seller-dashboard");
-    } else {
-      navigate("/buyer-dashboard");
-    }
+        // Store token and user details
+        localStorage.setItem("token", backendResponse.data.token);
+        localStorage.setItem("user", JSON.stringify(backendResponse.data.user));
+
+        // Improved role check with fallback (similar to your handleSubmit)
+        const userRole = backendResponse.data.user.role?.toLowerCase() || "buyer";
+        console.log("Redirecting based on role:", userRole);
+
+        if (userRole === "seller") {
+          console.log("Redirecting to Dashboard");
+          navigate("/Dashboard");
+        } else {
+          console.log("Redirecting to BeatExplorePage");
+          navigate("/BeatExplorePage");
+        }
       } catch (error) {
         console.error("Google login failed:", error);
         setErrorMessage("Google login failed. Please try again.");
@@ -87,7 +108,7 @@ const Login = () => {
     onError: () => {
       setErrorMessage("Google login was unsuccessful. Please try again.");
     },
-  });
+  });;
 
   return (
     <div className={styles.wrapper}>

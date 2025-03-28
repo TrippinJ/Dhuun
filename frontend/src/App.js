@@ -13,6 +13,8 @@ import Register from "./pages/Register";
 import BeatExplorePage from "./pages/BeatExplorePage";
 import Dashboard from "./pages/Dashboard";
 import ChooseRole from "./pages/ChooseRole";
+import SubscriptionPage from "./pages/Subscription";
+import PrivateRoute from "./Components/PrivateRoute"; // This needs to be created (see below)
 
 function App() {
   return (
@@ -35,11 +37,31 @@ function App() {
             }
           />
 
-          <Route path="/Login" element={<Login />} />
-          <Route path="/Register" element={<Register />} />
+          {/* Authentication Routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/chooserole" element={<ChooseRole />} />
+          
+          {/* Protected Routes */}
+          <Route 
+            path="/dashboard" 
+            element={
+              <PrivateRoute>
+                <Dashboard />
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/subscription" 
+            element={
+              <PrivateRoute>
+                <SubscriptionPage />
+              </PrivateRoute>
+            } 
+          />
+          
+          {/* Public Music Routes */}
           <Route path="/explore" element={<BeatExplorePage />} />
-          <Route path="/dashboard" element={<Dashboard/>}/>
-          <Route path="/chooserole" element={<ChooseRole/>}/>
         </Routes>
       </BrowserRouter>
     </div>

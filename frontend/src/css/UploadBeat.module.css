@@ -1,0 +1,236 @@
+.uploadContainer {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 30px 20px;
+}
+
+.uploadForm {
+  background-color: #222222;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  color: #f0f0f0;
+}
+
+.formSection {
+  padding: 25px;
+  border-bottom: 1px solid #333;
+}
+
+.formSection h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 1.2rem;
+  color: #ffba00;
+}
+
+.fileUploads {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.fileUpload {
+  flex: 1;
+  min-width: 250px;
+}
+
+.fileUpload label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed #ffba00;
+  border-radius: 8px;
+  padding: 30px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: rgba(255, 186, 0, 0.05);
+}
+
+.fileUpload label:hover {
+  background-color: rgba(255, 186, 0, 0.1);
+}
+
+.fileUpload input[type="file"] {
+  display: none;
+}
+
+.icon {
+  font-size: 2rem;
+  margin-bottom: 10px;
+  color: #ffba00;
+}
+
+.preview {
+  margin-top: 15px;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #333;
+  padding: 10px;
+}
+
+.preview img {
+  width: 100%;
+  height: auto;
+  max-height: 200px;
+  object-fit: contain;
+  display: block;
+  border-radius: 8px;
+}
+
+.preview audio {
+  width: 100%;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.formGroup {
+  margin-bottom: 20px;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #f0f0f0;
+}
+
+.formGroup input,
+.formGroup select,
+.formGroup textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #444;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+  background-color: #333;
+  color: #fff;
+}
+
+.formGroup input:focus,
+.formGroup select:focus,
+.formGroup textarea:focus {
+  border-color: #ffba00;
+  outline: none;
+}
+
+.submitSection {
+  padding: 25px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+}
+
+.submitBtn {
+  background-color: #ffba00;
+  color: #0f0f0f;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: background-color 0.3s;
+  font-weight: 600;
+}
+
+.submitBtn:hover {
+  background-color: #e48f0f;
+  transform: scale(1.02);
+}
+
+.submitBtn:disabled {
+  background-color: #666;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.errorMessage, 
+.successMessage {
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+.errorMessage {
+  background-color: rgba(255, 59, 48, 0.1);
+  border: 1px solid rgba(255, 59, 48, 0.3);
+  color: #ff3b30;
+}
+
+.successMessage {
+  background-color: rgba(52, 199, 89, 0.1);
+  border: 1px solid rgba(52, 199, 89, 0.3);
+  color: #34c759;
+}
+
+.fieldError {
+  color: #ff3b30;
+  font-size: 0.8rem;
+  margin-top: 5px;
+}
+
+.errorInput, 
+.errorBorder {
+  border-color: #ff3b30 !important;
+}
+
+.filePreview {
+  background-color: #333;
+  border-radius: 8px;
+  padding: 15px;
+  position: relative;
+}
+
+.fileInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.fileSize {
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.removeFile {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: rgba(255, 59, 48, 0.8);
+  color: white;
+  border: none;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.removeFile:hover {
+  background-color: #ff3b30;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .fileUploads {
+    flex-direction: column;
+  }
+}

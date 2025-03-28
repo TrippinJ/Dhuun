@@ -1,194 +1,410 @@
-/* Dashboard Layout */
 .dashboardContainer {
   display: flex;
-  height: 100vh;
-  min-width: 100vw;
-  overflow-x: hidden;
-  background-color: #f7f7f7;
+  min-height: 100vh;
+  background-color: #1a1a1a;
+  color: #f0f0f0;
 }
 
-/* Sidebar */
+/* Sidebar Styles */
 .sidebar {
   width: 250px;
-  height: 100vh;
-  background-color: #1c093c;
-  color: white;
-  padding: 20px;
+  background-color: #222;
+  padding: 20px 0;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+}
+
+.profileSection {
   display: flex;
   flex-direction: column;
   align-items: center;
-  transition: all 0.3s ease-in-out;
-}
-
-
-.profileSection {
-  text-align: center;
+  padding: 20px 15px;
+  border-bottom: 1px solid #333;
 }
 
 .profileIcon {
   font-size: 60px;
-  color: #aaa;
+  color: #ffba00;
+  margin-bottom: 10px;
 }
 
-.role {
-  font-size: 14px;
-  color: #bbb;
-}
-
-nav ul {
-  list-style: none;
-  padding: 0;
-  width: 100%;
-}
-
-nav ul li {
-  padding: 15px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  transition: background 0.3s ease-in-out;
-}
-
-nav ul li:hover,
-nav ul .active {
-  background-color: #6a0dad;
-  border-radius: 5px;
-}
-
-nav ul li svg {
+.profileSection h3 {
+  margin: 10px 0 5px;
   font-size: 18px;
 }
 
-/* Main Content */
-.mainContent {
-  flex-grow: 1;
-  padding: 30px;
+.role {
+  color: #999;
+  font-size: 14px;
 }
 
-/* Header */
+.sidebar nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+}
+
+.sidebar nav li {
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.sidebar nav li:hover {
+  background-color: #333;
+}
+
+.sidebar nav li.active {
+  background-color: #333;
+  border-left: 3px solid #ffba00;
+}
+
+/* Main Content Styles */
+.mainContent {
+  flex: 1;
+  padding: 30px;
+  overflow-y: auto;
+}
+
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 30px;
 }
 
-.uploadBtn {
-  background-color: #6a0dad;
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.uploadBtn:hover {
-  background-color: #5a0cac;
-}
-
-/* Profile Overview */
-.profileOverview {
-  display: flex;
-  gap: 20px;
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  margin-top: 20px;
-  flex-wrap: wrap;
-}
-
-.profileCard {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  flex: 1;
-}
-
-.profileImage {
-  font-size: 50px;
-  color: #aaa;
-}
-
-.stats {
-  display: flex;
-  gap: 30px;
-  flex: 2;
-  justify-content: space-around;
-}
-
-.stats div {
-  text-align: center;
-}
-
-.stats h4 {
-  font-size: 16px;
+.header h2 {
+  font-size: 24px;
   margin: 0;
 }
 
-.stats p {
-  font-size: 18px;
-  font-weight: bold;
-  color: #6a0dad;
-}
-
-/* Tools Section */
-.sectionTitle {
-  margin-top: 30px;
-}
-
-.toolsSection {
+.headerActions {
   display: flex;
   gap: 15px;
-  margin-top: 15px;
-  flex-wrap: wrap;
 }
 
-.toolCard {
-  flex-grow: 1;
-  padding: 15px;
+.upgradeBtn,
+.uploadBtn {
+  background-color: #ffba00;
+  color: #0f0f0f;
   border: none;
-  border-radius: 8px;
-  background-color: white;
-  cursor: pointer;
-  transition: transform 0.2s;
-  text-align: center;
-}
-
-.toolCard:hover {
-  transform: scale(1.05);
-}
-
-/* Upgrade Box */
-.upgradeBox {
-  background-color: #6a0dad;
-  color: white;
-  padding: 20px;
-  text-align: center;
-  border-radius: 8px;
-  margin-top: 20px;
-}
-
-.upgradeBtn {
-  background-color: white;
-  color: #6a0dad;
-  padding: 8px 15px;
-  border: none;
+  padding: 10px 20px;
   border-radius: 5px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
 }
 
-.upgradeBtn:hover {
-  background-color: #ddd;
+.upgradeBtn:hover,
+.uploadBtn:hover {
+  background-color: #e48f0f;
+  transform: translateY(-2px);
 }
 
-/* 📌 Responsive Design for Mobile */
+.backBtn {
+  background-color: #444;
+  color: #f0f0f0;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.backBtn:hover {
+  background-color: #555;
+}
+
+.btnIcon {
+  font-size: 16px;
+}
+
+/* Stats Section Styles */
+.statsSection {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.statCard {
+  background-color: #333;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.statCard h3 {
+  font-size: 16px;
+  color: #999;
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.statCard p {
+  font-size: 24px;
+  font-weight: bold;
+  color: #ffba00;
+  margin: 0;
+}
+
+/* Beats Section Styles */
+.beatsSection {
+  background-color: #2a2a2a;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.beatsSection h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 20px;
+}
+
+.beatsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.beatsHeader p {
+  margin: 0;
+  color: #999;
+}
+
+.noBeats {
+  text-align: center;
+  padding: 40px 0;
+}
+
+.noBeats p {
+  margin-bottom: 20px;
+  color: #999;
+}
+
+.beatsList {
+  width: 100%;
+}
+
+.beatsTableHeader {
+  display: grid;
+  grid-template-columns: 80px 2fr 1fr 1fr 1fr 120px;
+  background-color: #333;
+  padding: 12px;
+  border-radius: 5px;
+  margin-bottom: 10px;
+  font-weight: bold;
+  color: #999;
+}
+
+.beatItem {
+  display: grid;
+  grid-template-columns: 80px 2fr 1fr 1fr 1fr 120px;
+  background-color: #383838;
+  padding: 12px;
+  border-radius: 5px;
+  margin-bottom: 8px;
+  align-items: center;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.beatItem:hover {
+  background-color: #424242;
+}
+
+.beatImage img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.beatTitle {
+  font-weight: bold;
+}
+
+.beatGenre {
+  color: #999;
+}
+
+.beatPrice {
+  font-weight: bold;
+  color: #ffba00;
+}
+
+.beatStats {
+  display: flex;
+  gap: 10px;
+}
+
+.statItem {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #999;
+}
+
+.beatActions {
+  display: flex;
+  gap: 8px;
+}
+
+.actionBtn {
+  background-color: transparent;
+  border: none;
+  color: #f0f0f0;
+  cursor: pointer;
+  font-size: 16px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.actionBtn:hover {
+  background-color: #555;
+}
+
+/* Confirm Delete Modal */
+.confirmDelete {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: 5px;
+}
+
+.confirmDelete p {
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.confirmButtons {
+  display: flex;
+  gap: 10px;
+}
+
+.deleteBtn {
+  background-color: #ff3b30;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.cancelBtn {
+  background-color: #444;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* Buyer Dashboard Styles */
+.buyerDashboard {
+  text-align: center;
+}
+
+.buyerDashboard h2 {
+  margin-bottom: 10px;
+}
+
+.buyerDashboard p {
+  margin-bottom: 30px;
+  color: #999;
+}
+
+.actionCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.actionCard {
+  background-color: #333;
+  padding: 30px 20px;
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.actionCard:hover {
+  background-color: #444;
+  transform: translateY(-5px);
+}
+
+.actionIcon {
+  font-size: 40px;
+  color: #ffba00;
+  margin-bottom: 15px;
+}
+
+.actionCard h3 {
+  margin-bottom: 10px;
+}
+
+.actionCard p {
+  color: #999;
+  margin-bottom: 0;
+}
+
+/* Loading and Error States */
+.loading, .error {
+  text-align: center;
+  padding: 40px 0;
+}
+
+.error {
+  color: #ff3b30;
+}
+
+.loadingDot {
+  animation: pulse 1.5s infinite;
+  font-size: 18px;
+  letter-spacing: -2px;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.3; }
+  50% { opacity: 1; }
+  100% { opacity: 0.3; }
+}
+
+.actionBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Responsive styles */
 @media (max-width: 1024px) {
-  .sidebar {
-    width: 200px;
+  .beatsTableHeader, .beatItem {
+    grid-template-columns: 80px 2fr 1fr 1fr 120px;
   }
-
-  .profileIcon {
-    font-size: 50px;
+  
+  .beatStats {
+    display: none;
   }
 }
 
@@ -196,36 +412,55 @@ nav ul li svg {
   .dashboardContainer {
     flex-direction: column;
   }
-
+  
   .sidebar {
     width: 100%;
-    text-align: center;
+    padding: 10px 0;
   }
-
-  nav ul {
+  
+  .sidebar nav ul {
     display: flex;
-    justify-content: space-around;
+    margin: 10px 0;
+    overflow-x: auto;
   }
-
+  
+  .sidebar nav li {
+    padding: 10px 15px;
+    white-space: nowrap;
+  }
+  
   .mainContent {
     padding: 20px;
   }
-
-  .profileOverview {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .stats {
-    flex-direction: column;
+  
+  .beatsTableHeader, .beatItem {
+    grid-template-columns: 60px 2fr 1fr 120px;
     gap: 10px;
   }
-
-  .toolsSection {
-    flex-direction: column;
+  
+  .beatGenre {
+    display: none;
   }
+}
 
-  .toolCard {
-    width: 100%;
+@media (max-width: 480px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .beatsHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .beatsTableHeader, .beatItem {
+    grid-template-columns: 60px 1fr 80px;
+  }
+  
+  .beatPrice {
+    display: none;
   }
 }

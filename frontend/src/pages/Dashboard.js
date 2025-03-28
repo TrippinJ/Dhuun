@@ -1,15 +1,37 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import API from "../api/api"; 
+import API from "../api/api";
 import styles from "../css/Dashboard.module.css";
-import { FaUserCircle, FaMusic, FaChartLine, FaSignOutAlt, FaTools } from "react-icons/fa";
+import * as Tone from 'tone';
+import { 
+  FaUserCircle, 
+  FaMusic, 
+  FaChartLine, 
+  FaSignOutAlt, 
+  FaTools, 
+  FaUpload,
+  FaPlay,
+  FaPause,
+  FaEdit,
+  FaTrash,
+  FaHeadphones
+} from "react-icons/fa";
+import UploadBeat from "../Components/UploadBeat";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [beats, setBeats] = useState([]);
+  const [showUploadForm, setShowUploadForm] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [player, setPlayer] = useState(null);
+  const [currentlyPlaying, setCurrentlyPlaying] = useState(null);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(null);
+  const [error, setError] = useState(null);
+  const [audioLoading, setAudioLoading] = useState(false);
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const checkAuth = async () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) {
@@ -17,26 +39,356 @@ const Dashboard = () => {
           return;
         }
 
-        const response = await API.get("/api/auth/me", {
+        // Fetch user data
+        const userResponse = await API.get("/api/auth/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
-
-        setUser(response.data);
+        
+        setUser(userResponse.data);
+        
+        // Only fetch beats for sellers
+        if (userResponse.data.role === "seller") {
+          // Fetch user's beats
+          const beatsResponse = await API.get("/api/beats/producer/beats", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          
+          // Log the first beat to debug structure
+          if (beatsResponse.data.length > 0) {
+            console.log("First beat structure:", beatsResponse.data[0]);
+          }
+          
+          setBeats(beatsResponse.data);
+        }
+        
+        setIsLoading(false);
       } catch (error) {
-        console.error("Error fetching user:", error);
-        navigate("/login");
+        console.error("Error fetching data:", error);
+        if (error.response?.status === 401) {
+          localStorage.removeItem("token");
+          navigate("/login");
+        } else {
+          setError("Failed to load dashboard data. Please try again later.");
+          setIsLoading(false);
+        }
       }
     };
 
-    fetchUser();
+    checkAuth();
+    
+   // Initialize Tone.js safely
+   const initTone = async () => {
+    try {
+      // We don't auto-start Tone.js here - we'll start it on user interaction
+      console.log("Tone.js ready to initialize on user interaction");
+    } catch (error) {
+      console.error("Failed to prepare Tone.js:", error);
+    }
+  };
+  initTone();
+    
+    // Cleanup function for Tone.js player
+    return () => {
+      if (player) {
+        player.stop();
+        player.dispose();
+      }
+    };
   }, [navigate]);
 
   const handleLogout = () => {
+    if (player) {
+      player.stop();
+      player.dispose();
+    }
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     navigate("/");
   };
 
+  const handleUpgrade = () => {
+    navigate("/subscription");
+  };
+  
+  const toggleUploadForm = () => {
+    setShowUploadForm(!showUploadForm);
+  };
+  
+  const handleUploadComplete = (data) => {
+    // Add the new beat to the beats list
+    if (data && data.beat) {
+      setBeats([data.beat, ...beats]);
+    }
+    setShowUploadForm(false);
+  };
+  
+  const handlePlayPause = async (beatId, audioUrl) => {
+    try {
+      // Start audio context on first interaction (required by browsers)
+      await Tone.start();
+      
+      if (currentlyPlaying === beatId) {
+        // Toggle current player
+        if (player) {
+          if (player.state === "started") {
+            player.stop();
+            setCurrentlyPlaying(null);
+          } else {
+            player.start();
+          }
+        }
+      } else {
+        setAudioLoading(true);
+        
+        // Stop current player
+        if (player) {
+          player.stop();
+          player.dispose();
+        }
+        
+        // Create new player with proper configuration
+        const newPlayer = new Tone.Player({
+          url: audioUrl,
+          autostart: false,
+          loop: false,
+          onload: () => {
+            setAudioLoading(false);
+            console.log("Audio loaded successfully");
+          }
+        }).toDestination();
+        
+        // Set up event when playback finishes
+        newPlayer.onstop = () => {
+          setCurrentlyPlaying(null);
+        };
+        
+        // Load and play
+        newPlayer.load().then(() => {
+          newPlayer.start();
+          setPlayer(newPlayer);
+          setCurrentlyPlaying(beatId);
+          setAudioLoading(false);
+        }).catch(err => {
+          console.error("Player load error:", err);
+          setAudioLoading(false);
+        });
+      }
+    } catch (error) {
+      console.error("Tone.js error:", error);
+      setAudioLoading(false);
+    }
+  };
+  
+  const handleEditBeat = (beatId) => {
+    // Implement edit functionality or navigate to edit page
+    navigate(`/edit-beat/${beatId}`);
+  };
+  
+  const handleDeleteBeat = async (beatId) => {
+    try {
+      console.log("Setting up delete for beat ID:", beatId); // Debug log
+      // Set up confirm dialog
+      setShowConfirmDelete(beatId);
+    } catch (error) {
+      console.error("Error preparing delete:", error);
+    }
+  };
+  
+  const confirmDelete = async (beatId) => {
+    try {
+      console.log("Deleting beat with ID:", beatId); // Debug log
+      
+      // Make sure beatId is not undefined
+      if (!beatId) {
+        console.error("Beat ID is undefined");
+        setError("Cannot delete beat: Invalid ID");
+        setShowConfirmDelete(null);
+        return;
+      }
+      
+      const token = localStorage.getItem("token");
+      await API.delete(`/api/beats/${beatId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      // If the beat being deleted is currently playing, stop it
+      if (currentlyPlaying === beatId && player) {
+        player.stop();
+        player.dispose();
+        setPlayer(null);
+        setCurrentlyPlaying(null);
+      }
+      
+      // Remove the beat from the list - support both id and _id
+      setBeats(beats.filter(beat => (beat.id !== beatId && beat._id !== beatId)));
+      
+      // Reset confirm delete state
+      setShowConfirmDelete(null);
+    } catch (error) {
+      console.error("Error deleting beat:", error);
+      setError("Failed to delete beat. Please try again.");
+      setShowConfirmDelete(null);
+    }
+  };
+  
+  const cancelDelete = () => {
+    setShowConfirmDelete(null);
+  };
+
+  // Render dashboard content based on user's role
+  const renderDashboardContent = () => {
+    if (isLoading) {
+      return <div className={styles.loading}>Loading dashboard...</div>;
+    }
+    
+    if (error) {
+      return <div className={styles.error}>{error}</div>;
+    }
+    
+    // Return different content based on user role
+    if (user?.role === "seller") {
+      return (
+        <>
+          <div className={styles.statsSection}>
+            <div className={styles.statCard}>
+              <h3>Total Beats</h3>
+              <p>{beats.length}</p>
+            </div>
+            <div className={styles.statCard}>
+              <h3>Total Plays</h3>
+              <p>{beats.reduce((sum, beat) => sum + (beat.plays || 0), 0)}</p>
+            </div>
+            <div className={styles.statCard}>
+              <h3>Total Likes</h3>
+              <p>{beats.reduce((sum, beat) => sum + (beat.likes || 0), 0)}</p>
+            </div>
+            <div className={styles.statCard}>
+              <h3>Upload Limit</h3>
+              <p>{user.subscription?.uploadLimit || 5}</p>
+            </div>
+          </div>
+          
+          <div className={styles.beatsSection}>
+            <h2>Your Beats</h2>
+            {beats.length === 0 ? (
+              <div className={styles.noBeats}>
+                <p>You haven't uploaded any beats yet.</p>
+                <button className={styles.uploadBtn} onClick={toggleUploadForm}>
+                  <FaUpload className={styles.btnIcon} /> Upload Your First Beat
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className={styles.beatsHeader}>
+                  <p>You have {beats.length} beats uploaded</p>
+                  <button className={styles.uploadBtn} onClick={toggleUploadForm}>
+                    <FaUpload className={styles.btnIcon} /> Upload Beat
+                  </button>
+                </div>
+                <div className={styles.beatsList}>
+                  <div className={styles.beatsTableHeader}>
+                    <div className={styles.beatImage}>Cover</div>
+                    <div className={styles.beatTitle}>Title</div>
+                    <div className={styles.beatGenre}>Genre</div>
+                    <div className={styles.beatPrice}>Price</div>
+                    <div className={styles.beatStats}>Stats</div>
+                    <div className={styles.beatActions}>Actions</div>
+                  </div>
+                  
+                  {beats.map((beat) => {
+                    // Support both id and _id formats
+                    const beatId = beat._id || beat.id;
+                    return (
+                      <div key={beatId} className={styles.beatItem}>
+                        <div className={styles.beatImage}>
+                          <img src={beat.imageUrl} alt={beat.title} />
+                        </div>
+                        <div className={styles.beatTitle}>{beat.title}</div>
+                        <div className={styles.beatGenre}>{beat.genre}</div>
+                        <div className={styles.beatPrice}>${beat.price}</div>
+                        <div className={styles.beatStats}>
+                          <div className={styles.statItem}>
+                            <FaHeadphones /> {beat.plays || 0}
+                          </div>
+                        </div>
+                        <div className={styles.beatActions}>
+                          <button 
+                            className={styles.actionBtn}
+                            onClick={() => handlePlayPause(beatId, beat.audioUrl)}
+                            disabled={audioLoading}
+                          >
+                            {audioLoading && currentlyPlaying === beatId ? (
+                              <span className={styles.loadingDot}>•••</span>
+                            ) : currentlyPlaying === beatId ? (
+                              <FaPause />
+                            ) : (
+                              <FaPlay />
+                            )}
+                          </button>
+                          <button 
+                            className={styles.actionBtn}
+                            onClick={() => handleEditBeat(beatId)}
+                          >
+                            <FaEdit />
+                          </button>
+                          <button 
+                            className={styles.actionBtn}
+                            onClick={() => handleDeleteBeat(beatId)}
+                          >
+                            <FaTrash />
+                          </button>
+                        </div>
+                        
+                        {showConfirmDelete === beatId && (
+                          <div className={styles.confirmDelete}>
+                            <p>Are you sure you want to delete <strong>{beat.title}</strong>?</p>
+                            <div className={styles.confirmButtons}>
+                              <button 
+                                className={styles.deleteBtn}
+                                onClick={() => confirmDelete(beatId)}
+                              >
+                                Delete
+                              </button>
+                              <button 
+                                className={styles.cancelBtn}
+                                onClick={cancelDelete}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        </>
+      );
+    } else {
+      // Buyer dashboard content
+      return (
+        <div className={styles.buyerDashboard}>
+          <h2>Welcome to Your Dashboard</h2>
+          <p>View your purchased beats and explore more music</p>
+          
+          <div className={styles.actionCards}>
+            <div className={styles.actionCard} onClick={() => navigate('/BeatExplorePage')}>
+              <FaMusic className={styles.actionIcon} />
+              <h3>Explore Beats</h3>
+              <p>Browse our collection of beats from talented producers</p>
+            </div>
+            
+            {/* Add more action cards as needed */}
+          </div>
+        </div>
+      );
+    }
+  };
+
+  // Main render function for the dashboard
   return (
     <div className={styles.dashboardContainer}>
       {/* Sidebar */}
@@ -44,13 +396,13 @@ const Dashboard = () => {
         <div className={styles.profileSection}>
           <FaUserCircle className={styles.profileIcon} />
           <h3>{user?.name || "User"}</h3>
-          <span className={styles.role}>Starter Producer</span>
+          <span className={styles.role}>{user?.role === "seller" ? "Producer" : "Listener"}</span>
         </div>
         <nav>
           <ul>
             <li className={styles.active}><FaChartLine /> Dashboard</li>
-            <li><FaMusic /> Insights</li>
-            <li><FaTools /> Selling Tools</li>
+            <li><FaMusic /> {user?.role === "seller" ? "My Beats" : "Purchased Beats"}</li>
+            <li><FaTools /> {user?.role === "seller" ? "Selling Tools" : "Account Settings"}</li>
             <li onClick={handleLogout}><FaSignOutAlt /> Logout</li>
           </ul>
         </nav>
@@ -58,50 +410,39 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <main className={styles.mainContent}>
-        <div className={styles.header}>
-          <h2>Dashboard</h2>
-          <button className={styles.uploadBtn}>Upload Media</button>
-        </div>
-
-        {/* Profile Overview */}
-        <div className={styles.profileOverview}>
-          <div className={styles.profileCard}>
-            <FaUserCircle className={styles.profileImage} />
-            <div>
-              <h3>{user?.name || "User"}</h3>
-              <p>Starter Producer</p>
+        {showUploadForm ? (
+          <>
+            <div className={styles.header}>
+              <h2>Upload Beat</h2>
+              <button 
+                className={styles.backBtn}
+                onClick={toggleUploadForm}
+              >
+                Back to Dashboard
+              </button>
             </div>
-          </div>
-          <div className={styles.stats}>
-            <div>
-              <h4>Items Sold</h4>
-              <p>0</p>
+            
+            <UploadBeat onUploadComplete={handleUploadComplete} />
+          </>
+        ) : (
+          <>
+            <div className={styles.header}>
+              <h2>Dashboard</h2>
+              {user?.role === "seller" && (
+                <div className={styles.headerActions}>
+                  <button 
+                    className={styles.upgradeBtn}
+                    onClick={handleUpgrade}
+                  >
+                    Upgrade Plan
+                  </button>
+                </div>
+              )}
             </div>
-            <div>
-              <h4>Plays</h4>
-              <p>0</p>
-            </div>
-            <div>
-              <h4>Earnings</h4>
-              <p>$0.00</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Tools Section */}
-        <h3 className={styles.sectionTitle}>Tools</h3>
-        <div className={styles.toolsSection}>
-          <button className={styles.toolCard}>🎵 New Beats</button>
-          <button className={styles.toolCard}>💰 Monetization</button>
-          <button className={styles.toolCard}>📈 Sales Insights</button>
-          <button className={styles.toolCard}>🎨 Artwork Library</button>
-        </div>
-
-        {/* Upgrade CTA */}
-        <div className={styles.upgradeBox}>
-          <p>Upgrade now to Platinum Annual and save 60%</p>
-          <button className={styles.upgradeBtn}>Upgrade</button>
-        </div>
+            
+            {renderDashboardContent()}
+          </>
+        )}
       </main>
     </div>
   );

@@ -1,0 +1,111 @@
+/* Navbar styles */
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 80px;
+    width: 100%;
+    padding: 0 2rem;
+    background-color: #121212;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+  
+  .nav-logo-container {
+    display: flex;
+    align-items: center;
+  }
+  
+  .navbar-links-container {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  
+  .navbar-links-container a {
+    text-decoration: none;
+    color: white;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: color 0.3s ease;
+  }
+  
+  .navbar-links-container a:hover {
+    color: #7B2CBF;
+  }
+  
+  .navbar-cart-icon {
+    font-size: 1.2rem;
+    color: white;
+  }
+  
+  .primary-button {
+    background-color: #7B2CBF;
+    color: white;
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 25px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .primary-button:hover {
+    background-color: #8E44AD;
+    transform: scale(1.05);
+  }
+  
+  .navbar-menu-container {
+    display: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+  }
+  
+  /* Responsive styles */
+  @media screen and (max-width: 1024px) {
+    .navbar-links-container {
+      gap: 1rem;
+    }
+    
+    .navbar-links-container a {
+      font-size: 0.9rem;
+    }
+    
+    .primary-button {
+      padding: 0.7rem 1.2rem;
+      font-size: 0.9rem;
+    }
+  }
+  
+  @media screen and (max-width: 900px) {
+    .navbar-links-container {
+      display: none;
+    }
+    
+    .navbar-menu-container {
+      display: block;
+    }
+    
+    .navbar {
+      padding: 0 1.5rem;
+    }
+  }
+  
+  /* Additional styles for smaller screens */
+  @media screen and (max-width: 480px) {
+    .navbar {
+      padding: 0 1rem;
+      min-height: 70px;
+    }
+    
+    .nav-logo-container img {
+      width: 80px;
+    }
+    
+    .navbar-menu-container {
+      font-size: 1.3rem;
+    }
+  }

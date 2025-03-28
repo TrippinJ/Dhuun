@@ -1,5 +1,6 @@
 
 import React from "react";
+import '../css/Landingpage.css';
 import ProfilePic from "../Assets/john-doe-image.png";
 import { AiFillStar } from "react-icons/ai";
 

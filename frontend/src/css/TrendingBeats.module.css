@@ -1,0 +1,216 @@
+.sectionHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding: 0 1rem;
+  }
+  
+  .sectionTitle {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+  }
+  
+  .seeMoreButton {
+    color: #fff;
+    background: none;
+    border: none;
+    font-size: 1rem;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+  }
+  
+  .seeMoreButton:hover {
+    opacity: 1;
+    text-decoration: underline;
+  }
+  
+  .beatsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+    padding: 0 1rem;
+  }
+  
+  .beatCard {
+    background-color: #171717;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .beatCard:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+  }
+  
+  .imageContainer {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    border-radius: 8px 8px 0 0;
+  }
+  
+  .beatImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+  
+  .imageContainer:hover .beatImage {
+    transform: scale(1.05);
+  }
+  
+  .imageOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .imageContainer:hover .imageOverlay {
+    opacity: 1;
+  }
+  
+  .playButton, .favoriteButton {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    margin: 0 0.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+  }
+  
+  .playButton {
+    background-color: rgba(123, 44, 191, 0.8);
+    width: 3rem;
+    height: 3rem;
+  }
+  
+  .favoriteButton {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    font-size: 1.2rem;
+    background-color: rgba(0, 0, 0, 0.5);
+    width: 2rem;
+    height: 2rem;
+  }
+  
+  .playButton:hover {
+    background-color: #7b2cbf;
+    transform: scale(1.1);
+  }
+  
+  .favoriteButton:hover {
+    color: #ff4d4d;
+  }
+  
+  .beatInfo {
+    padding: 1rem;
+  }
+  
+  .beatTitle {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+    margin: 0 0 0.5rem 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .producerInfo {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+  
+  .producerName {
+    font-size: 0.85rem;
+    color: #aaa;
+    margin-right: 0.25rem;
+  }
+  
+  .verifiedIcon {
+    font-size: 0.75rem;
+    color: #3897f0;
+  }
+  
+  .beatActions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .price {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #7b2cbf;
+  }
+  
+  .cartButton {
+    background-color: #333;
+    color: white;
+    border: none;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .cartButton:hover {
+    background-color: #7b2cbf;
+    transform: scale(1.1);
+  }
+  
+  /* Media queries for responsiveness */
+  @media (max-width: 1200px) {
+    .beatsGrid {
+      grid-template-columns: repeat(5, 1fr);
+    }
+  }
+  
+  @media (max-width: 992px) {
+    .beatsGrid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .beatsGrid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .beatsGrid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .sectionTitle {
+      font-size: 1.5rem;
+    }
+  }

@@ -1,0 +1,159 @@
+/* NavbarBeatExplore.module.css */
+
+/* Navbar Container */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: #1E1E1E; /* Secondary dark background */
+  color: #FFFFFF;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: 1px solid #333333;
+}
+
+/* Logo styling */
+.logoContainer {
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.logoContainer:hover {
+  transform: scale(1.05);
+}
+
+.cartIcon {
+  font-size: 1.5rem;
+  margin-left: 20px;
+  color: #FFFFFF;
+  transition: color 0.3s ease;
+}
+
+.cartIcon:hover {
+  color: #7B2CBF; /* Purple on hover */
+}
+
+/* Links container */
+.navLinksContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+  margin-left: 2rem;
+}
+
+.navLinksContainer a {
+  margin-right: 1.5rem;
+  color: #AAAAAA; /* Secondary text color */
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.navLinksContainer a:hover {
+  color: #FFFFFF; /* White text on hover */
+}
+
+/* Search bar styles */
+.searchContainer {
+  display: flex;
+  align-items: center;
+  background-color: #2A2A2A; /* Slightly lighter background */
+  border: 1px solid #333333;
+  border-radius: 30px;
+  padding: 0.5rem 1rem;
+  transition: all 0.3s ease;
+  margin: 0 1rem;
+  flex: 0 0 300px;
+}
+
+.searchContainer:focus-within {
+  border-color: #7B2CBF; /* Purple border when focused */
+  box-shadow: 0 0 0 2px rgba(123, 44, 191, 0.2);
+}
+
+.searchInput {
+  border: none;
+  background: transparent;
+  color: #FFFFFF;
+  padding: 0.5rem;
+  width: 100%;
+  outline: none;
+  font-size: 0.9rem;
+}
+
+.searchInput::placeholder {
+  color: #555555;
+}
+
+.searchButton {
+  background: transparent;
+  border: none;
+  color: #7B2CBF; /* Purple search icon */
+  cursor: pointer;
+  margin-left: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.searchButton:hover {
+  transform: scale(1.2);
+}
+
+/* Profile button */
+.profileButton {
+  background: transparent;
+  border: none;
+  color: #FFFFFF;
+  cursor: pointer;
+  font-size: 1.5rem;
+  transition: all 0.3s ease;
+  margin-left: 20px;
+}
+
+.profileButton:hover {
+  color: #7B2CBF; /* Purple on hover */
+  transform: scale(1.1);
+}
+
+/* Mobile dropdown menu (initially hidden) */
+.mobileMenu {
+  display: none;
+}
+
+/* Additional styles for mobile responsiveness */
+@media (max-width: 992px) {
+  .navLinksContainer {
+    display: none; /* Hide regular navbar items for mobile */
+  }
+
+  .searchContainer {
+    flex: 0 0 200px;
+  }
+
+  .mobileMenu {
+    display: block;
+  }
+
+  .mobileMenuButton {
+    background: transparent;
+    border: none;
+    color: #FFFFFF;
+    font-size: 1.5rem;
+    cursor: pointer;
+  }
+}
+
+@media (max-width: 576px) {
+  .navbar {
+    padding: 0.8rem 1rem;
+  }
+
+  .searchContainer {
+    flex: 1;
+    margin: 0 0.5rem;
+  }
+}
