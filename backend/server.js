@@ -5,6 +5,7 @@ const cors = require("cors");
 const session = require("express-session");
 const passport = require("passport");
 const path = require("path");
+const fs = require("fs"); // <-- Add this import
 const expressListRoutes = require("express-list-routes");
 
 // Import Routes
@@ -56,6 +57,23 @@ mongoose
     process.exit(1); // Stop the server if DB connection fails
   });
 
+// Create uploads directories if they don't exist
+const uploadsDir = path.join(__dirname, 'uploads');
+const usersDir = path.join(uploadsDir, 'users');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
+}
+if (!fs.existsSync(usersDir)) {
+  fs.mkdirSync(usersDir);
+}
+
+// Create temp upload directory
+const tempDir = path.join(__dirname, 'temp_uploads');
+if (!fs.existsSync(tempDir)) {
+  fs.mkdirSync(tempDir, { recursive: true });
+  console.log('✅ Temporary upload directory created');
+}
+
 // Register API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/subscription", subscriptionRoutes);
@@ -65,16 +83,6 @@ app.use('/api/beats', beatRoutes);
 app.get("/", (req, res) => {
   res.send("Dhuun Backend is Running...");
 });
-
-// Create uploads directories if they don't exist
-const uploadsDir = path.join(__dirname, 'uploads');
-const usersDir = path.join(uploadsDir, 'users');
-if (!require('fs').existsSync(uploadsDir)) {
-  require('fs').mkdirSync(uploadsDir);
-}
-if (!require('fs').existsSync(usersDir)) {
-  require('fs').mkdirSync(usersDir);
-}
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -91,3 +99,29 @@ app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`🚀 Test at: http://localhost:${PORT}/`);
 });
+
+// Schedule cleaning of temp files (run once a day)
+setInterval(() => {
+  try {
+    if (!fs.existsSync(tempDir)) return;
+    
+    const files = fs.readdirSync(tempDir);
+    const now = Date.now();
+    const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+    
+    files.forEach(file => {
+      const filePath = path.join(tempDir, file);
+      const stats = fs.statSync(filePath);
+      const fileAge = now - stats.mtimeMs;
+      
+      if (fileAge > maxAge) {
+        fs.unlinkSync(filePath);
+        console.log(`Deleted temp file: ${filePath}`);
+      }
+    });
+    
+    console.log('✅ Temp directory cleaned up');
+  } catch (error) {
+    console.error('Error cleaning up temp files:', error);
+  }
+}, 24 * 60 * 60 * 1000);

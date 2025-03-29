@@ -6,27 +6,26 @@ const router = express.Router();
 const { authenticateUser } = require('../routes/auth');
 const Beat = require('../models/beat');
 const User = require('../models/user');
+const cloudinary = require('cloudinary').v2;
 
-// Set up storage for multer
+// Configure Cloudinary with credentials from environment variables
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true
+});
+
+// Setup temporary storage for file uploads before sending to Cloudinary
+const tempDir = path.join(__dirname, '../temp_uploads');
+if (!fs.existsSync(tempDir)) {
+  fs.mkdirSync(tempDir, { recursive: true });
+}
+
+// Configure multer to temporarily store files before uploading to Cloudinary
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    // Create directories if they don't exist
-    const userId = req.user.id;
-    const userDir = path.join(__dirname, '../uploads/users', userId);
-    const audioDir = path.join(userDir, 'audio');
-    const imageDir = path.join(userDir, 'images');
-    
-    // Create directories if they don't exist
-    if (!fs.existsSync(userDir)) fs.mkdirSync(userDir, { recursive: true });
-    if (!fs.existsSync(audioDir)) fs.mkdirSync(audioDir);
-    if (!fs.existsSync(imageDir)) fs.mkdirSync(imageDir);
-    
-    // Determine destination based on file type
-    if (file.fieldname === 'audio') {
-      cb(null, audioDir);
-    } else if (file.fieldname === 'coverImage') {
-      cb(null, imageDir);
-    }
+    cb(null, tempDir);
   },
   filename: (req, file, cb) => {
     // Generate unique filename with timestamp and original extension
@@ -77,6 +76,62 @@ const handleMulterError = (err, req, res, next) => {
   next();
 };
 
+// Helper function to upload file to Cloudinary
+const uploadToCloudinary = async (filePath, folder) => {
+  try {
+    // Determine resource type based on file extension
+    const ext = path.extname(filePath).toLowerCase();
+    const resourceType = ['.mp3', '.wav', '.ogg'].includes(ext) ? 'video' : 'image';
+    
+    // Upload to Cloudinary
+    const result = await cloudinary.uploader.upload(filePath, {
+      resource_type: resourceType,
+      folder: folder,
+      use_filename: true,
+      unique_filename: true
+    });
+    
+    // Delete the temp file after upload
+    fs.unlinkSync(filePath);
+    
+    return result;
+  } catch (error) {
+    console.error('Cloudinary upload error:', error);
+    throw error;
+  }
+};
+
+// Helper function to delete file from Cloudinary
+const deleteFromCloudinary = async (publicId, resourceType) => {
+  try {
+    const result = await cloudinary.uploader.destroy(publicId, { 
+      resource_type: resourceType 
+    });
+    return result;
+  } catch (error) {
+    console.error('Cloudinary delete error:', error);
+    throw error;
+  }
+};
+
+// Helper function to extract public ID from Cloudinary URL
+const getPublicIdFromUrl = (url) => {
+  if (!url || typeof url !== 'string') return null;
+  if (!url.includes('cloudinary.com')) return null;
+  
+  // Example URL: https://res.cloudinary.com/cloud-name/image/upload/v1234567890/folder/filename.jpg
+  const urlParts = url.split('/');
+  const uploadIndex = urlParts.indexOf('upload');
+  
+  if (uploadIndex === -1) return null;
+  
+  // Get everything after "upload" excluding the version and file extension
+  const publicIdWithVersion = urlParts.slice(uploadIndex + 1).join('/');
+  const publicId = publicIdWithVersion.replace(/^v\d+\//, '').replace(/\.[^/.]+$/, '');
+  
+  return publicId;
+};
+
 // Get all beats (public route)
 router.get('/', async (req, res) => {
   try {
@@ -121,7 +176,7 @@ router.get('/producer/beats', authenticateUser, async (req, res) => {
   }
 });
 
-// Create new beat (authorized route)
+// Create new beat (authorized route) with Cloudinary upload
 router.post('/', authenticateUser, upload.fields([
   { name: 'audio', maxCount: 1 },
   { name: 'coverImage', maxCount: 1 }
@@ -164,7 +219,23 @@ router.post('/', authenticateUser, upload.fields([
       return res.status(400).json({ message: 'Both audio file and cover image are required' });
     }
     
-    // Create a new beat
+    // Upload files to Cloudinary
+    const audioFile = req.files.audio[0];
+    const imageFile = req.files.coverImage[0];
+    
+    console.log(`⏳ Uploading audio to Cloudinary: ${audioFile.path}`);
+    const audioResult = await uploadToCloudinary(
+      audioFile.path, 
+      `dhuun/audio/${req.user.id}`
+    );
+    
+    console.log(`⏳ Uploading cover image to Cloudinary: ${imageFile.path}`);
+    const imageResult = await uploadToCloudinary(
+      imageFile.path,
+      `dhuun/images/${req.user.id}`
+    );
+    
+    // Create a new beat with Cloudinary URLs and public IDs
     const newBeat = new Beat({
       title: req.body.title,
       producer: req.user.id,
@@ -175,8 +246,11 @@ router.post('/', authenticateUser, upload.fields([
       price: parseFloat(req.body.price),
       licenseType: req.body.licenseType,
       description: req.body.description || '',
-      audioFile: req.files.audio[0].path,
-      coverImage: req.files.coverImage[0].path
+      // Store Cloudinary URLs
+      audioFile: audioResult.secure_url,
+      audioPublicId: audioResult.public_id,
+      coverImage: imageResult.secure_url,
+      imagePublicId: imageResult.public_id
     });
     
     // Save the beat
@@ -195,12 +269,27 @@ router.post('/', authenticateUser, upload.fields([
     });
   } catch (error) {
     console.error('Error uploading beat:', error);
+    
+    // Clean up temp files if they still exist
+    if (req.files) {
+      Object.keys(req.files).forEach(key => {
+        req.files[key].forEach(file => {
+          if (fs.existsSync(file.path)) {
+            fs.unlinkSync(file.path);
+          }
+        });
+      });
+    }
+    
     res.status(500).json({ message: 'Server error while uploading beat' });
   }
 });
 
 // Update a beat (authorized route)
-router.put('/:id', authenticateUser, async (req, res) => {
+router.put('/:id', authenticateUser, upload.fields([
+  { name: 'audio', maxCount: 1 },
+  { name: 'coverImage', maxCount: 1 }
+]), handleMulterError, async (req, res) => {
   try {
     const beat = await Beat.findById(req.params.id);
     
@@ -231,6 +320,49 @@ router.put('/:id', authenticateUser, async (req, res) => {
     if (req.body.description) beat.description = req.body.description;
     beat.tags = tags;
     
+    // Handle file updates if new files are provided
+    if (req.files) {
+      // Update audio file if provided
+      if (req.files.audio && req.files.audio[0]) {
+        const audioFile = req.files.audio[0];
+        
+        // Upload new audio to Cloudinary
+        const audioResult = await uploadToCloudinary(
+          audioFile.path, 
+          `dhuun/audio/${req.user.id}`
+        );
+        
+        // Delete old audio file from Cloudinary if it exists
+        if (beat.audioPublicId) {
+          await deleteFromCloudinary(beat.audioPublicId, 'video');
+        }
+        
+        // Update beat with new audio info
+        beat.audioFile = audioResult.secure_url;
+        beat.audioPublicId = audioResult.public_id;
+      }
+      
+      // Update cover image if provided
+      if (req.files.coverImage && req.files.coverImage[0]) {
+        const imageFile = req.files.coverImage[0];
+        
+        // Upload new image to Cloudinary
+        const imageResult = await uploadToCloudinary(
+          imageFile.path, 
+          `dhuun/images/${req.user.id}`
+        );
+        
+        // Delete old image from Cloudinary if it exists
+        if (beat.imagePublicId) {
+          await deleteFromCloudinary(beat.imagePublicId, 'image');
+        }
+        
+        // Update beat with new image info
+        beat.coverImage = imageResult.secure_url;
+        beat.imagePublicId = imageResult.public_id;
+      }
+    }
+    
     // Save the updated beat
     await beat.save();
     
@@ -240,11 +372,25 @@ router.put('/:id', authenticateUser, async (req, res) => {
         id: beat._id,
         title: beat.title,
         genre: beat.genre,
-        price: beat.price
+        price: beat.price,
+        audioFile: beat.audioFile,
+        coverImage: beat.coverImage
       }
     });
   } catch (error) {
     console.error('Error updating beat:', error);
+    
+    // Clean up temp files if they still exist
+    if (req.files) {
+      Object.keys(req.files).forEach(key => {
+        req.files[key].forEach(file => {
+          if (fs.existsSync(file.path)) {
+            fs.unlinkSync(file.path);
+          }
+        });
+      });
+    }
+    
     res.status(500).json({ message: 'Server error while updating beat' });
   }
 });
@@ -263,18 +409,20 @@ router.delete('/:id', authenticateUser, async (req, res) => {
       return res.status(403).json({ message: 'You are not authorized to delete this beat' });
     }
     
-    // Delete the audio and image files
+    // Delete files from Cloudinary
     try {
-      if (fs.existsSync(beat.audioFile)) {
-        fs.unlinkSync(beat.audioFile);
+      // Delete audio file from Cloudinary
+      if (beat.audioPublicId) {
+        await deleteFromCloudinary(beat.audioPublicId, 'video');
       }
       
-      if (fs.existsSync(beat.coverImage)) {
-        fs.unlinkSync(beat.coverImage);
+      // Delete image file from Cloudinary
+      if (beat.imagePublicId) {
+        await deleteFromCloudinary(beat.imagePublicId, 'image');
       }
-    } catch (fileError) {
-      console.error('Error deleting files:', fileError);
-      // Continue with beat deletion even if files cannot be deleted
+    } catch (cloudinaryError) {
+      console.error('Error deleting files from Cloudinary:', cloudinaryError);
+      // Continue with beat deletion even if Cloudinary deletion fails
     }
     
     // Delete the beat from the database
@@ -287,8 +435,8 @@ router.delete('/:id', authenticateUser, async (req, res) => {
   }
 });
 
-// Stream audio file (public route)
-router.get('/:id/audio', async (req, res) => {
+// Increment play count
+router.post('/:id/play', async (req, res) => {
   try {
     const beat = await Beat.findById(req.params.id);
     
@@ -297,75 +445,13 @@ router.get('/:id/audio', async (req, res) => {
     }
     
     // Increment play count
-    beat.plays += 1;
+    beat.plays = (beat.plays || 0) + 1;
     await beat.save();
     
-    // Stream the audio file
-    const audioPath = path.resolve(beat.audioFile);
-    
-    // Check if file exists
-    if (!fs.existsSync(audioPath)) {
-      return res.status(404).json({ message: 'Audio file not found' });
-    }
-    
-    const stat = fs.statSync(audioPath);
-    const fileSize = stat.size;
-    const range = req.headers.range;
-    
-    if (range) {
-      // Handle range requests for audio streaming
-      const parts = range.replace(/bytes=/, "").split("-");
-      const start = parseInt(parts[0], 10);
-      const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
-      const chunksize = (end - start) + 1;
-      const file = fs.createReadStream(audioPath, { start, end });
-      
-      const head = {
-        'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-        'Accept-Ranges': 'bytes',
-        'Content-Length': chunksize,
-        'Content-Type': 'audio/mpeg',
-      };
-      
-      res.writeHead(206, head);
-      file.pipe(res);
-    } else {
-      // Handle non-range requests
-      const head = {
-        'Content-Length': fileSize,
-        'Content-Type': 'audio/mpeg',
-      };
-      
-      res.writeHead(200, head);
-      fs.createReadStream(audioPath).pipe(res);
-    }
+    res.json({ plays: beat.plays });
   } catch (error) {
-    console.error('Error streaming audio:', error);
-    res.status(500).json({ message: 'Server error while streaming audio' });
-  }
-});
-
-// Get cover image (public route)
-router.get('/:id/image', async (req, res) => {
-  try {
-    const beat = await Beat.findById(req.params.id);
-    
-    if (!beat) {
-      return res.status(404).json({ message: 'Beat not found' });
-    }
-    
-    // Send the image file
-    const imagePath = path.resolve(beat.coverImage);
-    
-    // Check if file exists
-    if (!fs.existsSync(imagePath)) {
-      return res.status(404).json({ message: 'Image file not found' });
-    }
-    
-    res.sendFile(imagePath);
-  } catch (error) {
-    console.error('Error fetching image:', error);
-    res.status(500).json({ message: 'Server error while fetching image' });
+    console.error('Error incrementing play count:', error);
+    res.status(500).json({ message: 'Server error while tracking play count' });
   }
 });
 
@@ -379,7 +465,7 @@ router.post('/:id/like', authenticateUser, async (req, res) => {
     }
     
     // Increment likes
-    beat.likes += 1;
+    beat.likes = (beat.likes || 0) + 1;
     await beat.save();
     
     res.json({ likes: beat.likes });

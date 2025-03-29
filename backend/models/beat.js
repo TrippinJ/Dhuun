@@ -1,75 +1,85 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const beatSchema = new mongoose.Schema({
-  title: {
+const BeatSchema = new mongoose.Schema({
+  title: { 
+    type: String, 
+    required: [true, 'Please provide a title'],
+    trim: true
+  },
+  genre: { 
+    type: String, 
+    required: [true, 'Please specify the genre'],
+    trim: true
+  },
+  bpm: { 
+    type: Number
+  },
+  key: { 
+    type: String,
+    trim: true
+  },
+  price: { 
+    type: Number, 
+    required: true,
+    min: 0
+  },
+  licenseType: {
     type: String,
     required: true,
     trim: true
   },
-  producer: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  genre: {
+  description: { 
     type: String,
+    trim: true
+  },
+  producer: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: "User", 
+    required: true 
+  },
+  // Cloudinary audio file URL
+  audioFile: { 
+    type: String, 
     required: true
   },
-  bpm: {
-    type: Number
+  // Cloudinary audio file public ID for deletion
+  audioPublicId: { 
+    type: String, 
+    required: true
   },
-  key: {
-    type: String
+  // Cloudinary cover image URL
+  coverImage: { 
+    type: String, 
+    required: true
+  },
+  // Cloudinary cover image public ID for deletion
+  imagePublicId: { 
+    type: String, 
+    required: true
   },
   tags: [String],
-  price: {
-    type: Number,
-    required: true
-  },
-  licenseType: {
-    type: String,
-    enum: ['non-exclusive', 'exclusive', 'both'],
-    required: true
-  },
-  description: {
-    type: String
-  },
-  audioFile: {
-    type: String, // Path to the audio file
-    required: true
-  },
-  coverImage: {
-    type: String, // Path to the cover image
-    required: true
-  },
-  plays: {
-    type: Number,
-    default: 0
+  plays: { 
+    type: Number, 
+    default: 0 
   },
   likes: {
     type: Number,
     default: 0
   },
-  sales: {
+  // Track purchases
+  purchases: {
     type: Number,
     default: 0
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
   }
+}, { 
+  timestamps: true
 });
 
-// Pre-save hook to update the updatedAt field
-beatSchema.pre('save', function(next) {
-  this.updatedAt = Date.now();
-  next();
+// Add text search index
+BeatSchema.index({ 
+  title: 'text', 
+  genre: 'text', 
+  tags: 'text' 
 });
 
-const Beat = mongoose.model('Beat', beatSchema);
-
-module.exports = Beat;
+module.exports = mongoose.model("Beat", BeatSchema);

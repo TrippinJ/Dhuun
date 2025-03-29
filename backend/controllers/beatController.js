@@ -1,414 +1,545 @@
 const Beat = require('../models/beat');
-const User = require('../models/user');
+const { uploadFileToCloudinary, deleteFile, RESOURCE_TYPES } = require('../utils/storageManager');
 const fs = require('fs');
-const path = require('path');
 
-// Get all beats with optional filtering
-exports.getAllBeats = async (req, res) => {
+/**
+ * Create and upload a new beat
+ * @route POST /api/beats
+ * @access Private
+ */
+exports.createBeat = async (req, res) => {
   try {
-    // Build query based on filter parameters
-    const query = {};
+    // Extract beat data from request body
+    const { title, genre, bpm, price, description, key, mood, tags } = req.body;
     
-    // Apply filters if provided
-    if (req.query.genre) query.genre = req.query.genre;
-    if (req.query.producer) query.producer = req.query.producer;
-    if (req.query.minPrice) query.price = { $gte: parseFloat(req.query.minPrice) };
-    if (req.query.maxPrice) {
-      if (query.price) {
-        query.price.$lte = parseFloat(req.query.maxPrice);
-      } else {
-        query.price = { $lte: parseFloat(req.query.maxPrice) };
+    // Validate required files
+    if (!req.files || !req.files.audio || !req.files.coverImage) {
+      return res.status(400).json({
+        success: false,
+        message: 'Both audio file and cover image are required'
+      });
+    }
+    
+    // Get file information
+    const audioFile = req.files.audio[0];
+    const imageFile = req.files.coverImage[0];
+    
+    // Upload files to Cloudinary
+    console.log(`⏳ Uploading audio file: ${audioFile.path}`);
+    const audioResult = await uploadFileToCloudinary(
+      audioFile.path, 
+      true // isAudio = true
+    );
+    
+    console.log(`⏳ Uploading cover image: ${imageFile.path}`);
+    const imageResult = await uploadFileToCloudinary(
+      imageFile.path,
+      false // isAudio = false
+    );
+    
+    // Process tags if provided
+    let processedTags = [];
+    if (tags && typeof tags === 'string') {
+      processedTags = tags.split(',').map(tag => tag.trim().toLowerCase());
+    }
+    
+    // Create new beat document
+    const newBeat = new Beat({
+      title,
+      genre,
+      bpm: parseInt(bpm),
+      price: parseFloat(price),
+      description,
+      key,
+      mood,
+      tags: processedTags,
+      producer: req.user.id,
+      // Store both URL and public ID for future reference
+      audioFile: audioResult.url,
+      audioPublicId: audioResult.publicId,
+      coverImage: imageResult.url,
+      imagePublicId: imageResult.publicId
+    });
+    
+    // Save to database
+    await newBeat.save();
+    
+    res.status(201).json({
+      success: true,
+      message: 'Beat uploaded successfully',
+      beat: newBeat
+    });
+  } catch (error) {
+    console.error('Beat upload error:', error);
+    
+    // Clean up any temporary files that might still exist
+    if (req.files) {
+      if (req.files.audio && req.files.audio[0] && fs.existsSync(req.files.audio[0].path)) {
+        fs.unlinkSync(req.files.audio[0].path);
+      }
+      
+      if (req.files.coverImage && req.files.coverImage[0] && fs.existsSync(req.files.coverImage[0].path)) {
+        fs.unlinkSync(req.files.coverImage[0].path);
       }
     }
     
-    // Pagination
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
-    
-    // Sorting
-    const sortField = req.query.sortField || 'createdAt';
-    const sortOrder = req.query.sortOrder === 'asc' ? 1 : -1;
-    const sort = { [sortField]: sortOrder };
-    
-    // Execute query
-    const beats = await Beat.find(query)
-      .populate('producer', 'name username')
-      .sort(sort)
-      .skip(skip)
-      .limit(limit);
-    
-    // Get total count for pagination
-    const total = await Beat.countDocuments(query);
-    
-    // Format response
-    const formattedBeats = beats.map(beat => ({
-      id: beat._id,
-      title: beat.title,
-      producer: {
-        id: beat.producer._id,
-        name: beat.producer.name,
-        username: beat.producer.username
-      },
-      genre: beat.genre,
-      bpm: beat.bpm,
-      key: beat.key,
-      price: beat.price,
-      licenseType: beat.licenseType,
-      tags: beat.tags,
-      plays: beat.plays,
-      likes: beat.likes,
-      createdAt: beat.createdAt,
-      audioUrl: `/api/beats/${beat._id}/audio`,
-      imageUrl: `/api/beats/${beat._id}/image`
-    }));
-    
-    res.json({
-      beats: formattedBeats,
-      pagination: {
-        total,
-        pages: Math.ceil(total / limit),
-        currentPage: page,
-        hasMore: page < Math.ceil(total / limit)
-      }
+    res.status(500).json({
+      success: false,
+      message: 'Failed to upload beat',
+      error: error.message
     });
-  } catch (error) {
-    console.error('Error fetching beats:', error);
-    res.status(500).json({ message: 'Server error while fetching beats' });
   }
 };
 
-// Get a single beat by ID
+/**
+ * Get all beats with filtering options
+ * @route GET /api/beats
+ * @access Public
+ */
+exports.getAllBeats = async (req, res) => {
+  try {
+    // Extract query parameters for filtering
+    const { 
+      genre, 
+      minPrice, 
+      maxPrice, 
+      sortBy = 'createdAt', 
+      sortOrder = 'desc',
+      search,
+      limit = 20,
+      page = 1
+    } = req.query;
+    
+    // Build filter object
+    const filter = { isPublished: true };
+    
+    if (genre) {
+      filter.genre = genre;
+    }
+    
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      filter.price = {};
+      if (minPrice !== undefined) filter.price.$gte = parseFloat(minPrice);
+      if (maxPrice !== undefined) filter.price.$lte = parseFloat(maxPrice);
+    }
+    
+    // Add text search if provided
+    if (search) {
+      filter.$text = { $search: search };
+    }
+    
+    // Calculate pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    // Build sort object
+    const sort = {};
+    sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
+    
+    // Execute query with pagination
+    const beats = await Beat.find(filter)
+      .populate('producer', 'name username')
+      .sort(sort)
+      .skip(skip)
+      .limit(parseInt(limit));
+    
+    // Get total count for pagination
+    const total = await Beat.countDocuments(filter);
+    
+    res.status(200).json({
+      success: true,
+      count: beats.length,
+      total,
+      totalPages: Math.ceil(total / parseInt(limit)),
+      currentPage: parseInt(page),
+      data: beats
+    });
+  } catch (error) {
+    console.error('Error fetching beats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching beats',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Get beat by ID
+ * @route GET /api/beats/:id
+ * @access Public
+ */
 exports.getBeatById = async (req, res) => {
   try {
     const beat = await Beat.findById(req.params.id)
       .populate('producer', 'name username');
-    
+      
     if (!beat) {
-      return res.status(404).json({ message: 'Beat not found' });
-    }
-    
-    // Format response
-    const formattedBeat = {
-      id: beat._id,
-      title: beat.title,
-      producer: {
-        id: beat.producer._id,
-        name: beat.producer.name,
-        username: beat.producer.username
-      },
-      genre: beat.genre,
-      bpm: beat.bpm,
-      key: beat.key,
-      price: beat.price,
-      licenseType: beat.licenseType,
-      tags: beat.tags,
-      description: beat.description,
-      plays: beat.plays,
-      likes: beat.likes,
-      createdAt: beat.createdAt,
-      audioUrl: `/api/beats/${beat._id}/audio`,
-      imageUrl: `/api/beats/${beat._id}/image`
-    };
-    
-    res.json(formattedBeat);
-  } catch (error) {
-    console.error('Error fetching beat:', error);
-    res.status(500).json({ message: 'Server error while fetching beat' });
-  }
-};
-
-// Get beats by producer
-exports.getProducerBeats = async (req, res) => {
-  try {
-    const beats = await Beat.find({ producer: req.user.id })
-      .sort({ createdAt: -1 });
-    
-    // Format response
-    const formattedBeats = beats.map(beat => ({
-      id: beat._id,
-      title: beat.title,
-      genre: beat.genre,
-      bpm: beat.bpm,
-      price: beat.price,
-      licenseType: beat.licenseType,
-      plays: beat.plays,
-      likes: beat.likes,
-      createdAt: beat.createdAt,
-      audioUrl: `/api/beats/${beat._id}/audio`,
-      imageUrl: `/api/beats/${beat._id}/image`
-    }));
-    
-    res.json(formattedBeats);
-  } catch (error) {
-    console.error('Error fetching producer beats:', error);
-    res.status(500).json({ message: 'Server error while fetching beats' });
-  }
-};
-
-// Create a new beat
-exports.createBeat = async (req, res) => {
-  try {
-    // Check user's upload limit based on subscription
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    
-    // Count user's existing beats
-    const beatCount = await Beat.countDocuments({ producer: req.user.id });
-    
-    // Get upload limit from user's subscription (default to 5 if not defined)
-    const uploadLimit = user.subscription?.uploadLimit || 5;
-    
-    // Check if user has reached their upload limit
-    if (beatCount >= uploadLimit) {
-      return res.status(403).json({ 
-        message: `You've reached your upload limit of ${uploadLimit} beats. Please upgrade your subscription to upload more.` 
+      return res.status(404).json({
+        success: false,
+        message: 'Beat not found'
       });
     }
     
-    // Process tags if provided
-    let tags = [];
-    if (req.body.tags) {
-      tags = Array.isArray(req.body.tags) 
-        ? req.body.tags 
-        : req.body.tags.split(',').map(tag => tag.trim());
-    }
-
-    // Validate required fields
-    if (!req.body.title || !req.body.genre || !req.body.price || !req.body.licenseType) {
-      return res.status(400).json({ message: 'Missing required fields' });
-    }
-
-    // Validate files
-    if (!req.files || !req.files.audio || !req.files.coverImage) {
-      return res.status(400).json({ message: 'Both audio file and cover image are required' });
-    }
-    
-    // Create a new beat
-    const newBeat = new Beat({
-      title: req.body.title,
-      producer: req.user.id,
-      genre: req.body.genre,
-      bpm: req.body.bpm || null,
-      key: req.body.key || null,
-      tags: tags,
-      price: parseFloat(req.body.price),
-      licenseType: req.body.licenseType,
-      description: req.body.description || '',
-      audioFile: req.files.audio[0].path,
-      coverImage: req.files.coverImage[0].path
-    });
-    
-    // Save the beat
-    await newBeat.save();
-    
-    res.status(201).json({
-      message: 'Beat uploaded successfully',
-      beat: {
-        id: newBeat._id,
-        title: newBeat.title,
-        genre: newBeat.genre,
-        price: newBeat.price,
-        audioUrl: `/api/beats/${newBeat._id}/audio`,
-        imageUrl: `/api/beats/${newBeat._id}/image`
-      }
+    res.status(200).json({
+      success: true,
+      data: beat
     });
   } catch (error) {
-    console.error('Error uploading beat:', error);
-    res.status(500).json({ message: 'Server error while uploading beat' });
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching beat',
+      error: error.message
+    });
   }
 };
 
-// Update an existing beat
+/**
+ * Get beats by producer
+ * @route GET /api/beats/producer/:producerId
+ * @access Public
+ */
+exports.getBeatsByProducer = async (req, res) => {
+  try {
+    // Handle special 'me' parameter for own beats
+    const producerId = req.params.producerId === 'me' 
+      ? req.user.id 
+      : req.params.producerId;
+    
+    // Get optional query parameters
+    const { limit = 20, page = 1 } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    // Build filter
+    const filter = { producer: producerId };
+    
+    // Only show published beats for other producers, show all for own beats
+    if (req.user && producerId === req.user.id) {
+      // Show all beats for the current user
+    } else {
+      filter.isPublished = true;
+    }
+    
+    // Get beats with pagination
+    const beats = await Beat.find(filter)
+      .populate('producer', 'name username')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+    
+    // Get total count
+    const total = await Beat.countDocuments(filter);
+    
+    res.status(200).json({
+      success: true,
+      count: beats.length,
+      total,
+      totalPages: Math.ceil(total / parseInt(limit)),
+      currentPage: parseInt(page),
+      data: beats
+    });
+  } catch (error) {
+    console.error('Error fetching producer beats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching producer beats',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Update beat details
+ * @route PUT /api/beats/:id
+ * @access Private
+ */
 exports.updateBeat = async (req, res) => {
   try {
-    const beat = await Beat.findById(req.params.id);
+    const beatId = req.params.id;
+    const { title, genre, bpm, price, description, key, mood, tags, isPublished } = req.body;
+    
+    // Make sure the beat exists and belongs to this user
+    const beat = await Beat.findOne({ 
+      _id: beatId,
+      producer: req.user.id 
+    });
     
     if (!beat) {
-      return res.status(404).json({ message: 'Beat not found' });
+      return res.status(404).json({
+        success: false,
+        message: 'Beat not found or you do not have permission to update it'
+      });
     }
     
-    // Check if user is the producer of the beat
-    if (beat.producer.toString() !== req.user.id) {
-      return res.status(403).json({ message: 'You are not authorized to update this beat' });
-    }
+    // Process updates
+    const updates = {};
     
-    // Process tags if provided
-    let tags = beat.tags;
-    if (req.body.tags) {
-      tags = Array.isArray(req.body.tags) 
-        ? req.body.tags 
-        : req.body.tags.split(',').map(tag => tag.trim());
-    }
+    if (title !== undefined) updates.title = title;
+    if (genre !== undefined) updates.genre = genre;
+    if (bpm !== undefined) updates.bpm = parseInt(bpm);
+    if (price !== undefined) updates.price = parseFloat(price);
+    if (description !== undefined) updates.description = description;
+    if (key !== undefined) updates.key = key;
+    if (mood !== undefined) updates.mood = mood;
+    if (isPublished !== undefined) updates.isPublished = isPublished;
     
-    // Update allowed fields
-    if (req.body.title) beat.title = req.body.title;
-    if (req.body.genre) beat.genre = req.body.genre;
-    if (req.body.bpm) beat.bpm = req.body.bpm;
-    if (req.body.key) beat.key = req.body.key;
-    if (req.body.price) beat.price = parseFloat(req.body.price);
-    if (req.body.licenseType) beat.licenseType = req.body.licenseType;
-    if (req.body.description) beat.description = req.body.description;
-    beat.tags = tags;
-    
-    // Save the updated beat
-    await beat.save();
-    
-    res.json({
-      message: 'Beat updated successfully',
-      beat: {
-        id: beat._id,
-        title: beat.title,
-        genre: beat.genre,
-        price: beat.price,
-        audioUrl: `/api/beats/${beat._id}/audio`,
-        imageUrl: `/api/beats/${beat._id}/image`
+    // Handle tags if provided
+    if (tags !== undefined) {
+      if (typeof tags === 'string') {
+        updates.tags = tags.split(',').map(tag => tag.trim().toLowerCase());
+      } else if (Array.isArray(tags)) {
+        updates.tags = tags.map(tag => tag.trim().toLowerCase());
       }
+    }
+    
+    // Update files if provided
+    if (req.files) {
+      // Handle audio file update
+      if (req.files.audio) {
+        // Upload new audio
+        const audioResult = await uploadFileToCloudinary(
+          req.files.audio[0].path, 
+          true // isAudio = true
+        );
+        
+        // Delete old audio file from Cloudinary
+        await deleteFile(beat.audioPublicId, RESOURCE_TYPES.AUDIO);
+        
+        // Update with new audio info
+        updates.audioFile = audioResult.url;
+        updates.audioPublicId = audioResult.publicId;
+      }
+      
+      // Handle cover image update
+      if (req.files.coverImage) {
+        // Upload new image
+        const imageResult = await uploadFileToCloudinary(
+          req.files.coverImage[0].path, 
+          false // isAudio = false
+        );
+        
+        // Delete old image from Cloudinary
+        await deleteFile(beat.imagePublicId, RESOURCE_TYPES.IMAGE);
+        
+        // Update with new image info
+        updates.coverImage = imageResult.url;
+        updates.imagePublicId = imageResult.publicId;
+      }
+    }
+    
+    // Update the beat
+    const updatedBeat = await Beat.findByIdAndUpdate(
+      beatId,
+      updates,
+      { new: true, runValidators: true }
+    ).populate('producer', 'name username');
+    
+    res.status(200).json({
+      success: true,
+      message: 'Beat updated successfully',
+      data: updatedBeat
     });
   } catch (error) {
     console.error('Error updating beat:', error);
-    res.status(500).json({ message: 'Server error while updating beat' });
+    
+    // Clean up any temporary files
+    if (req.files) {
+      if (req.files.audio && req.files.audio[0] && fs.existsSync(req.files.audio[0].path)) {
+        fs.unlinkSync(req.files.audio[0].path);
+      }
+      
+      if (req.files.coverImage && req.files.coverImage[0] && fs.existsSync(req.files.coverImage[0].path)) {
+        fs.unlinkSync(req.files.coverImage[0].path);
+      }
+    }
+    
+    res.status(500).json({
+      success: false,
+      message: 'Error updating beat',
+      error: error.message
+    });
   }
 };
 
-// Delete a beat
+/**
+ * Delete beat
+ * @route DELETE /api/beats/:id
+ * @access Private
+ */
 exports.deleteBeat = async (req, res) => {
   try {
-    const beat = await Beat.findById(req.params.id);
+    const beatId = req.params.id;
+    
+    // Find beat and check ownership
+    const beat = await Beat.findOne({ 
+      _id: beatId,
+      producer: req.user.id 
+    });
     
     if (!beat) {
-      return res.status(404).json({ message: 'Beat not found' });
+      return res.status(404).json({
+        success: false,
+        message: 'Beat not found or you do not have permission to delete it'
+      });
     }
     
-    // Check if user is the producer of the beat
-    if (beat.producer.toString() !== req.user.id) {
-      return res.status(403).json({ message: 'You are not authorized to delete this beat' });
-    }
-    
-    // Delete the audio and image files
+    // Delete files from Cloudinary
     try {
-      if (fs.existsSync(beat.audioFile)) {
-        fs.unlinkSync(beat.audioFile);
+      if (beat.audioPublicId) {
+        await deleteFile(beat.audioPublicId, RESOURCE_TYPES.AUDIO);
       }
       
-      if (fs.existsSync(beat.coverImage)) {
-        fs.unlinkSync(beat.coverImage);
+      if (beat.imagePublicId) {
+        await deleteFile(beat.imagePublicId, RESOURCE_TYPES.IMAGE);
       }
-    } catch (fileError) {
-      console.error('Error deleting files:', fileError);
-      // Continue with beat deletion even if files cannot be deleted
+    } catch (cloudinaryError) {
+      console.error('Error deleting files from Cloudinary:', cloudinaryError);
+      // Continue with beat deletion even if Cloudinary deletion fails
     }
     
-    // Delete the beat from the database
-    await Beat.findByIdAndDelete(req.params.id);
+    // Delete from database
+    await Beat.findByIdAndDelete(beatId);
     
-    res.json({ message: 'Beat deleted successfully' });
+    res.status(200).json({
+      success: true,
+      message: 'Beat deleted successfully'
+    });
   } catch (error) {
     console.error('Error deleting beat:', error);
-    res.status(500).json({ message: 'Server error while deleting beat' });
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting beat',
+      error: error.message
+    });
   }
 };
 
-// Stream audio file
-exports.streamAudio = async (req, res) => {
+/**
+ * Increment play count
+ * @route POST /api/beats/:id/play
+ * @access Public
+ */
+exports.incrementPlayCount = async (req, res) => {
   try {
-    const beat = await Beat.findById(req.params.id);
+    const beatId = req.params.id;
     
-    if (!beat) {
-      return res.status(404).json({ message: 'Beat not found' });
+    const updatedBeat = await Beat.findByIdAndUpdate(
+      beatId,
+      { $inc: { plays: 1 } }, // Increment plays by 1
+      { new: true }
+    );
+    
+    if (!updatedBeat) {
+      return res.status(404).json({
+        success: false,
+        message: 'Beat not found'
+      });
     }
     
-    // Increment play count
-    beat.plays += 1;
+    res.status(200).json({
+      success: true,
+      plays: updatedBeat.plays
+    });
+  } catch (error) {
+    console.error('Error incrementing play count:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error tracking play count',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Get featured beats
+ * @route GET /api/beats/featured
+ * @access Public
+ */
+exports.getFeaturedBeats = async (req, res) => {
+  try {
+    const featuredBeats = await Beat.find({ 
+      isPublished: true,
+      isFeatured: true 
+    })
+    .populate('producer', 'name username')
+    .sort({ createdAt: -1 })
+    .limit(8);
+    
+    res.status(200).json({
+      success: true,
+      count: featuredBeats.length,
+      data: featuredBeats
+    });
+  } catch (error) {
+    console.error('Error fetching featured beats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching featured beats',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Get trending beats (most played)
+ * @route GET /api/beats/trending
+ * @access Public
+ */
+exports.getTrendingBeats = async (req, res) => {
+  try {
+    const trendingBeats = await Beat.find({ isPublished: true })
+      .populate('producer', 'name username')
+      .sort({ plays: -1, createdAt: -1 })
+      .limit(8);
+    
+    res.status(200).json({
+      success: true,
+      count: trendingBeats.length,
+      data: trendingBeats
+    });
+  } catch (error) {
+    console.error('Error fetching trending beats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching trending beats',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Toggle featured status (admin only)
+ * @route PATCH /api/beats/:id/featured
+ * @access Private/Admin
+ */
+exports.toggleFeaturedStatus = async (req, res) => {
+  try {
+    const beatId = req.params.id;
+    
+    // Find the beat
+    const beat = await Beat.findById(beatId);
+    
+    if (!beat) {
+      return res.status(404).json({
+        success: false,
+        message: 'Beat not found'
+      });
+    }
+    
+    // Toggle featured status
+    beat.isFeatured = !beat.isFeatured;
     await beat.save();
     
-    // Stream the audio file
-    const audioPath = path.resolve(beat.audioFile);
-    
-    // Check if file exists
-    if (!fs.existsSync(audioPath)) {
-      return res.status(404).json({ message: 'Audio file not found' });
-    }
-    
-    const stat = fs.statSync(audioPath);
-    const fileSize = stat.size;
-    const range = req.headers.range;
-    
-    if (range) {
-      // Handle range requests for audio streaming
-      const parts = range.replace(/bytes=/, "").split("-");
-      const start = parseInt(parts[0], 10);
-      const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
-      const chunksize = (end - start) + 1;
-      const file = fs.createReadStream(audioPath, { start, end });
-      
-      const head = {
-        'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-        'Accept-Ranges': 'bytes',
-        'Content-Length': chunksize,
-        'Content-Type': 'audio/mpeg',
-      };
-      
-      res.writeHead(206, head);
-      file.pipe(res);
-    } else {
-      // Handle non-range requests
-      const head = {
-        'Content-Length': fileSize,
-        'Content-Type': 'audio/mpeg',
-      };
-      
-      res.writeHead(200, head);
-      fs.createReadStream(audioPath).pipe(res);
-    }
+    res.status(200).json({
+      success: true,
+      message: `Beat ${beat.isFeatured ? 'featured' : 'unfeatured'} successfully`,
+      isFeatured: beat.isFeatured
+    });
   } catch (error) {
-    console.error('Error streaming audio:', error);
-    res.status(500).json({ message: 'Server error while streaming audio' });
-  }
-};
-
-// Get cover image
-exports.getCoverImage = async (req, res) => {
-  try {
-    const beat = await Beat.findById(req.params.id);
-    
-    if (!beat) {
-      return res.status(404).json({ message: 'Beat not found' });
-    }
-    
-    // Send the image file
-    const imagePath = path.resolve(beat.coverImage);
-    
-    // Check if file exists
-    if (!fs.existsSync(imagePath)) {
-      return res.status(404).json({ message: 'Image file not found' });
-    }
-    
-    res.sendFile(imagePath);
-  } catch (error) {
-    console.error('Error fetching image:', error);
-    res.status(500).json({ message: 'Server error while fetching image' });
-  }
-};
-
-// Like a beat
-exports.likeBeat = async (req, res) => {
-  try {
-    const beat = await Beat.findById(req.params.id);
-    
-    if (!beat) {
-      return res.status(404).json({ message: 'Beat not found' });
-    }
-    
-    // Increment likes
-    beat.likes += 1;
-    await beat.save();
-    
-    res.json({ likes: beat.likes });
-  } catch (error) {
-    console.error('Error liking beat:', error);
-    res.status(500).json({ message: 'Server error while liking beat' });
+    console.error('Error toggling featured status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating featured status',
+      error: error.message
+    });
   }
 };
