@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/api";
 import styles from "../css/Dashboard.module.css";
-import * as Tone from 'tone';
 import { 
   FaUserCircle, 
   FaMusic, 
@@ -56,6 +55,8 @@ const Dashboard = () => {
           // Log the first beat to debug structure
           if (beatsResponse.data.length > 0) {
             console.log("First beat structure:", beatsResponse.data[0]);
+            console.log("Image URL:", beatsResponse.data[0].coverImage || beatsResponse.data[0].imageUrl || "No image URL found");
+            console.log("Audio URL:", beatsResponse.data[0].audioUrl || beatsResponse.data[0].audioFile || "No audio URL found");
           }
           
           setBeats(beatsResponse.data);
@@ -76,30 +77,120 @@ const Dashboard = () => {
 
     checkAuth();
     
-   // Initialize Tone.js safely
-   const initTone = async () => {
-    try {
-      // We don't auto-start Tone.js here - we'll start it on user interaction
-      console.log("Tone.js ready to initialize on user interaction");
-    } catch (error) {
-      console.error("Failed to prepare Tone.js:", error);
-    }
-  };
-  initTone();
-    
-    // Cleanup function for Tone.js player
+    // Cleanup function for audio player
     return () => {
       if (player) {
-        player.stop();
-        player.dispose();
+        player.pause();
+        player.src = "";
       }
     };
   }, [navigate]);
 
+  // Image URL helper function
+  const getCloudinaryImageUrl = (imageUrl, fallbackUrl = "/default-cover.jpg") => {
+    if (!imageUrl) {
+      console.log("Image URL is missing, using fallback");
+      return fallbackUrl;
+    }
+    
+    console.log("Original image URL:", imageUrl);
+    
+    // Make sure it's a string
+    const url = String(imageUrl);
+    
+    // Check if it's a valid URL
+    try {
+      new URL(url);
+      return url;
+    } catch (e) {
+      console.error("Invalid image URL:", url, e);
+      return fallbackUrl;
+    }
+  };
+
+  // HTML5 Audio Implementation for play/pause
+  const handlePlayPause = async (beatId, audioUrl) => {
+    try {
+      console.log(`Playing beat with ID: ${beatId}`);
+      console.log("Audio URL:", audioUrl);
+      
+      if (!audioUrl) {
+        console.error("No audio URL provided for this beat");
+        return;
+      }
+      
+      // If already playing this beat, toggle play/pause
+      if (currentlyPlaying === beatId && player) {
+        if (!player.paused) {
+          player.pause();
+          setCurrentlyPlaying(null);
+        } else {
+          player.play();
+          setCurrentlyPlaying(beatId);
+        }
+        return;
+      }
+      
+      // Otherwise, start fresh with a new audio player
+      setAudioLoading(true);
+      
+      // Stop previous audio if playing
+      if (player) {
+        player.pause();
+        player.src = "";
+      }
+      
+      // Create standard HTML5 Audio element
+      const audio = new Audio();
+      
+      // Set up event handlers first
+      audio.oncanplaythrough = () => {
+        setAudioLoading(false);
+        audio.play()
+          .then(() => {
+            console.log("Audio playback started successfully");
+            setCurrentlyPlaying(beatId);
+          })
+          .catch(error => {
+            console.error("Failed to start playback:", error);
+            setAudioLoading(false);
+          });
+      };
+      
+      audio.onended = () => {
+        setCurrentlyPlaying(null);
+      };
+      
+      audio.onerror = (e) => {
+        console.error("Audio playback error:", e);
+        console.error("Error code:", audio.error ? audio.error.code : "unknown");
+        console.error("Error message:", audio.error ? audio.error.message : "unknown");
+        setAudioLoading(false);
+        setCurrentlyPlaying(null);
+      };
+      
+      // Log loading states for debugging
+      audio.onloadstart = () => console.log("Audio loading started");
+      audio.onprogress = () => console.log("Audio download in progress");
+      audio.onstalled = () => console.log("Audio download stalled");
+      
+      // Set the source (this triggers loading)
+      audio.src = audioUrl;
+      audio.load(); // Explicitly start loading
+      
+      // Store the audio element
+      setPlayer(audio);
+      
+    } catch (error) {
+      console.error("Audio playback error:", error);
+      setAudioLoading(false);
+    }
+  };
+
   const handleLogout = () => {
     if (player) {
-      player.stop();
-      player.dispose();
+      player.pause();
+      player.src = "";
     }
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -120,63 +211,6 @@ const Dashboard = () => {
       setBeats([data.beat, ...beats]);
     }
     setShowUploadForm(false);
-  };
-  
-  const handlePlayPause = async (beatId, audioUrl) => {
-    try {
-      // Start audio context on first interaction (required by browsers)
-      await Tone.start();
-      
-      if (currentlyPlaying === beatId) {
-        // Toggle current player
-        if (player) {
-          if (player.state === "started") {
-            player.stop();
-            setCurrentlyPlaying(null);
-          } else {
-            player.start();
-          }
-        }
-      } else {
-        setAudioLoading(true);
-        
-        // Stop current player
-        if (player) {
-          player.stop();
-          player.dispose();
-        }
-        
-        // Create new player with proper configuration
-        const newPlayer = new Tone.Player({
-          url: audioUrl,
-          autostart: false,
-          loop: false,
-          onload: () => {
-            setAudioLoading(false);
-            console.log("Audio loaded successfully");
-          }
-        }).toDestination();
-        
-        // Set up event when playback finishes
-        newPlayer.onstop = () => {
-          setCurrentlyPlaying(null);
-        };
-        
-        // Load and play
-        newPlayer.load().then(() => {
-          newPlayer.start();
-          setPlayer(newPlayer);
-          setCurrentlyPlaying(beatId);
-          setAudioLoading(false);
-        }).catch(err => {
-          console.error("Player load error:", err);
-          setAudioLoading(false);
-        });
-      }
-    } catch (error) {
-      console.error("Tone.js error:", error);
-      setAudioLoading(false);
-    }
   };
   
   const handleEditBeat = (beatId) => {
@@ -213,8 +247,8 @@ const Dashboard = () => {
       
       // If the beat being deleted is currently playing, stop it
       if (currentlyPlaying === beatId && player) {
-        player.stop();
-        player.dispose();
+        player.pause();
+        player.src = "";
         setPlayer(null);
         setCurrentlyPlaying(null);
       }
@@ -301,7 +335,15 @@ const Dashboard = () => {
                     return (
                       <div key={beatId} className={styles.beatItem}>
                         <div className={styles.beatImage}>
-                          <img src={beat.imageUrl} alt={beat.title} />
+                          <img 
+                            src={getCloudinaryImageUrl(beat.coverImage || beat.imageUrl)} 
+                            alt={beat.title}
+                            onError={(e) => {
+                              console.error("Image failed to load:", e.target.src);
+                              e.target.src = "/default-cover.jpg";
+                              e.target.onerror = null;
+                            }}
+                          />
                         </div>
                         <div className={styles.beatTitle}>{beat.title}</div>
                         <div className={styles.beatGenre}>{beat.genre}</div>
@@ -314,8 +356,8 @@ const Dashboard = () => {
                         <div className={styles.beatActions}>
                           <button 
                             className={styles.actionBtn}
-                            onClick={() => handlePlayPause(beatId, beat.audioUrl)}
-                            disabled={audioLoading}
+                            onClick={() => handlePlayPause(beatId, beat.audioFile || beat.audioUrl)}
+                            disabled={audioLoading && currentlyPlaying === beatId}
                           >
                             {audioLoading && currentlyPlaying === beatId ? (
                               <span className={styles.loadingDot}>•••</span>

@@ -1,8 +1,8 @@
-// frontend/src/components/Subscription.js
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import '../css/Subscription.css'; 
+import API from '../api/api';
+import styles from '../css/Subscription.module.css';
+import { FaCheck, FaTimes, FaArrowLeft } from 'react-icons/fa';
 
 const Subscription = () => {
   const [subscription, setSubscription] = useState(null);
@@ -11,25 +11,32 @@ const Subscription = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const navigate = useNavigate();
 
-  // Move fetchSubscription before useEffect and wrap it in useCallback
+  // Fetch subscription data
   const fetchSubscription = useCallback(async () => {
     try {
+      setLoading(true);
       const token = localStorage.getItem('token');
       
-      const res = await axios.get('/api/subscription', {
+      if (!token) {
+        setError('You must be logged in to view subscription details');
+        setLoading(false);
+        setTimeout(() => navigate('/login'), 2000);
+        return;
+      }
+
+      const response = await API.get('/api/subscription', {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
       
-      setSubscription(res.data.subscription);
+      setSubscription(response.data.subscription);
       setLoading(false);
     } catch (err) {
       console.error('Error fetching subscription:', err);
       
       if (err.response && err.response.status === 401) {
         setError('You must be logged in to view subscription details');
-        // Redirect to login page after a delay
         setTimeout(() => navigate('/login'), 2000);
       } else {
         setError('Failed to load subscription details. Please try again later.');
@@ -37,29 +44,22 @@ const Subscription = () => {
       
       setLoading(false);
     }
-  }, [navigate]); // Include navigate as a dependency since it's used in the function
+  }, [navigate]);
 
   useEffect(() => {
-    // Check if user is logged in
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setError('You must be logged in to view subscription details');
-      setLoading(false);
-      // Redirect to login page after a delay
-      setTimeout(() => navigate('/login'), 2000);
-      return;
-    }
-
     fetchSubscription();
-  }, [navigate, fetchSubscription]); // Now fetchSubscription is properly included
+  }, [fetchSubscription]);
 
+  // Handle plan selection
   const handleSelectPlan = async (plan, price) => {
     try {
+      setError(null);
+      
       // For free plan, directly update subscription
       if (plan === 'Free') {
         const token = localStorage.getItem('token');
         
-        const res = await axios.post(
+        const res = await API.post(
           '/api/subscription/update',
           { plan },
           {
@@ -89,7 +89,7 @@ const Subscription = () => {
       
       script.onload = () => {
         // Once Khalti is loaded, initialize payment
-        const khaltiKey = process.env.KHALTI_PUBLIC_KEY || '93148c2f7d274399afd73aab9e9ad7f4';
+        const khaltiKey = process.env.REACT_APP_KHALTI_PUBLIC_KEY || '93148c2f7d274399afd73aab9e9ad7f4';
         const priceInPaisa = price * 100; // Khalti expects amount in paisa (1 NPR = 100 paisa)
         
         const config = {
@@ -101,7 +101,7 @@ const Subscription = () => {
             onSuccess: async (payload) => {
               try {
                 // Verify payment and update subscription
-                const res = await axios.post(
+                const res = await API.post(
                   '/api/subscription/verify-payment',
                   {
                     token: payload.token,
@@ -143,7 +143,9 @@ const Subscription = () => {
       document.body.appendChild(script);
       
       return () => {
-        document.body.removeChild(script);
+        if (document.body.contains(script)) {
+          document.body.removeChild(script);
+        }
       };
     } catch (err) {
       console.error('Error selecting plan:', err);
@@ -152,15 +154,7 @@ const Subscription = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="subscription-container loading">
-        <div className="spinner"></div>
-        <p>Loading subscription details...</p>
-      </div>
-    );
-  }
-
+  // Subscription plans data
   const plans = [
     {
       name: 'Free',
@@ -201,89 +195,115 @@ const Subscription = () => {
     }
   ];
 
+  if (loading) {
+    return (
+      <div className={styles.subscriptionContainer}>
+        <div className={styles.loadingContainer}>
+          <div className={styles.spinner}></div>
+          <p>Loading subscription details...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="subscription-container">
-      <h1>Choose Your Subscription Plan</h1>
-      
-      {error && (
-        <div className="alert error">
-          <p>{error}</p>
+    <div className={styles.subscriptionContainer}>
+        <div className={styles.header}>
+          <button className={styles.backButton} onClick={() => navigate('/dashboard')}>
+            <FaArrowLeft /> Back to Dashboard
+          </button>
+          <h1>Choose Your Subscription Plan</h1>
         </div>
-      )}
-      
-      {successMessage && (
-        <div className="alert success">
-          <p>{successMessage}</p>
-        </div>
-      )}
-      
-      {subscription && (
-        <div className="current-subscription">
-          <h2>Current Subscription</h2>
-          <div className="subscription-details">
-            <div className="detail">
-              <span className="label">Plan:</span>
-              <span className="value">{subscription.plan}</span>
-            </div>
-            <div className="detail">
-              <span className="label">Status:</span>
-              <span className="value">{subscription.status}</span>
-            </div>
-            <div className="detail">
-              <span className="label">Upload Limit:</span>
-              <span className="value">
-                {subscription.uploadLimit === Infinity ? 'Unlimited' : subscription.uploadLimit}
-              </span>
-            </div>
-            <div className="detail">
-              <span className="label">Revenue Share:</span>
-              <span className="value">{subscription.revenueShare}%</span>
-            </div>
-            {subscription.expiryDate && (
-              <div className="detail">
-                <span className="label">Expires:</span>
-                <span className="value">
-                  {new Date(subscription.expiryDate).toLocaleDateString()}
+        
+        {error && (
+          <div className={styles.alert}>
+            <p className={styles.errorMessage}>{error}</p>
+          </div>
+        )}
+        
+        {successMessage && (
+          <div className={styles.alert}>
+            <p className={styles.successMessage}>{successMessage}</p>
+          </div>
+        )}
+        
+        {subscription && (
+          <div className={styles.currentSubscription}>
+            <h2>Current Subscription</h2>
+            <div className={styles.subscriptionDetails}>
+              <div className={styles.detail}>
+                <span className={styles.label}>Plan:</span>
+                <span className={styles.value}>{subscription.plan}</span>
+              </div>
+              <div className={styles.detail}>
+                <span className={styles.label}>Status:</span>
+                <span className={styles.value}>{subscription.status}</span>
+              </div>
+              <div className={styles.detail}>
+                <span className={styles.label}>Upload Limit:</span>
+                <span className={styles.value}>
+                  {subscription.uploadLimit === Infinity ? 'Unlimited' : subscription.uploadLimit}
                 </span>
               </div>
-            )}
+              <div className={styles.detail}>
+                <span className={styles.label}>Revenue Share:</span>
+                <span className={styles.value}>{subscription.revenueShare}%</span>
+              </div>
+              {subscription.expiryDate && (
+                <div className={styles.detail}>
+                  <span className={styles.label}>Expires:</span>
+                  <span className={styles.value}>
+                    {new Date(subscription.expiryDate).toLocaleDateString()}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
-      
-      <div className="plans-container">
-        {plans.map((plan) => (
-          <div className={`plan-card ${subscription && subscription.plan === plan.name ? 'current' : ''}`} key={plan.name}>
-            <div className="plan-header">
-              <h3>{plan.name}</h3>
-              <div className="price">${plan.price}<span>/mo</span></div>
-            </div>
-            <div className="plan-features">
-              <ul>
-                <li>
-                  <strong>Upload Limit:</strong> {plan.uploadLimit}
-                </li>
-                <li>
-                  <strong>Revenue Share:</strong> {plan.revenueShare}%
-                </li>
-                {plan.features.map((feature, index) => (
-                  <li key={index}>{feature}</li>
-                ))}
-              </ul>
-            </div>
-            <button 
-              className="plan-button"
-              onClick={() => handleSelectPlan(plan.name, plan.price)}
-              disabled={subscription && subscription.plan === plan.name}
+        )}
+        
+        <div className={styles.plansContainer}>
+          {plans.map((plan) => (
+            <div 
+              className={`${styles.planCard} ${subscription && subscription.plan === plan.name ? styles.current : ''}`} 
+              key={plan.name}
             >
-              {subscription && subscription.plan === plan.name 
-                ? 'Current Plan' 
-                : `Pay with Khalti`}
-            </button>
-          </div>
-        ))}
+              <div className={styles.planHeader}>
+                <h3>{plan.name}</h3>
+                <div className={styles.price}>
+                  ${plan.price}
+                  <span>/mo</span>
+                </div>
+              </div>
+              <div className={styles.planFeatures}>
+                <ul>
+                  <li>
+                    <FaCheck className={styles.checkIcon} /> 
+                    <strong>Upload Limit:</strong> {plan.uploadLimit}
+                  </li>
+                  <li>
+                    <FaCheck className={styles.checkIcon} /> 
+                    <strong>Revenue Share:</strong> {plan.revenueShare}%
+                  </li>
+                  {plan.features.map((feature, index) => (
+                    <li key={index}>
+                      <FaCheck className={styles.checkIcon} /> {feature}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <button 
+                className={`${styles.planButton} ${plan.name === 'Pro' ? styles.proPlanButton : ''}`}
+                onClick={() => handleSelectPlan(plan.name, plan.price)}
+                disabled={subscription && subscription.plan === plan.name}
+              >
+                {subscription && subscription.plan === plan.name 
+                  ? 'Current Plan' 
+                  : plan.price === 0 ? 'Choose Plan' : `Pay with Khalti`}
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
   );
 };
 

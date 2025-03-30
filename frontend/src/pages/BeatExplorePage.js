@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/api";
 import styles from "../css/BeatExplorePage.module.css";
-import { FaCartPlus, FaPlay, FaSearch, FaHeart } from "react-icons/fa";
+import { FaCartPlus, FaPlay, FaSearch, FaHeart, FaPause } from "react-icons/fa";
 import NavbarBeatExplore from '../Components/NavbarBeatExplore';
 
 const BeatExplorePage = () => {
@@ -19,6 +19,9 @@ const BeatExplorePage = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [displayMode, setDisplayMode] = useState("grid"); // 'row' or 'grid'
   const itemsPerPage = 6; // Show 6 beats per page
+  const [currentlyPlaying, setCurrentlyPlaying] = useState(null);
+  const [audioLoading, setAudioLoading] = useState(false);
+  const [player, setPlayer] = useState(null);
 
   const navigate = useNavigate();
 
@@ -28,19 +31,19 @@ const BeatExplorePage = () => {
       try {
         const response = await API.get("/api/beats");
         console.log("API Response:", response.data);
-       
+
         // Check if the response data contains the beats array
         if (response.data && response.data.beats) {
           // Use the beats array from the response
           setBeats(response.data.beats);
-         
+
           if (response.data.beats.length === 0) {
             setErrorMessage("No beats available yet. Please check back later.");
           }
         } else if (Array.isArray(response.data)) {
           // If the response itself is an array (direct beats array)
           setBeats(response.data);
-         
+
           if (response.data.length === 0) {
             setErrorMessage("No beats available yet. Please check back later.");
           }
@@ -59,6 +62,16 @@ const BeatExplorePage = () => {
     };
     fetchBeats();
   }, []);
+
+  // Cleanup audio when component unmounts
+  useEffect(() => {
+    return () => {
+      if (player) {
+        player.pause();
+        player.src = ""; // Clear the source
+      }
+    };
+  }, [player]);
 
   // Set max price after beats are loaded
   useEffect(() => {
@@ -89,9 +102,9 @@ const BeatExplorePage = () => {
     if (!keywords.trim()) {
       return beats;
     }
-    return beats.filter((beat) => 
-      beat.title.toLowerCase().includes(keywords.toLowerCase()) ||
-      beat.artist.toLowerCase().includes(keywords.toLowerCase())
+    return beats.filter((beat) =>
+      beat.title?.toLowerCase().includes(keywords.toLowerCase()) ||
+      beat.artist?.toLowerCase().includes(keywords.toLowerCase())
     );
   };
 
@@ -121,10 +134,97 @@ const BeatExplorePage = () => {
     return filteredBeats.slice(startIndex, startIndex + itemsPerPage);
   };
 
+  // Audio playback with HTML5 Audio
+  const handlePlayPreview = async (beatId) => {
+    try {
+      // Find the beat
+      const beat = displayedBeats.find(b => b._id === beatId);
+      if (!beat) {
+        console.error(`Beat with ID ${beatId} not found`);
+        return;
+      }
+      
+      // Get audio URL
+      const audioUrl = beat.audioFile || beat.audioUrl;
+      console.log("Playing URL:", audioUrl);
+      
+      if (!audioUrl) {
+        console.error("No audio URL found for this beat");
+        return;
+      }
+      
+      // If already playing this beat, toggle play/pause
+      if (currentlyPlaying === beatId && player) {
+        if (!player.paused) {
+          player.pause();
+          setCurrentlyPlaying(null);
+        } else {
+          player.play();
+          setCurrentlyPlaying(beatId);
+        }
+        return;
+      }
+      
+      // Otherwise, start fresh with a new audio player
+      setAudioLoading(true);
+      
+      // Stop previous audio if playing
+      if (player) {
+        player.pause();
+        player.src = "";
+      }
+      
+      // Create standard HTML5 Audio element
+      const audio = new Audio();
+      
+      // Set up event handlers first
+      audio.oncanplaythrough = () => {
+        setAudioLoading(false);
+        audio.play()
+          .then(() => {
+            console.log("Audio playback started successfully");
+            setCurrentlyPlaying(beatId);
+          })
+          .catch(error => {
+            console.error("Failed to start playback:", error);
+            setAudioLoading(false);
+          });
+      };
+      
+      audio.onended = () => {
+        setCurrentlyPlaying(null);
+      };
+      
+      audio.onerror = (e) => {
+        console.error("Audio playback error:", e);
+        console.error("Error code:", audio.error ? audio.error.code : "unknown");
+        console.error("Error message:", audio.error ? audio.error.message : "unknown");
+        setAudioLoading(false);
+        setCurrentlyPlaying(null);
+      };
+      
+      // Log loading states
+      audio.onloadstart = () => console.log("Audio loading started");
+      audio.onprogress = () => console.log("Audio download in progress");
+      audio.onstalled = () => console.log("Audio download stalled");
+      
+      // Set the source (this triggers loading)
+      audio.src = audioUrl;
+      audio.load(); // Explicitly start loading
+      
+      // Store the audio element
+      setPlayer(audio);
+      
+    } catch (error) {
+      console.error("Audio playback error:", error);
+      setAudioLoading(false);
+    }
+  };
+
   // Handlers
   const handleBuy = (beat) => {
     const isLoggedIn = localStorage.getItem('token'); // Check if user is logged in
-    
+
     if (isLoggedIn) {
       if (cartItems.length < 3) { // Limit cart to 3 items
         setCartItems([...cartItems, beat]);
@@ -138,11 +238,6 @@ const BeatExplorePage = () => {
       alert("Please log in to add items to cart");
       navigate("/login");
     }
-  };
-
-  const handlePlayPreview = (beatId) => {
-    console.log(`Playing beat with ID: ${beatId}`);
-    // Implement audio preview functionality here
   };
 
   const handlePageChange = (pageNumber) => {
@@ -180,13 +275,13 @@ const BeatExplorePage = () => {
   return (
     <div className={styles.exploreContainer}>
       <NavbarBeatExplore />
-      
+
       <div className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>Explore Beats</h1>
-        
+
         {/* Search bar */}
         <form onSubmit={handleSearch} className={styles.searchForm}>
-          <input 
+          <input
             type="text"
             value={keywords}
             onChange={(e) => setKeywords(e.target.value)}
@@ -205,8 +300,8 @@ const BeatExplorePage = () => {
           {/* Display mode toggle */}
           <div className={styles.filterSection}>
             <h3 className={styles.filterTitle}>View Mode</h3>
-            <button 
-              onClick={toggleDisplayMode} 
+            <button
+              onClick={toggleDisplayMode}
               className={styles.modeToggleButton}
             >
               {displayMode === "grid" ? "Switch to List View" : "Switch to Grid View"}
@@ -217,7 +312,7 @@ const BeatExplorePage = () => {
           <div className={styles.filterSection}>
             <h3 className={styles.filterTitle}>Categories</h3>
             <div className={styles.categoryList}>
-              <button 
+              <button
                 className={!selectedCategory ? styles.categoryButtonActive : styles.categoryButton}
                 onClick={() => handleCategorySelect(null)}
               >
@@ -253,7 +348,7 @@ const BeatExplorePage = () => {
         {/* Main content */}
         <div className={styles.mainContent}>
           {errorMessage && <div className={styles.errorMessage}>{errorMessage}</div>}
-          
+
           {displayMode === "grid" ? (
             /* Grid View */
             <div className={styles.grid}>
@@ -274,7 +369,7 @@ const BeatExplorePage = () => {
                     </div>
                     <div className={styles.cardInfo}>
                       <h3>{beat.title}</h3>
-                      <p className={styles.artist}>{beat.artist}</p>
+                      <p className={styles.artist}>{beat.artist || beat.producer?.name || "Unknown Artist"}</p>
                       <p className={styles.price}>${beat.price}</p>
                       {beat.category && <p className={styles.category}>{beat.category}</p>}
                     </div>
@@ -282,8 +377,18 @@ const BeatExplorePage = () => {
                       <button className={styles.buyButton} onClick={() => handleBuy(beat)}>
                         <FaCartPlus /> Add to Cart
                       </button>
-                      <button className={styles.downloadButton} onClick={() => handlePlayPreview(beat._id)}>
-                        <FaPlay /> Play
+                      <button 
+                        className={styles.downloadButton} 
+                        onClick={() => handlePlayPreview(beat._id)}
+                        disabled={audioLoading && currentlyPlaying === beat._id}
+                      >
+                        {audioLoading && currentlyPlaying === beat._id ? (
+                          <span>Loading...</span>
+                        ) : currentlyPlaying === beat._id ? (
+                          <FaPause />
+                        ) : (
+                          <FaPlay />
+                        )} {currentlyPlaying === beat._id ? 'Pause' : 'Play'}
                       </button>
                     </div>
                   </div>
@@ -305,13 +410,23 @@ const BeatExplorePage = () => {
                     />
                     <div className={styles.beatInfo}>
                       <h3>{beat.title}</h3>
-                      <p className={styles.artist}>{beat.artist}</p>
+                      <p className={styles.artist}>{beat.artist || beat.producer?.name || "Unknown Artist"}</p>
                       {beat.category && <p className={styles.category}>{beat.category}</p>}
                       <p className={styles.price}>${beat.price}</p>
                     </div>
                     <div className={styles.controls}>
-                      <button className={styles.playButton} onClick={() => handlePlayPreview(beat._id)}>
-                        <FaPlay /> Play
+                      <button 
+                        className={styles.playButton} 
+                        onClick={() => handlePlayPreview(beat._id)}
+                        disabled={audioLoading && currentlyPlaying === beat._id}
+                      >
+                        {audioLoading && currentlyPlaying === beat._id ? (
+                          <span>Loading...</span>
+                        ) : currentlyPlaying === beat._id ? (
+                          <FaPause />
+                        ) : (
+                          <FaPlay />
+                        )} {currentlyPlaying === beat._id ? 'Pause' : 'Play'}
                       </button>
                       <button className={styles.cartButton} onClick={() => handleBuy(beat)}>
                         <FaCartPlus /> Add to Cart
@@ -328,14 +443,14 @@ const BeatExplorePage = () => {
           {/* Pagination */}
           {pageCount > 1 && (
             <div className={styles.pagination}>
-              <button 
+              <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 0}
                 className={styles.paginationButton}
               >
                 Previous
               </button>
-              
+
               {[...Array(pageCount)].map((_, index) => (
                 <button
                   key={index}
@@ -345,7 +460,7 @@ const BeatExplorePage = () => {
                   {index + 1}
                 </button>
               ))}
-              
+
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === pageCount - 1}
