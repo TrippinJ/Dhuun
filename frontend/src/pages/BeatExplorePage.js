@@ -17,7 +17,7 @@ const BeatExplorePage = () => {
   const [maxPrice, setMaxPrice] = useState(0);
   const [cartItems, setCartItems] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
-  const [displayMode, setDisplayMode] = useState("row"); // 'row' or 'grid'
+  const [displayMode, setDisplayMode] = useState("grid"); // 'row' or 'grid'
   const itemsPerPage = 6; // Show 6 beats per page
 
   const navigate = useNavigate();
@@ -166,7 +166,7 @@ const BeatExplorePage = () => {
   };
 
   const toggleDisplayMode = () => {
-    setDisplayMode(displayMode === "row" ? "grid" : "row");
+    setDisplayMode(displayMode === "grid" ? "row" : "grid");
   };
 
   if (loading) {
@@ -209,7 +209,7 @@ const BeatExplorePage = () => {
               onClick={toggleDisplayMode} 
               className={styles.modeToggleButton}
             >
-              {displayMode === "row" ? "Switch to Grid View" : "Switch to List View"}
+              {displayMode === "grid" ? "Switch to List View" : "Switch to Grid View"}
             </button>
           </div>
 
