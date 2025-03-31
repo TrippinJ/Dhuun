@@ -109,6 +109,7 @@ nav {
   flex-direction: column;
   justify-content: center;
   align-items: flex-start;
+  margin-left: 20px;
 }
 
 .primary-heading {
