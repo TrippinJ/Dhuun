@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "../css/NavbarBeatExplore.module.css";
 import Logo from "../Assets/DHUUN.png"; 
-import { FaShoppingCart } from 'react-icons/fa';
+import { FaShoppingCart, FaUserCircle } from 'react-icons/fa';
 
 const NavbarBeatExplore = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -32,6 +32,33 @@ const NavbarBeatExplore = () => {
     } else {
       setIsLoggedIn(false);
     }
+  }, []);
+
+  // Update cart count
+  useEffect(() => {
+    const updateCartCount = () => {
+      try {
+        const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+        setCartCount(cart.length);
+      } catch (error) {
+        console.error("Error parsing cart:", error);
+        setCartCount(0);
+      }
+    };
+    
+    // Update on mount
+    updateCartCount();
+    
+    // Add event listener for storage changes
+    window.addEventListener("storage", updateCartCount);
+    
+    // Set an interval to check periodically
+    const interval = setInterval(updateCartCount, 2000);
+    
+    return () => {
+      window.removeEventListener("storage", updateCartCount);
+      clearInterval(interval);
+    };
   }, []);
 
   // Handle clicks outside the dropdown to close it
@@ -79,6 +106,13 @@ const NavbarBeatExplore = () => {
         <a href="/BeatExplorePage" className={styles.navLink}>Explore Beats</a>
         <a href="/chooserole" className={styles.navLink}>Sell Beats</a>
         <a href="/creator-community" className={styles.navLink}>Community</a>
+        <a href="/cart" className={styles.navLink}>
+          <div className={styles.cartIconContainer}>
+            <FaShoppingCart />
+            {cartCount > 0 && <span className={styles.cartBadge}>{cartCount}</span>}
+          </div>
+          Cart
+        </a>
       </div>
       
       <div className={styles.navActions}>
@@ -88,7 +122,7 @@ const NavbarBeatExplore = () => {
               className={styles.profileButton} 
               onClick={toggleDropdown}
             >
-              <span className={styles.profileIcon}>👤</span> {userName}
+              <FaUserCircle className={styles.profileIcon} /> {userName}
             </button>
             
             {showDropdown && (

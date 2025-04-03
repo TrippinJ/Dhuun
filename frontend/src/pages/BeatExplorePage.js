@@ -226,14 +226,34 @@ const BeatExplorePage = () => {
     const isLoggedIn = localStorage.getItem('token'); // Check if user is logged in
 
     if (isLoggedIn) {
-      if (cartItems.length < 3) { // Limit cart to 3 items
-        setCartItems([...cartItems, beat]);
-        console.log(`Added ${beat.title} to cart`);
-        // In a real app, you'd dispatch to Redux here
-        alert(`${beat.title} added to cart!`);
-      } else {
-        alert("Only 3 beats can be added to cart at a time");
+      // Get current cart from localStorage
+      let cart = [];
+      try {
+        cart = JSON.parse(localStorage.getItem("cart") || "[]");
+      } catch (error) {
+        console.error("Error parsing cart:", error);
+        cart = [];
       }
+      
+      // Check if beat is already in cart
+      const beatInCart = cart.some(item => item._id === beat._id);
+      
+      if (beatInCart) {
+        alert(`"${beat.title}" is already in your cart`);
+        return;
+      }
+      
+      // Add beat to cart without any limit
+      cart.push(beat);
+      
+      // Update local state
+      setCartItems(cart);
+      
+      // Save cart to localStorage
+      localStorage.setItem("cart", JSON.stringify(cart));
+      
+      console.log(`Added ${beat.title} to cart`);
+      alert(`${beat.title} added to cart!`);
     } else {
       alert("Please log in to add items to cart");
       navigate("/login");
