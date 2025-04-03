@@ -11,15 +11,10 @@ const Checkout = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [total, setTotal] = useState(0);
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    cardNumber: "",
-    expiryDate: "",
-    cvv: "",
-  });
+  const [email, setEmail] = useState("");
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
 
-  // Fetch cart items from localStorage or your state management solution
+  // Fetch cart items from localStorage
   useEffect(() => {
     try {
       // Get cart from localStorage
@@ -38,26 +33,19 @@ const Checkout = () => {
     }
   }, []);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+  const handleEmailChange = (e) => {
+    setEmail(e.target.value);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
+  const handleKhaltiPayment = () => {
     // Basic validation
-    if (!formData.fullName || !formData.email || !formData.cardNumber || 
-        !formData.expiryDate || !formData.cvv) {
-      setError("Please fill out all fields");
+    if (!email) {
+      setError("Please enter your email address");
       return;
     }
     
     try {
-      setLoading(true);
+      setPaymentProcessing(true);
       
       // Check if user is logged in
       const token = localStorage.getItem("token");
@@ -66,36 +54,85 @@ const Checkout = () => {
         return;
       }
       
-      // Create order
-      const orderData = {
-        items: cartItems.map(item => ({
-          beatId: item._id,
-          license: "Basic", // You can make this dynamic based on user selection
-          price: item.price
-        })),
-        totalAmount: total
+      // Load Khalti script dynamically
+      const script = document.createElement('script');
+      script.src = 'https://khalti.s3.ap-south-1.amazonaws.com/KPG/dist/2020.12.22.0.0.0/khalti-checkout.iffe.js';
+      script.async = true;
+      
+      script.onload = () => {
+        // Once Khalti is loaded, initialize payment
+        const khaltiKey = process.env.REACT_APP_KHALTI_PUBLIC_KEY || '93148c2f7d274399afd73aab9e9ad7f4'; // Use your Khalti public key
+        const priceInPaisa = total * 100; // Khalti expects amount in paisa (1 NPR = 100 paisa)
+        
+        const config = {
+          publicKey: khaltiKey,
+          productIdentity: "beatOrder" + Date.now(),
+          productName: "Beats Purchase",
+          productUrl: window.location.href,
+          eventHandler: {
+            onSuccess: async (payload) => {
+              try {
+                // Create order with payment info
+                const orderData = {
+                  items: cartItems.map(item => ({
+                    beatId: item._id,
+                    license: "Basic", // You can make this dynamic based on user selection
+                    price: item.price
+                  })),
+                  totalAmount: total,
+                  customerEmail: email,
+                  paymentMethod: "khalti",
+                  paymentId: payload.token
+                };
+                
+                // Send order to your API
+                const response = await API.post("/api/orders", orderData, {
+                  headers: { Authorization: `Bearer ${token}` }
+                });
+                
+                // Clear cart after successful purchase
+                localStorage.setItem("cart", "[]");
+                
+                // Navigate to success page
+                navigate("/checkout-success", { 
+                  state: { 
+                    orderId: response.data.orderId || response.data._id 
+                  } 
+                });
+              } catch (err) {
+                console.error("Payment verification error:", err);
+                setError("Payment verification failed. Please contact support.");
+                setPaymentProcessing(false);
+              }
+            },
+            onError: (error) => {
+              console.error("Khalti payment error:", error);
+              setError("Payment failed. Please try again later.");
+              setPaymentProcessing(false);
+            },
+            onClose: () => {
+              console.log("Khalti payment widget closed");
+              setPaymentProcessing(false);
+            }
+          },
+          amount: priceInPaisa
+        };
+        
+        const checkout = new window.KhaltiCheckout(config);
+        checkout.show({ amount: priceInPaisa });
       };
       
-      // Send order to your API
-      const response = await API.post("/api/orders", orderData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      // Clear cart after successful purchase
-      localStorage.setItem("cart", "[]");
-      
-      // Navigate to success page
-      navigate("/checkout-success", { state: { orderId: response.data.orderId } });
+      document.body.appendChild(script);
       
     } catch (error) {
       console.error("Checkout error:", error);
       setError("Payment failed. Please try again.");
-      setLoading(false);
+      setPaymentProcessing(false);
     }
   };
 
   if (loading) {
-    return <div>Loading checkout...</div>;
+    return <div className={styles.loading}>Loading checkout...</div>;
   }
 
   return (
@@ -167,85 +204,41 @@ const Checkout = () => {
               <FaLock /> Secure Checkout
             </div>
             
-            <form onSubmit={handleSubmit} className={styles.paymentForm}>
+            <div className={styles.paymentForm}>
               <div className={styles.formGroup}>
-                <label htmlFor="fullName">Full Name</label>
-                <input
-                  type="text"
-                  id="fullName"
-                  name="fullName"
-                  value={formData.fullName}
-                  onChange={handleInputChange}
-                  placeholder="John Doe"
-                  required
-                />
-              </div>
-              
-              <div className={styles.formGroup}>
-                <label htmlFor="email">Email</label>
+                <label htmlFor="email">Email (for order confirmation)</label>
                 <input
                   type="email"
                   id="email"
                   name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  placeholder="johndoe@example.com"
+                  value={email}
+                  onChange={handleEmailChange}
+                  placeholder="your.email@example.com"
                   required
                 />
               </div>
               
-              <div className={styles.formGroup}>
-                <label htmlFor="cardNumber">Card Number</label>
-                <input
-                  type="text"
-                  id="cardNumber"
-                  name="cardNumber"
-                  value={formData.cardNumber}
-                  onChange={handleInputChange}
-                  placeholder="1234 5678 9012 3456"
-                  maxLength="19"
-                  required
-                />
-              </div>
-              
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label htmlFor="expiryDate">Expiry Date</label>
-                  <input
-                    type="text"
-                    id="expiryDate"
-                    name="expiryDate"
-                    value={formData.expiryDate}
-                    onChange={handleInputChange}
-                    placeholder="MM/YY"
-                    maxLength="5"
-                    required
+              {/* <div className={styles.paymentOptions}>
+                <div className={styles.paymentMethod}>
+                  <img 
+                    src="/khalti-logo.png" 
+                    alt="Khalti" 
+                    className={styles.khaltiLogo}
+                    onError={(e) => e.target.src = "https://khalti.com/static/images/khalti-logo.svg"} 
                   />
+                  <span>Pay with Khalti</span>
                 </div>
-                
-                <div className={styles.formGroup}>
-                  <label htmlFor="cvv">CVV</label>
-                  <input
-                    type="text"
-                    id="cvv"
-                    name="cvv"
-                    value={formData.cvv}
-                    onChange={handleInputChange}
-                    placeholder="123"
-                    maxLength="4"
-                    required
-                  />
-                </div>
-              </div>
+              </div> */}
               
               <button 
-                type="submit" 
-                className={styles.checkoutButton}
-                disabled={cartItems.length === 0 || loading}
+                type="button"
+                onClick={handleKhaltiPayment}
+                className={styles.khaltiButton}
+                disabled={cartItems.length === 0 || paymentProcessing}
               >
-                {loading ? "Processing..." : `Pay $${total.toFixed(2)}`}
+                {paymentProcessing ? "Processing..." : `Pay $${total.toFixed(2)} with Khalti`}
               </button>
-            </form>
+            </div>
           </div>
         </div>
       </div>

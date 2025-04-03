@@ -26,6 +26,17 @@ const OrderSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  customerEmail: {
+    type: String
+  },
+  paymentMethod: {
+    type: String,
+    enum: ['khalti', 'card', 'other'],
+    default: 'khalti'
+  },
+  paymentId: {
+    type: String
+  },
   paymentStatus: {
     type: String,
     enum: ['Pending', 'Completed', 'Failed'],

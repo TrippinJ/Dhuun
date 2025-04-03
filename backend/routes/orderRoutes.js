@@ -3,6 +3,7 @@ const router = express.Router();
 const Order = require('../models/order');
 const Beat = require('../models/beat');
 const { authenticateUser } = require('../routes/auth');
+const { verifyPayment } = require('../utils/khaltiPayment');
 
 // Protect all order routes
 router.use(authenticateUser);
@@ -10,16 +11,35 @@ router.use(authenticateUser);
 // Create a new order
 router.post('/', async (req, res) => {
   try {
-    const { items, totalAmount } = req.body;
+    const { items, totalAmount, customerEmail, paymentMethod, paymentId } = req.body;
     
     if (!items || items.length === 0) {
       return res.status(400).json({ message: 'Order must contain at least one item' });
     }
     
+    // Verify Khalti payment if payment method is Khalti
+    if (paymentMethod === 'khalti' && paymentId) {
+      try {
+        await verifyPayment(paymentId);
+      } catch (paymentError) {
+        console.error('Payment verification error:', paymentError);
+        return res.status(400).json({ message: 'Payment verification failed' });
+      }
+    }
+    
+    // Create the order
     const order = new Order({
       user: req.user.id,
-      items,
-      totalAmount
+      items: items.map(item => ({
+        beat: item.beatId,
+        license: item.license || 'Basic',
+        price: item.price
+      })),
+      totalAmount,
+      customerEmail: customerEmail || req.user.email,
+      paymentMethod: paymentMethod || 'khalti',
+      paymentId,
+      paymentStatus: 'Completed'
     });
     
     // Save the order
@@ -79,6 +99,32 @@ router.get('/:id', async (req, res) => {
   } catch (error) {
     console.error('Error fetching order:', error);
     res.status(500).json({ message: 'Failed to fetch order' });
+  }
+});
+
+// Verify a Khalti payment
+router.post('/verify-payment', async (req, res) => {
+  try {
+    const { token } = req.body;
+    
+    if (!token) {
+      return res.status(400).json({ message: 'Payment token is required' });
+    }
+    
+    // Verify the payment with Khalti
+    const verificationResult = await verifyPayment(token);
+    
+    res.json({
+      success: true,
+      message: 'Payment verified successfully',
+      data: verificationResult
+    });
+  } catch (error) {
+    console.error('Payment verification error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to verify payment' 
+    });
   }
 });
 
