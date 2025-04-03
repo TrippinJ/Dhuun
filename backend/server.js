@@ -7,6 +7,8 @@ const passport = require("passport");
 const path = require("path");
 const fs = require("fs"); // <-- Add this import
 const expressListRoutes = require("express-list-routes");
+const orderRoutes = require('./routes/orderRoutes');
+
 
 // Import Routes
 const { router: authRoutes } = require("./routes/auth");
@@ -78,6 +80,7 @@ if (!fs.existsSync(tempDir)) {
 app.use("/api/auth", authRoutes);
 app.use("/api/subscription", subscriptionRoutes);
 app.use('/api/beats', beatRoutes);
+app.use('/api/orders', orderRoutes);
 
 // Test Route
 app.get("/", (req, res) => {

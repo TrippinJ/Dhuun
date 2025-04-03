@@ -9,13 +9,17 @@ import Contact from "./Components/Contact";
 import Footer from "./Components/Footer";
 import Navbar from "./Components/Navbar";
 import Login from "./pages/Login"
-import Register from "./pages/Register"; 
+import Register from "./pages/Register";
 import BeatExplorePage from "./pages/BeatExplorePage";
 import Dashboard from "./pages/Dashboard";
 import ChooseRole from "./pages/ChooseRole";
 import SubscriptionPage from "./pages/Subscription";
 import PrivateRoute from "./Components/PrivateRoute"; // This needs to be created (see below)
 import CreatorCommunity from "./pages/CreatorCommunity"; // This needs to be created (see below)
+import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
+import CheckoutSuccess from "./pages/CheckoutSuccess";
+
 
 function App() {
   return (
@@ -27,9 +31,9 @@ function App() {
             path="/"
             element={
               <>
-                <Navbar /> 
+                <Navbar />
                 <Home />
-                <About /> 
+                <About />
                 <Work />
                 <Testimonial />
                 <Contact />
@@ -42,29 +46,46 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/chooserole" element={<ChooseRole />} />
-          
+
           {/* Protected Routes */}
-          <Route 
-            path="/dashboard" 
+          <Route
+            path="/dashboard"
             element={
               <PrivateRoute>
                 <Dashboard />
               </PrivateRoute>
-            } 
+            }
           />
-          <Route 
-            path="/subscription" 
+          <Route
+            path="/subscription"
             element={
               <PrivateRoute>
                 <SubscriptionPage />
               </PrivateRoute>
-            } 
+            }
           />
-          
+
           {/* Public Music Routes */}
           <Route path="/BeatExplorePage" element={<BeatExplorePage />} />
           <Route path="/creator-community" element={<CreatorCommunity />} />
-        
+          {/* Cart and Checkout Routes */}
+          <Route path="/cart" element={<Cart />} />
+          <Route
+            path="/checkout"
+            element={
+              <PrivateRoute>
+                <Checkout />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/checkout-success"
+            element={
+              <PrivateRoute>
+                <CheckoutSuccess />
+              </PrivateRoute>
+            }
+          />
         </Routes>
       </BrowserRouter>
     </div>

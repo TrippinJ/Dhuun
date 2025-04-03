@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "../css/NavbarBeatExplore.module.css";
 import Logo from "../Assets/DHUUN.png"; 
+import { FaShoppingCart } from 'react-icons/fa';
 
 const NavbarBeatExplore = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -9,6 +10,7 @@ const NavbarBeatExplore = () => {
   const [userName, setUserName] = useState("User");
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
+  const [cartCount, setCartCount] = useState(0);
 
   // Check if user is logged in
   useEffect(() => {
