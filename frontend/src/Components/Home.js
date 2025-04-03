@@ -10,7 +10,7 @@ const Home = () => {
   const navigate = useNavigate();
 
   const handleExploreBtnClick = () => {
-    navigate("/explore");
+    navigate("/BeatExplorePage");
   };
 
   return (
@@ -20,9 +20,6 @@ const Home = () => {
         <div className="home-bannerImage-container">
           <img src={BannerBackground} alt="Background pattern" />
         </div>
-        {/* <div className="left-bannerImage-container">
-          <img src={BannerBackground} alt="Background pattern" />
-        </div> */}
         <div className="home-text-section">
           <h1 className="primary-heading">
             Explore Beats For Your Taste

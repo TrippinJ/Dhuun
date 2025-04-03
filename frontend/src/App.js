@@ -15,6 +15,7 @@ import Dashboard from "./pages/Dashboard";
 import ChooseRole from "./pages/ChooseRole";
 import SubscriptionPage from "./pages/Subscription";
 import PrivateRoute from "./Components/PrivateRoute"; // This needs to be created (see below)
+import CreatorCommunity from "./pages/CreatorCommunity"; // This needs to be created (see below)
 
 function App() {
   return (
@@ -62,6 +63,8 @@ function App() {
           
           {/* Public Music Routes */}
           <Route path="/BeatExplorePage" element={<BeatExplorePage />} />
+          <Route path="/creator-community" element={<CreatorCommunity />} />
+        
         </Routes>
       </BrowserRouter>
     </div>

@@ -6,7 +6,6 @@ import { HiOutlineBars3 } from "react-icons/hi2";
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
 import List from "@mui/material/List";
-import Divider from "@mui/material/Divider";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
@@ -41,12 +40,12 @@ const Navbar = () => {
   const menuItems = [
     { 
       text: "Buy Beats", 
-      route: "/buy-beats",
+      route: "/BeatExplorePage",
       icon: <StoreIcon />
     },
     { 
       text: "Sell Beats", 
-      route: "/sell-beats",
+      route: "/register?role=seller",
       icon: <SellIcon />
     },
     { 

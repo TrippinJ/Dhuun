@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "../css/NavbarBeatExplore.module.css";
-import Logo from "../Assets/DHUUN.png"; // Adjust the path if needed
+import Logo from "../Assets/DHUUN.png"; 
 
 const NavbarBeatExplore = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -74,8 +74,8 @@ const NavbarBeatExplore = () => {
       </div>
       
       <div className={styles.navLinks}>
-        <a href="/explore" className={styles.navLink}>Explore Beats</a>
-        <a href="/sell-beats" className={styles.navLink}>Sell Beats</a>
+        <a href="/BeatExplorePage" className={styles.navLink}>Explore Beats</a>
+        <a href="/chooserole" className={styles.navLink}>Sell Beats</a>
         <a href="/creator-community" className={styles.navLink}>Community</a>
       </div>
       
