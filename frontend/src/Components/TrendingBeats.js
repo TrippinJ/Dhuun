@@ -1,60 +1,31 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaPlay, FaHeart, FaShoppingCart } from 'react-icons/fa';
 import { BsCheckCircleFill } from 'react-icons/bs';
 import styles from '../css/TrendingBeats.module.css';
+import API from '../api/api';
 
 const TrendingBeats = () => {
-  // Sample trending beats data (replace with your actual data later)
-  const trendingBeats = [
-    {
-      id: 1,
-      title: "3AM IN OAKLAND",
-      producer: "Desirez",
-      image: "https://via.placeholder.com/300x300",
-      price: 34.99,
-      isVerified: true
-    },
-    {
-      id: 2,
-      title: "(FREE) 4Batz",
-      producer: "$K",
-      image: "https://via.placeholder.com/300x300",
-      price: 17.99,
-      isVerified: true
-    },
-    {
-      id: 3,
-      title: "TIMING ⚡1 + 1 FREE",
-      producer: "SIGHOST",
-      image: "https://via.placeholder.com/300x300",
-      price: 29.99,
-      isVerified: true
-    },
-    {
-      id: 4,
-      title: "100 BEATS FOR $100",
-      producer: "waytoolost",
-      image: "https://via.placeholder.com/300x300",
-      price: 100.00,
-      isVerified: true
-    },
-    {
-      id: 5,
-      title: "BALENCIAGA",
-      producer: "KISSES BEATS",
-      image: "https://via.placeholder.com/300x300",
-      price: 24.99,
-      isVerified: true
-    },
-    {
-      id: 6,
-      title: "SORRY | Juice WRLD",
-      producer: "Aleksandr Ches Music",
-      image: "https://via.placeholder.com/300x300",
-      price: 19.99,
-      isVerified: true
-    }
-  ];
+  const [trendingBeats, setTrendingBeats] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  // Fetch trending beats from API
+  useEffect(() => {
+    const fetchTrendingBeats = async () => {
+      try {
+        setLoading(true);
+        const response = await API.get('/api/beats/trending');
+        setTrendingBeats(response.data.data || []);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching trending beats:', err);
+        setError('Failed to load trending beats');
+        setLoading(false);
+      }
+    };
+    
+    fetchTrendingBeats();
+  }, []);
 
   // Handle play button click
   const handlePlay = (id) => {
@@ -63,9 +34,16 @@ const TrendingBeats = () => {
   };
 
   // Handle add to cart
-  const handleAddToCart = (id) => {
-    console.log(`Add beat ${id} to cart`);
-    // Implement add to cart functionality
+  const handleAddToCart = (beat) => {
+    console.log(`Add beat ${beat.id} to cart`);
+    // Get existing cart or initialize empty array
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    // Add beat to cart
+    cart.push(beat);
+    // Save updated cart
+    localStorage.setItem('cart', JSON.stringify(cart));
+    // Show feedback to user
+    alert(`${beat.title} added to cart!`);
   };
 
   // Handle favorite
@@ -77,8 +55,16 @@ const TrendingBeats = () => {
   // Handle see more click
   const handleSeeMore = () => {
     console.log('See more beats');
-    // Navigate to browse all beats page
+    window.location.href = '/BeatExplorePage';
   };
+
+  if (loading) {
+    return <div className={styles.loading}>Loading trending beats...</div>;
+  }
+
+  if (error) {
+    return <div className={styles.error}>{error}</div>;
+  }
 
   return (
     <>
@@ -90,46 +76,50 @@ const TrendingBeats = () => {
       </div>
 
       <div className={styles.beatsGrid}>
-        {trendingBeats.map((beat) => (
-          <div key={beat.id} className={styles.beatCard}>
-            <div className={styles.imageContainer}>
-              <img src={beat.image} alt={beat.title} className={styles.beatImage} />
-              <div className={styles.imageOverlay}>
-                <button 
-                  className={styles.playButton}
-                  onClick={() => handlePlay(beat.id)}
-                >
-                  <FaPlay />
-                </button>
-                <button 
-                  className={styles.favoriteButton}
-                  onClick={() => handleFavorite(beat.id)}
-                >
-                  <FaHeart />
-                </button>
+        {trendingBeats.length > 0 ? (
+          trendingBeats.map((beat) => (
+            <div key={beat._id} className={styles.beatCard}>
+              <div className={styles.imageContainer}>
+                <img src={beat.coverImage || "https://via.placeholder.com/300x300"} alt={beat.title} className={styles.beatImage} />
+                <div className={styles.imageOverlay}>
+                  <button 
+                    className={styles.playButton}
+                    onClick={() => handlePlay(beat._id)}
+                  >
+                    <FaPlay />
+                  </button>
+                  <button 
+                    className={styles.favoriteButton}
+                    onClick={() => handleFavorite(beat._id)}
+                  >
+                    <FaHeart />
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <div className={styles.beatInfo}>
-              <h3 className={styles.beatTitle}>{beat.title}</h3>
-              <div className={styles.producerInfo}>
-                <span className={styles.producerName}>{beat.producer}</span>
-                {beat.isVerified && (
-                  <BsCheckCircleFill className={styles.verifiedIcon} />
-                )}
-              </div>
-              <div className={styles.beatActions}>
-                <span className={styles.price}>${beat.price.toFixed(2)}</span>
-                <button 
-                  className={styles.cartButton}
-                  onClick={() => handleAddToCart(beat.id)}
-                >
-                  <FaShoppingCart />
-                </button>
+              <div className={styles.beatInfo}>
+                <h3 className={styles.beatTitle}>{beat.title}</h3>
+                <div className={styles.producerInfo}>
+                  <span className={styles.producerName}>{beat.producer?.name || "Unknown"}</span>
+                  {beat.producer?.verified && (
+                    <BsCheckCircleFill className={styles.verifiedIcon} />
+                  )}
+                </div>
+                <div className={styles.beatActions}>
+                  <span className={styles.price}>${beat.price?.toFixed(2) || "0.00"}</span>
+                  <button 
+                    className={styles.cartButton}
+                    onClick={() => handleAddToCart(beat)}
+                  >
+                    <FaShoppingCart />
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))
+        ) : (
+          <div className={styles.noBeats}>No trending beats available</div>
+        )}
       </div>
     </>
   );

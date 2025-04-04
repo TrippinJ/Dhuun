@@ -61,54 +61,62 @@ const Login = () => {
     setShowPassword(!showPassword);
   };
 
-  // Google Login Handler
-  const handleGoogleLogin = useGoogleLogin({
-    onSuccess: async (response) => {
-      try {
-        const { data } = await axios.get(`https://www.googleapis.com/oauth2/v3/userinfo`, {
-          headers: {
-            Authorization: `Bearer ${response.access_token}`,
-          },
-        });
+  // in frontend/src/pages/Login.js
 
-        console.log("Google User Info:", data);
+// In frontend/src/pages/Login.js
+const handleGoogleLogin = useGoogleLogin({
+  onSuccess: async (response) => {
+    try {
+      console.log("Google auth success, getting user info...");
+      const { data } = await axios.get(`https://www.googleapis.com/oauth2/v3/userinfo`, {
+        headers: {
+          Authorization: `Bearer ${response.access_token}`,
+        },
+      });
 
-        // Send data to backend for storing user info
-        const backendResponse = await API.post("/api/auth/google-login", {
-          name: data.name,
-          email: data.email,
-          googleId: data.sub, // Unique Google ID
-          avatar: data.picture, // Profile picture URL
-        });
+      console.log("Google User Info:", data);
 
-        // Log backend response after it's received
-        console.log("Backend response:", backendResponse.data);
-        console.log("User role from backend:", backendResponse.data.user.role);
+      // Send data to backend for storing user info
+      const backendResponse = await API.post("/api/auth/google-login", {
+        name: data.name,
+        email: data.email,
+        googleId: data.sub, // Unique Google ID
+        avatar: data.picture, // Profile picture URL
+      });
 
-        // Store token and user details
-        localStorage.setItem("token", backendResponse.data.token);
-        localStorage.setItem("user", JSON.stringify(backendResponse.data.user));
+      console.log("Backend response:", backendResponse.data);
+      
+      // Store token and user details
+      localStorage.setItem("token", backendResponse.data.token);
+      localStorage.setItem("user", JSON.stringify(backendResponse.data.user));
 
-        // Improved role check with fallback (similar to your handleSubmit)
-        const userRole = backendResponse.data.user.role?.toLowerCase() || "buyer";
-        console.log("Redirecting based on role:", userRole);
-
-        if (userRole === "seller") {
-          console.log("Redirecting to Dashboard");
-          navigate("/Dashboard");
-        } else {
-          console.log("Redirecting to BeatExplorePage");
-          navigate("/BeatExplorePage");
-        }
-      } catch (error) {
-        console.error("Google login failed:", error);
-        setErrorMessage("Google login failed. Please try again.");
+      // Check if this is a new user needing to select a role
+      if (backendResponse.data.isNewUser) {
+        console.log("This is a new user - redirecting to role selection");
+        navigate("/chooserole");
+        return;
       }
-    },
-    onError: () => {
-      setErrorMessage("Google login was unsuccessful. Please try again.");
-    },
-  });;
+
+      // For existing users, check their role and redirect appropriately
+      const userRole = backendResponse.data.user.role?.toLowerCase() || "buyer";
+      console.log("Existing user with role:", userRole);
+
+      if (userRole === "seller") {
+        navigate("/Dashboard");
+      } else {
+        navigate("/BeatExplorePage");
+      }
+    } catch (error) {
+      console.error("Google login error:", error);
+      console.error("Error details:", error.response?.data || error.message);
+      setErrorMessage(`Google login failed: ${error.response?.data?.error || error.message}`);
+    }
+  },
+  onError: (error) => {
+    console.error("Google OAuth error:", error);
+    setErrorMessage("Google login was unsuccessful. Please try again.");
+  },
+});
 
   return (
     <div className={styles.wrapper}>

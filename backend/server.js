@@ -8,7 +8,7 @@ const path = require("path");
 const fs = require("fs"); // <-- Add this import
 const expressListRoutes = require("express-list-routes");
 const orderRoutes = require('./routes/orderRoutes');
-
+const producerRoutes = require('./routes/producerRoutes');
 
 // Import Routes
 const { router: authRoutes } = require("./routes/auth");
@@ -21,7 +21,7 @@ const PORT = process.env.PORT || 8080;
 
 // CORS Middleware Setup
 app.use(cors({
-  origin: "http://localhost:3000", // Allow frontend requests
+  origin: ["http://localhost:3000", "https://accounts.google.com"],
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   credentials: true
 }));
@@ -81,6 +81,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/subscription", subscriptionRoutes);
 app.use('/api/beats', beatRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/producers', producerRoutes);
 
 // Test Route
 app.get("/", (req, res) => {

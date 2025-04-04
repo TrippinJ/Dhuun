@@ -3,7 +3,7 @@ console.log("✅ Auth routes loaded successfully!");
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const User = require("../models/user"); 
+const User = require("../models/user");
 const { body, validationResult } = require("express-validator");
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret_here"; // Use environment variable for security
@@ -36,22 +36,22 @@ router.post(
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
 
-      user = new User({ 
-        name, 
-        username, 
-        phonenumber, 
-        email, 
+      user = new User({
+        name,
+        username,
+        phonenumber,
+        email,
         password: hashedPassword,
         role
       });
-      
+
       await user.save();
 
       // Generate token for immediate login after registration
       const payload = { user: { id: user.id } };
       const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "1h" });
 
-      res.status(201).json({ 
+      res.status(201).json({
         message: "User registered successfully",
         token,
         user: {
@@ -93,15 +93,15 @@ router.post(
       const payload = { user: { id: user.id } };
       const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "1h" });
 
-      res.json({ 
-        token, 
-        user: { 
-          id: user.id, 
-          name: user.name, 
+      res.json({
+        token,
+        user: {
+          id: user.id,
+          name: user.name,
           email: user.email,
           role: user.role,
           subscription: user.subscription
-        } 
+        }
       });
     } catch (error) {
       console.error("Login error:", error);
@@ -128,7 +128,7 @@ router.get("/me", authenticateUser, async (req, res) => {
 function authenticateUser(req, res, next) {
   // Get token from header
   const token = req.header("Authorization");
-  
+
   // Check if no token
   if (!token) {
     return res.status(401).json({ message: "Access denied. No token provided." });
@@ -137,25 +137,25 @@ function authenticateUser(req, res, next) {
   try {
     // Verify token
     const decoded = jwt.verify(token.replace("Bearer ", ""), JWT_SECRET);
-    
+
     // Set user in request initially from token
     req.user = decoded.user;
-    
+
     // Verify that the user exists in the database
     User.findById(req.user.id)
       .then(user => {
         if (!user) {
           return res.status(401).json({ message: "User not found" });
         }
-        
+
         // Store the full user object for use in controllers
         req.user = user;
-        
+
         // Add both _id and id properties to ensure compatibility with all code
         // This is critical for other controllers that expect _id
         req.user._id = user._id;
         req.user.id = user._id.toString();
-        
+
         next();
       })
       .catch(err => {
@@ -180,35 +180,35 @@ router.get("/verify", async (req, res) => {
     if (!authHeader) {
       return res.status(401).json({ message: 'No token provided' });
     }
-    
+
     // Handle different authorization header formats
-    const token = authHeader.startsWith('Bearer ') 
-      ? authHeader.substring(7) 
+    const token = authHeader.startsWith('Bearer ')
+      ? authHeader.substring(7)
       : authHeader;
-    
+
     if (!token) {
       return res.status(401).json({ message: 'Invalid token format' });
     }
-    
+
     // Verify token
     const decoded = jwt.verify(token, JWT_SECRET);
-    
+
     // Extract user ID from token
     const userId = decoded.user?.id;
-    
+
     if (!userId) {
       return res.status(401).json({ message: 'No user ID in token' });
     }
-    
+
     // Find user in database
     const user = await User.findById(userId);
-    
+
     if (!user) {
       return res.status(401).json({ message: 'Valid token but user not found', userId: userId });
     }
-    
+
     // Return token validation success
-    return res.json({ 
+    return res.json({
       message: 'Token is valid',
       user: {
         id: user._id,
@@ -223,7 +223,7 @@ router.get("/verify", async (req, res) => {
     });
   } catch (error) {
     console.error('Token verification error:', error);
-    
+
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({ message: 'Token has expired' });
     } else if (error.name === 'JsonWebTokenError') {
@@ -239,40 +239,57 @@ router.get("/test", (req, res) => {
   res.send("Auth route is working!");
 });
 
-// ✅ Google Login Route
+
+
+// In backend/routes/auth.js - Google Login route
 router.post("/google-login", async (req, res) => {
   try {
+    console.log("Google login request received:", req.body);
     const { name, email, googleId, avatar } = req.body;
 
+    if (!email) {
+      return res.status(400).json({ message: "Email is required from Google profile" });
+    }
+
+    // Check if user already exists
     let user = await User.findOne({ email });
+    console.log("Existing user check:", user ? "User found" : "New user");
+    
+    // Flag to indicate if this is a new user
+    let isNewUser = false;
 
     if (!user) {
-      // If user doesn't exist, create a new one
+      // This is a new user
+      isNewUser = true;
+      
+      // Create a new user WITH a default role
       user = new User({
-        name,
-        email,
-        username: email.split('@')[0], // Generate a username from email
-        phonenumber: "", // Google auth users may not provide phone
-        googleId,
-        avatar, 
-        password: "google-auth", // Placeholder since Google handles authentication
-        role: "buyer" // Default role
+        name: name,
+        email: email,
+        username: email.split('@')[0], // Generate username from email
+        phonenumber: "Not provided", // Give a default value for phone number
+        googleId: googleId,
+        avatar: avatar, 
+        password: "google-auth",
+        role: "buyer" // Explicitly set to buyer
       });
 
+      console.log("New user object created:", user); // Log the complete user object for debugging
       await user.save();
-    } else {
-      // Update existing user with Google info if they're logging in with Google
-      if (!user.googleId) {
-        user.googleId = googleId;
-        user.avatar = avatar || user.avatar;
-        await user.save();
-      }
+      console.log("New user saved to database");
+    } else if (!user.googleId) {
+      // Existing user but first time using Google login
+      user.googleId = googleId;
+      user.avatar = avatar || user.avatar;
+      await user.save();
+      console.log("Updated existing user with Google info");
     }
 
     // Generate JWT token
     const payload = { user: { id: user.id } };
-    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "1h" });
+    const token = jwt.sign(payload, process.env.JWT_SECRET || "default_jwt_secret_replace_this", { expiresIn: "1h" });
 
+    // Return user data WITH the isNewUser flag
     res.json({ 
       token, 
       user: {
@@ -281,13 +298,15 @@ router.post("/google-login", async (req, res) => {
         email: user.email,
         role: user.role,
         subscription: user.subscription
-      } 
+      },
+      isNewUser // Send this flag to the frontend
     });
   } catch (error) {
-    console.error("Google login error:", error);
+    console.error("Google login server error:", error);
     res.status(500).json({ error: error.message });
   }
 });
+
 
 module.exports = {
   router,

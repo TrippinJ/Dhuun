@@ -475,4 +475,5 @@ router.post('/:id/like', authenticateUser, async (req, res) => {
   }
 });
 
+router.get('/trending', beatController.getTrendingBeats);
 module.exports = router;
