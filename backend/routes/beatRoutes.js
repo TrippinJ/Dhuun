@@ -147,7 +147,23 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get a single beat by ID (public route)
+// Get trending beats - IMPORTANT: This must come BEFORE the /:id route
+router.get('/trending', beatController.getTrendingBeats);
+
+// Get beats by producer (authorized route)
+router.get('/producer/beats', authenticateUser, async (req, res) => {
+  try {
+    const beats = await Beat.find({ producer: req.user.id })
+      .sort({ createdAt: -1 });
+    
+    res.json(beats);
+  } catch (error) {
+    console.error('Error fetching producer beats:', error);
+    res.status(500).json({ message: 'Server error while fetching beats' });
+  }
+});
+
+// Get a single beat by ID (public route) - This must come AFTER specific routes like /trending
 router.get('/:id', async (req, res) => {
   try {
     const beat = await Beat.findById(req.params.id)
@@ -161,19 +177,6 @@ router.get('/:id', async (req, res) => {
   } catch (error) {
     console.error('Error fetching beat:', error);
     res.status(500).json({ message: 'Server error while fetching beat' });
-  }
-});
-
-// Get beats by producer (authorized route)
-router.get('/producer/beats', authenticateUser, async (req, res) => {
-  try {
-    const beats = await Beat.find({ producer: req.user.id })
-      .sort({ createdAt: -1 });
-    
-    res.json(beats);
-  } catch (error) {
-    console.error('Error fetching producer beats:', error);
-    res.status(500).json({ message: 'Server error while fetching beats' });
   }
 });
 
@@ -476,5 +479,4 @@ router.post('/:id/like', authenticateUser, async (req, res) => {
   }
 });
 
-router.get('/trending', beatController.getTrendingBeats);
 module.exports = router;
