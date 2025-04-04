@@ -7,6 +7,7 @@ const { authenticateUser } = require('../routes/auth');
 const Beat = require('../models/beat');
 const User = require('../models/user');
 const cloudinary = require('cloudinary').v2;
+const beatController = require('../controllers/beatController');
 
 // Configure Cloudinary with credentials from environment variables
 cloudinary.config({

@@ -1,5 +1,5 @@
 const Beat = require('../models/beat');
-const { uploadFileToCloudinary, deleteFile, RESOURCE_TYPES } = require('../utils/storageManager');
+const { uploadFileToCloudinary, deleteFile, RESOURCE_TYPES } = require('../utils/storageManger');
 const fs = require('fs');
 
 /**
