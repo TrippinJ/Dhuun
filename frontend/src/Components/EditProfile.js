@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios"; // Make sure to import axios
 import API from "../api/api";
 import styles from "../css/EditProfile.module.css";
 import { FaSave, FaUserCircle, FaUpload } from "react-icons/fa";
@@ -40,6 +41,8 @@ const EditProfile = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
 
+        console.log("Fetched user data:", response.data);
+
         // Update the state with user data
         setUserProfile({
           name: response.data.name || "",
@@ -69,6 +72,13 @@ const EditProfile = () => {
     };
 
     fetchUserProfile();
+    
+    // Cleanup previews on unmount
+    return () => {
+      if (avatarPreview && avatarPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+    };
   }, [navigate]);
 
   // Handle input changes
@@ -98,6 +108,26 @@ const EditProfile = () => {
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Log file details for debugging
+      console.log("Selected file:", file.name, file.type, file.size);
+      
+      // Add file size validation
+      if (file.size > 2 * 1024 * 1024) { // 2MB max
+        setError("Image file size must be less than 2MB");
+        return;
+      }
+      
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setError("Please select a valid image file");
+        return;
+      }
+      
+      // Clean up previous preview URL if it exists
+      if (avatarPreview && avatarPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+      
       setAvatar(file);
       setAvatarPreview(URL.createObjectURL(file));
     }
@@ -118,7 +148,7 @@ const EditProfile = () => {
 
       setLoading(true);
       
-      // Create formData for multipart form submission (for file upload)
+      // Create formData for multipart form submission
       const formData = new FormData();
       formData.append("name", userProfile.name);
       formData.append("username", userProfile.username);
@@ -132,29 +162,51 @@ const EditProfile = () => {
       
       // Add avatar if a new one was selected
       if (avatar) {
-        formData.append("avatar", avatar);
+        // Explicitly add as File object with filename
+        formData.append("avatar", avatar, avatar.name);
+        console.log("Adding file to form data:", avatar.name, avatar.type, avatar.size);
       }
 
-      // Make the API call to update profile
-      const response = await API.put("/api/profile", formData, {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data"
-        },
-      });
+      // Log form data entries for debugging
+      for (let [key, value] of formData.entries()) {
+        console.log(`FormData: ${key} = ${value instanceof File ? `File: ${value.name}` : value}`);
+      }
 
+      // Use axios directly instead of your API helper to ensure proper configuration
+      const apiBaseUrl = process.env.REACT_APP_BACKEND_URL || "http://localhost:8080";
+      const response = await axios.put(
+        `${apiBaseUrl}/api/profile/update`, 
+        formData, 
+        {
+          headers: { 
+            Authorization: `Bearer ${token}`
+            // DO NOT set Content-Type header for multipart/form-data
+          },
+        }
+      );
+
+      console.log("Profile update response:", response.data);
       setSuccessMessage("Profile updated successfully!");
-      setLoading(false);
       
-      // Update localStorage user data if needed
-      const userData = JSON.parse(localStorage.getItem("user") || "{}");
-      userData.name = userProfile.name;
-      userData.username = userProfile.username;
-      localStorage.setItem("user", JSON.stringify(userData));
+      // If there's a new avatar URL in the response, update the preview
+      if (response.data.user && response.data.user.avatar) {
+        setAvatarPreview(response.data.user.avatar);
+        
+        // Update localStorage user data with the new avatar URL
+        const userData = JSON.parse(localStorage.getItem("user") || "{}");
+        userData.name = userProfile.name;
+        userData.username = userProfile.username;
+        userData.avatar = response.data.user.avatar; // <-- This is crucial for the dashboard!
+        localStorage.setItem("user", JSON.stringify(userData));
+        
+        // Update any global state if you have one (for example, if using Context API)
+        // userContext.updateUser({ ...userData });
+      }
       
     } catch (error) {
       console.error("Error updating profile:", error);
       setError(error.response?.data?.message || "Failed to update profile. Please try again.");
+    } finally {
       setLoading(false);
     }
   };
@@ -197,6 +249,7 @@ const EditProfile = () => {
           <p className={styles.avatarHelp}>Upload a profile picture (max 2MB)</p>
         </div>
         
+        {/* Rest of the form remains the same */}
         <div className={styles.formGrid}>
           <div className={styles.formGroup}>
             <label htmlFor="name">Full Name</label>

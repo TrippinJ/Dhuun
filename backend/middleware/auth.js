@@ -41,7 +41,8 @@ const auth = async (req, res, next) => {
     });
     
     // Handle different ID field names in tokens
-    const userId = decoded.id || decoded.userId || decoded.sub || decoded._id;
+    const userId = decoded.user?.id || decoded.id || decoded.userId || decoded.sub || decoded._id;
+
     
     if (!userId) {
       console.error('No user ID found in token');

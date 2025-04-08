@@ -30,6 +30,8 @@ const Dashboard = () => {
   const [error, setError] = useState(null);
   const [audioLoading, setAudioLoading] = useState(false);
   const [activePage, setActivePage] = useState("dashboard");
+  const [userAvatar, setUserAvatar] = useState(null);
+  const [userFullName, setUserFullName] = useState("User");
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -87,7 +89,7 @@ const Dashboard = () => {
       }
     };
   }, [navigate]);
-
+  
   // Image URL helper function
   const getCloudinaryImageUrl = (imageUrl, fallbackUrl = "/default-cover.jpg") => {
     if (!imageUrl) {
@@ -471,9 +473,9 @@ const Dashboard = () => {
               </li>
             )}
 
-            <li className={activePage === "settings" ? styles.active : ""} onClick={() => setActivePage("settings")}>
+            {/* <li className={activePage === "settings" ? styles.active : ""} onClick={() => setActivePage("settings")}>
               <FaTools /> {user?.role === "seller" ? "Selling Tools" : "Account Settings"}
-            </li>
+            </li> */}
 
             <li onClick={handleLogout}>
               <FaSignOutAlt /> Logout
