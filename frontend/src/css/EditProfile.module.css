@@ -1,0 +1,219 @@
+.profileContainer {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 30px 20px;
+    color: #FFFFFF;
+  }
+  
+  .profileHeading {
+    font-size: 1.8rem;
+    margin-bottom: 30px;
+    color: #FFFFFF;
+  }
+  
+  .errorMessage {
+    background-color: rgba(255, 59, 48, 0.2);
+    color: #FF3B30;
+    padding: 12px 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 59, 48, 0.3);
+  }
+  
+  .successMessage {
+    background-color: rgba(52, 199, 89, 0.2);
+    color: #34C759;
+    padding: 12px 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(52, 199, 89, 0.3);
+  }
+  
+  .profileForm {
+    background-color: #1E1E1E;
+    border-radius: 10px;
+    padding: 30px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    border: 1px solid #333333;
+  }
+  
+  .avatarSection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 30px;
+  }
+  
+  .avatarContainer {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin-bottom: 15px;
+  }
+  
+  .avatarImage {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #7B2CBF;
+  }
+  
+  .avatarPlaceholder {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background-color: #333333;
+    color: #AAAAAA;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+  }
+  
+  .avatarUploadButton {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background-color: #7B2CBF;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+  }
+  
+  .avatarUploadButton:hover {
+    background-color: #9945E8;
+    transform: scale(1.1);
+  }
+  
+  .fileInput {
+    display: none;
+  }
+  
+  .avatarHelp {
+    font-size: 0.8rem;
+    color: #AAAAAA;
+    text-align: center;
+    margin-top: 5px;
+  }
+  
+  .formGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+  
+  .formGroup {
+    margin-bottom: 20px;
+  }
+  
+  .formGroup label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #FFFFFF;
+  }
+  
+  .socialIcon {
+    font-size: 1.2rem;
+    margin-right: 5px;
+  }
+  
+  .formGroup input,
+  .formGroup textarea {
+    width: 100%;
+    padding: 12px 15px;
+    background-color: #2A2A2A;
+    border: 1px solid #333333;
+    border-radius: 8px;
+    font-size: 1rem;
+    color: #FFFFFF;
+    transition: all 0.3s ease;
+  }
+  
+  .formGroup input:disabled {
+    background-color: #262626;
+    color: #666666;
+    cursor: not-allowed;
+  }
+  
+  .formGroup input:focus,
+  .formGroup textarea:focus {
+    outline: none;
+    border-color: #7B2CBF;
+    box-shadow: 0 0 0 2px rgba(123, 44, 191, 0.2);
+  }
+  
+  .fieldHelp {
+    font-size: 0.8rem;
+    color: #999999;
+    margin-top: 5px;
+  }
+  
+  .sectionHeading {
+    font-size: 1.3rem;
+    margin-top: 10px;
+    margin-bottom: 20px;
+    color: #FFFFFF;
+    border-bottom: 1px solid #333333;
+    padding-bottom: 10px;
+  }
+  
+  .formActions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 30px;
+  }
+  
+  .saveButton {
+    background-color: #7B2CBF;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 25px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+  }
+  
+  .saveButton:hover:not(:disabled) {
+    background-color: #9945E8;
+    transform: scale(1.05);
+  }
+  
+  .saveButton:disabled {
+    background-color: #666666;
+    cursor: not-allowed;
+  }
+  
+  .loadingContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    color: #AAAAAA;
+  }
+  
+  /* Responsive styles */
+  @media (max-width: 768px) {
+    .profileForm {
+      padding: 20px;
+    }
+    
+    .formGrid {
+      grid-template-columns: 1fr;
+    }
+  }

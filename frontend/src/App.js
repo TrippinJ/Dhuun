@@ -19,6 +19,8 @@ import CreatorCommunity from "./pages/CreatorCommunity"; // This needs to be cre
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
+import EditProfile from "./Components/EditProfile";
+import EditBeat from "./Components/EditBeat"
 
 
 function App() {
@@ -56,11 +58,30 @@ function App() {
               </PrivateRoute>
             }
           />
+
+          <Route
+            path="/edit-profile"
+            element={
+              <PrivateRoute>
+                <EditProfile />
+              </PrivateRoute>
+            }
+          />
+
           <Route
             path="/subscription"
             element={
               <PrivateRoute>
                 <SubscriptionPage />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/edit-beat/:beatId"
+            element={
+              <PrivateRoute>
+                <EditBeat />
               </PrivateRoute>
             }
           />

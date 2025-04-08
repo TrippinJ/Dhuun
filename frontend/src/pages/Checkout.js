@@ -38,6 +38,7 @@ const Checkout = () => {
   };
 
   const handleKhaltiPayment = () => {
+    
     // Basic validation
     if (!email) {
       setError("Please enter your email address");
@@ -61,7 +62,7 @@ const Checkout = () => {
       
       script.onload = () => {
         // Once Khalti is loaded, initialize payment
-        const khaltiKey = process.env.REACT_APP_KHALTI_PUBLIC_KEY || '93148c2f7d274399afd73aab9e9ad7f4'; // Use your Khalti public key
+        const khaltiKey = process.env.KHALTI_PUBLIC_KEY || 'Not Set'; 
         const priceInPaisa = total * 100; // Khalti expects amount in paisa (1 NPR = 100 paisa)
         
         const config = {

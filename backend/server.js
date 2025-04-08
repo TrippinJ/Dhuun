@@ -9,6 +9,7 @@ const fs = require("fs"); // <-- Add this import
 const expressListRoutes = require("express-list-routes");
 const orderRoutes = require('./routes/orderRoutes');
 const producerRoutes = require('./routes/producerRoutes');
+const profileRoutes = require('./routes/profileRoutes');
 
 // Import Routes
 const { router: authRoutes } = require("./routes/auth");
@@ -17,7 +18,7 @@ const subscriptionRoutes = require("./routes/subscription");
 
 // Initialize Express
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3000;
 
 // CORS Middleware Setup
 app.use(cors({
@@ -82,6 +83,7 @@ app.use("/api/subscription", subscriptionRoutes);
 app.use('/api/beats', beatRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/producers', producerRoutes);
+app.use('/api/profile', profileRoutes);
 
 // Test Route
 app.get("/", (req, res) => {
@@ -129,3 +131,5 @@ setInterval(() => {
     console.error('Error cleaning up temp files:', error);
   }
 }, 24 * 60 * 60 * 1000);
+
+

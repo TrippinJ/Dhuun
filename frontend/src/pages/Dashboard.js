@@ -2,18 +2,19 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/api";
 import styles from "../css/Dashboard.module.css";
-import { 
-  FaUserCircle, 
-  FaMusic, 
-  FaChartLine, 
-  FaSignOutAlt, 
-  FaTools, 
+import {
+  FaUserCircle,
+  FaMusic,
+  FaChartLine,
+  FaSignOutAlt,
+  FaTools,
   FaUpload,
   FaPlay,
   FaPause,
   FaEdit,
   FaTrash,
-  FaHeadphones
+  FaHeadphones,
+  FaUserEdit
 } from "react-icons/fa";
 import UploadBeat from "../Components/UploadBeat";
 
@@ -28,6 +29,7 @@ const Dashboard = () => {
   const [showConfirmDelete, setShowConfirmDelete] = useState(null);
   const [error, setError] = useState(null);
   const [audioLoading, setAudioLoading] = useState(false);
+  const [activePage, setActivePage] = useState("dashboard");
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -42,26 +44,26 @@ const Dashboard = () => {
         const userResponse = await API.get("/api/auth/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        
+
         setUser(userResponse.data);
-        
+
         // Only fetch beats for sellers
         if (userResponse.data.role === "seller") {
           // Fetch user's beats
           const beatsResponse = await API.get("/api/beats/producer/beats", {
             headers: { Authorization: `Bearer ${token}` },
           });
-          
+
           // Log the first beat to debug structure
           if (beatsResponse.data.length > 0) {
             console.log("First beat structure:", beatsResponse.data[0]);
             console.log("Image URL:", beatsResponse.data[0].coverImage || beatsResponse.data[0].imageUrl || "No image URL found");
             console.log("Audio URL:", beatsResponse.data[0].audioUrl || beatsResponse.data[0].audioFile || "No audio URL found");
           }
-          
+
           setBeats(beatsResponse.data);
         }
-        
+
         setIsLoading(false);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -76,7 +78,7 @@ const Dashboard = () => {
     };
 
     checkAuth();
-    
+
     // Cleanup function for audio player
     return () => {
       if (player) {
@@ -92,12 +94,12 @@ const Dashboard = () => {
       console.log("Image URL is missing, using fallback");
       return fallbackUrl;
     }
-    
+
     console.log("Original image URL:", imageUrl);
-    
+
     // Make sure it's a string
     const url = String(imageUrl);
-    
+
     // Check if it's a valid URL
     try {
       new URL(url);
@@ -113,12 +115,12 @@ const Dashboard = () => {
     try {
       console.log(`Playing beat with ID: ${beatId}`);
       console.log("Audio URL:", audioUrl);
-      
+
       if (!audioUrl) {
         console.error("No audio URL provided for this beat");
         return;
       }
-      
+
       // If already playing this beat, toggle play/pause
       if (currentlyPlaying === beatId && player) {
         if (!player.paused) {
@@ -130,19 +132,19 @@ const Dashboard = () => {
         }
         return;
       }
-      
+
       // Otherwise, start fresh with a new audio player
       setAudioLoading(true);
-      
+
       // Stop previous audio if playing
       if (player) {
         player.pause();
         player.src = "";
       }
-      
+
       // Create standard HTML5 Audio element
       const audio = new Audio();
-      
+
       // Set up event handlers first
       audio.oncanplaythrough = () => {
         setAudioLoading(false);
@@ -156,11 +158,11 @@ const Dashboard = () => {
             setAudioLoading(false);
           });
       };
-      
+
       audio.onended = () => {
         setCurrentlyPlaying(null);
       };
-      
+
       audio.onerror = (e) => {
         console.error("Audio playback error:", e);
         console.error("Error code:", audio.error ? audio.error.code : "unknown");
@@ -168,19 +170,19 @@ const Dashboard = () => {
         setAudioLoading(false);
         setCurrentlyPlaying(null);
       };
-      
+
       // Log loading states for debugging
       audio.onloadstart = () => console.log("Audio loading started");
       audio.onprogress = () => console.log("Audio download in progress");
       audio.onstalled = () => console.log("Audio download stalled");
-      
+
       // Set the source (this triggers loading)
       audio.src = audioUrl;
       audio.load(); // Explicitly start loading
-      
+
       // Store the audio element
       setPlayer(audio);
-      
+
     } catch (error) {
       console.error("Audio playback error:", error);
       setAudioLoading(false);
@@ -200,11 +202,11 @@ const Dashboard = () => {
   const handleUpgrade = () => {
     navigate("/subscription");
   };
-  
+
   const toggleUploadForm = () => {
     setShowUploadForm(!showUploadForm);
   };
-  
+
   const handleUploadComplete = (data) => {
     // Add the new beat to the beats list
     if (data && data.beat) {
@@ -212,12 +214,12 @@ const Dashboard = () => {
     }
     setShowUploadForm(false);
   };
-  
+
   const handleEditBeat = (beatId) => {
     // Implement edit functionality or navigate to edit page
     navigate(`/edit-beat/${beatId}`);
   };
-  
+
   const handleDeleteBeat = async (beatId) => {
     try {
       console.log("Setting up delete for beat ID:", beatId); // Debug log
@@ -227,11 +229,11 @@ const Dashboard = () => {
       console.error("Error preparing delete:", error);
     }
   };
-  
+
   const confirmDelete = async (beatId) => {
     try {
       console.log("Deleting beat with ID:", beatId); // Debug log
-      
+
       // Make sure beatId is not undefined
       if (!beatId) {
         console.error("Beat ID is undefined");
@@ -239,12 +241,12 @@ const Dashboard = () => {
         setShowConfirmDelete(null);
         return;
       }
-      
+
       const token = localStorage.getItem("token");
       await API.delete(`/api/beats/${beatId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       // If the beat being deleted is currently playing, stop it
       if (currentlyPlaying === beatId && player) {
         player.pause();
@@ -252,10 +254,10 @@ const Dashboard = () => {
         setPlayer(null);
         setCurrentlyPlaying(null);
       }
-      
+
       // Remove the beat from the list - support both id and _id
       setBeats(beats.filter(beat => (beat.id !== beatId && beat._id !== beatId)));
-      
+
       // Reset confirm delete state
       setShowConfirmDelete(null);
     } catch (error) {
@@ -264,9 +266,14 @@ const Dashboard = () => {
       setShowConfirmDelete(null);
     }
   };
-  
+
   const cancelDelete = () => {
     setShowConfirmDelete(null);
+  };
+
+  // Handle navigation to edit profile
+  const handleNavigateToEditProfile = () => {
+    navigate("/edit-profile");
   };
 
   // Render dashboard content based on user's role
@@ -274,11 +281,11 @@ const Dashboard = () => {
     if (isLoading) {
       return <div className={styles.loading}>Loading dashboard...</div>;
     }
-    
+
     if (error) {
       return <div className={styles.error}>{error}</div>;
     }
-    
+
     // Return different content based on user role
     if (user?.role === "seller") {
       return (
@@ -301,7 +308,7 @@ const Dashboard = () => {
               <p>{user.subscription?.uploadLimit || 5}</p>
             </div>
           </div>
-          
+
           <div className={styles.beatsSection}>
             <h2>Your Beats</h2>
             {beats.length === 0 ? (
@@ -328,15 +335,15 @@ const Dashboard = () => {
                     <div className={styles.beatStats}>Stats</div>
                     <div className={styles.beatActions}>Actions</div>
                   </div>
-                  
+
                   {beats.map((beat) => {
                     // Support both id and _id formats
                     const beatId = beat._id || beat.id;
                     return (
                       <div key={beatId} className={styles.beatItem}>
                         <div className={styles.beatImage}>
-                          <img 
-                            src={getCloudinaryImageUrl(beat.coverImage || beat.imageUrl)} 
+                          <img
+                            src={getCloudinaryImageUrl(beat.coverImage || beat.imageUrl)}
                             alt={beat.title}
                             onError={(e) => {
                               console.error("Image failed to load:", e.target.src);
@@ -354,7 +361,7 @@ const Dashboard = () => {
                           </div>
                         </div>
                         <div className={styles.beatActions}>
-                          <button 
+                          <button
                             className={styles.actionBtn}
                             onClick={() => handlePlayPause(beatId, beat.audioFile || beat.audioUrl)}
                             disabled={audioLoading && currentlyPlaying === beatId}
@@ -367,31 +374,31 @@ const Dashboard = () => {
                               <FaPlay />
                             )}
                           </button>
-                          <button 
+                          <button
                             className={styles.actionBtn}
                             onClick={() => handleEditBeat(beatId)}
                           >
                             <FaEdit />
                           </button>
-                          <button 
+                          <button
                             className={styles.actionBtn}
                             onClick={() => handleDeleteBeat(beatId)}
                           >
                             <FaTrash />
                           </button>
                         </div>
-                        
+
                         {showConfirmDelete === beatId && (
                           <div className={styles.confirmDelete}>
                             <p>Are you sure you want to delete <strong>{beat.title}</strong>?</p>
                             <div className={styles.confirmButtons}>
-                              <button 
+                              <button
                                 className={styles.deleteBtn}
                                 onClick={() => confirmDelete(beatId)}
                               >
                                 Delete
                               </button>
-                              <button 
+                              <button
                                 className={styles.cancelBtn}
                                 onClick={cancelDelete}
                               >
@@ -415,14 +422,14 @@ const Dashboard = () => {
         <div className={styles.buyerDashboard}>
           <h2>Welcome to Your Dashboard</h2>
           <p>View your purchased beats and explore more music</p>
-          
+
           <div className={styles.actionCards}>
             <div className={styles.actionCard} onClick={() => navigate('/BeatExplorePage')}>
               <FaMusic className={styles.actionIcon} />
               <h3>Explore Beats</h3>
               <p>Browse our collection of beats from talented producers</p>
             </div>
-            
+
             {/* Add more action cards as needed */}
           </div>
         </div>
@@ -442,10 +449,35 @@ const Dashboard = () => {
         </div>
         <nav>
           <ul>
-            <li className={styles.active}><FaChartLine /> Dashboard</li>
-            <li><FaMusic /> {user?.role === "seller" ? "My Beats" : "Purchased Beats"}</li>
-            <li><FaTools /> {user?.role === "seller" ? "Selling Tools" : "Account Settings"}</li>
-            <li onClick={handleLogout}><FaSignOutAlt /> Logout</li>
+            <li className={activePage === "dashboard" ? styles.active : ""} onClick={() => setActivePage("dashboard")}>
+              <FaChartLine /> Dashboard
+            </li>
+
+            {/* Edit Profile link */}
+            <li
+              className={activePage === "profile" ? styles.active : ""}
+              onClick={handleNavigateToEditProfile}
+            >
+              <FaUserEdit /> Edit Profile
+            </li>
+
+            {user?.role === "seller" ? (
+              <li className={activePage === "beats" ? styles.active : ""} onClick={() => setActivePage("beats")}>
+                <FaMusic /> My Beats
+              </li>
+            ) : (
+              <li className={activePage === "purchases" ? styles.active : ""} onClick={() => setActivePage("purchases")}>
+                <FaMusic /> Purchased Beats
+              </li>
+            )}
+
+            <li className={activePage === "settings" ? styles.active : ""} onClick={() => setActivePage("settings")}>
+              <FaTools /> {user?.role === "seller" ? "Selling Tools" : "Account Settings"}
+            </li>
+
+            <li onClick={handleLogout}>
+              <FaSignOutAlt /> Logout
+            </li>
           </ul>
         </nav>
       </aside>
@@ -456,14 +488,14 @@ const Dashboard = () => {
           <>
             <div className={styles.header}>
               <h2>Upload Beat</h2>
-              <button 
+              <button
                 className={styles.backBtn}
                 onClick={toggleUploadForm}
               >
                 Back to Dashboard
               </button>
             </div>
-            
+
             <UploadBeat onUploadComplete={handleUploadComplete} />
           </>
         ) : (
@@ -472,7 +504,7 @@ const Dashboard = () => {
               <h2>Dashboard</h2>
               {user?.role === "seller" && (
                 <div className={styles.headerActions}>
-                  <button 
+                  <button
                     className={styles.upgradeBtn}
                     onClick={handleUpgrade}
                   >
@@ -481,7 +513,7 @@ const Dashboard = () => {
                 </div>
               )}
             </div>
-            
+
             {renderDashboardContent()}
           </>
         )}
