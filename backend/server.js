@@ -10,7 +10,7 @@ const expressListRoutes = require("express-list-routes");
 const orderRoutes = require('./routes/orderRoutes');
 const producerRoutes = require('./routes/producerRoutes');
 const profileRoutes = require('./routes/profileRoutes');
-
+const paymentRoutes = require('./routes/paymentRoutes');
 // Import Routes
 const { router: authRoutes } = require("./routes/auth");
 const beatRoutes = require('./routes/beatRoutes');
@@ -84,6 +84,7 @@ app.use('/api/beats', beatRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/producers', producerRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // Test Route
 app.get("/", (req, res) => {

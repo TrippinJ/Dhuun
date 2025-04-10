@@ -1,12 +1,14 @@
-// backend/utils/khaltiPayment.js
+// backend/utils/khaltiPayment.js - UPDATED
 const axios = require("axios");
 require('dotenv').config();
 
-// Use Khalti sandbox URL for development
-const KHALTI_BASE_URL = 'https://a.khalti.com/api/v2';
+// Updated API Endpoints (according to documentation)
+const KHALTI_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://khalti.com/api/v2'
+  : 'https://dev.khalti.com/api/v2';
 
 /**
- * Verify payment status with Khalti
+ * Verify payment status with Khalti using lookup endpoint
  * @param {string} pidx - Payment ID to verify
  * @returns {Promise<Object>} - Payment verification result
  */
@@ -19,7 +21,7 @@ const verifyPayment = async (pidx) => {
       throw new Error("Payment ID (pidx) is required for verification");
     }
     
-    // Use lookup endpoint to check payment status
+    // Use lookup endpoint to check payment status as per documentation
     const response = await axios.post(
       `${KHALTI_BASE_URL}/epayment/lookup/`,
       { pidx },
@@ -31,8 +33,16 @@ const verifyPayment = async (pidx) => {
       }
     );
     
-    console.log("Payment verification successful:", response.data.status);
-    return response.data;
+    console.log("Payment verification response:", response.data);
+    
+    // Check if status is "Completed" (only valid success state)
+    if (response.data.status === "Completed") {
+      console.log("Payment verification successful - Status: Completed");
+      return response.data;
+    } else {
+      console.log(`Payment not completed - Status: ${response.data.status}`);
+      throw new Error(`Payment not completed. Current status: ${response.data.status}`);
+    }
   } catch (error) {
     console.error("Payment Verification Error:", error.response?.data || error.message);
     throw new Error(`Failed to verify payment: ${error.response?.data?.detail || error.message}`);
@@ -52,13 +62,18 @@ const initiatePayment = async ({ userId, amount, purchaseOrderName, returnUrl, w
     // Create a unique order ID if not provided
     const orderId = userId || `order-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     
-    // Build the payload
+    // Build the payload according to Khalti documentation
     const payload = {
       return_url: returnUrl || "http://localhost:3000/checkout-success",
       website_url: websiteUrl || "http://localhost:3000/",
       amount: amountInPaisa,
       purchase_order_id: orderId,
       purchase_order_name: purchaseOrderName || "Product Purchase",
+      customer_info: {
+        name: "Customer",
+        email: "customer@example.com",
+        phone: "9800000001"  // Use test phone for sandbox
+      }
     };
     
     console.log("Initiating Khalti payment with payload:", JSON.stringify(payload, null, 2));
@@ -77,10 +92,14 @@ const initiatePayment = async ({ userId, amount, purchaseOrderName, returnUrl, w
     
     console.log("Payment initiation successful:", {
       pidx: response.data.pidx,
-      payment_url: response.data.payment_url
+      payment_url: response.data.payment_url,
+      expires_at: response.data.expires_at
     });
     
-    return response.data.payment_url;
+    return {
+      payment_url: response.data.payment_url,
+      pidx: response.data.pidx
+    };
   } catch (error) {
     // Enhanced error handling with detailed information
     const errorDetails = error.response?.data || error.message;
@@ -102,16 +121,13 @@ const validatePaymentSuccess = async (pidx) => {
   try {
     const paymentStatus = await verifyPayment(pidx);
     
-    if (paymentStatus.status === "Completed") {
-      return {
-        success: true,
-        transactionId: paymentStatus.transaction_id,
-        amount: paymentStatus.total_amount / 100, // Convert back from paisa
-        status: paymentStatus.status
-      };
-    } else {
-      throw new Error(`Payment not completed. Status: ${paymentStatus.status}`);
-    }
+    return {
+      success: true,
+      pidx: paymentStatus.pidx,
+      transaction_id: paymentStatus.transaction_id,
+      amount: paymentStatus.total_amount / 100, // Convert back from paisa
+      status: paymentStatus.status
+    };
   } catch (error) {
     console.error("Payment validation error:", error.message);
     throw error;

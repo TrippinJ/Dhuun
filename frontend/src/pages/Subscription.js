@@ -89,7 +89,7 @@ const Subscription = () => {
       
       script.onload = () => {
         // Once Khalti is loaded, initialize payment
-        const khaltiKey = process.env.REACT_APP_KHALTI_PUBLIC_KEY || '93148c2f7d274399afd73aab9e9ad7f4';
+        const khaltiKey = process.env.REACT_APP_KHALTI_PUBLIC_KEY || '994dad9a767e4b57a455035549d3d6b1';
         const priceInPaisa = price * 100; // Khalti expects amount in paisa (1 NPR = 100 paisa)
         
         const config = {

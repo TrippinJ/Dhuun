@@ -6,6 +6,7 @@ const FeaturedBeatsCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentPlayingId, setCurrentPlayingId] = useState(null);
+  const [audioLoading, setAudioLoading] = useState(false);
   const audioRef = useRef(new Audio());
   
   // Sample featured beats data
@@ -57,29 +58,77 @@ const FeaturedBeatsCarousel = () => {
     return () => clearInterval(interval);
   }, [nextSlide]);
   
-  // Handle audio playback
+  // Handle audio playback with improved error handling
   const togglePlay = (beatId, audioUrl) => {
-    const audio = audioRef.current;
-    
-    // If the same beat is clicked
-    if (beatId === currentPlayingId) {
+    try {
+      const audio = audioRef.current;
+      
+      console.log(`Toggling play for beat ID: ${beatId}, URL: ${audioUrl}`);
+      
+      if (!audioUrl) {
+        console.error("No audio URL provided for this beat");
+        return;
+      }
+      
+      // If the same beat is clicked
+      if (beatId === currentPlayingId) {
+        if (isPlaying) {
+          audio.pause();
+          setIsPlaying(false);
+        } else {
+          audio.play()
+            .catch(error => {
+              console.error("Error resuming audio:", error);
+              setIsPlaying(false);
+            });
+          setIsPlaying(true);
+        }
+        return;
+      } 
+      
+      // If a different beat is clicked
       if (isPlaying) {
         audio.pause();
-        setIsPlaying(false);
-      } else {
-        audio.play();
-        setIsPlaying(true);
       }
-    } 
-    // If a different beat is clicked
-    else {
-      if (isPlaying) {
-        audio.pause();
-      }
+      
+      // Set loading state
+      setAudioLoading(true);
+      
+      // Set audio source and prepare event handlers
       audio.src = audioUrl;
-      audio.play();
-      setCurrentPlayingId(beatId);
-      setIsPlaying(true);
+      
+      // Set up event handlers
+      audio.oncanplaythrough = () => {
+        setAudioLoading(false);
+        audio.play()
+          .then(() => {
+            setCurrentPlayingId(beatId);
+            setIsPlaying(true);
+          })
+          .catch(error => {
+            console.error("Error playing audio:", error);
+            setAudioLoading(false);
+            setIsPlaying(false);
+          });
+      };
+      
+      audio.onended = () => {
+        setIsPlaying(false);
+        setCurrentPlayingId(null);
+      };
+      
+      audio.onerror = (e) => {
+        console.error("Audio error:", e);
+        console.error("Error code:", audio.error ? audio.error.code : "unknown");
+        setAudioLoading(false);
+        setIsPlaying(false);
+        setCurrentPlayingId(null);
+      };
+      
+    } catch (error) {
+      console.error("Error in togglePlay:", error);
+      setAudioLoading(false);
+      setIsPlaying(false);
     }
   };
   
@@ -96,9 +145,35 @@ const FeaturedBeatsCarousel = () => {
   
   // Handle buy now click
   const handleBuyNow = (beatId) => {
-    // Here you would add the logic to add the beat to cart or navigate to purchase page
-    console.log('Buy now clicked for beat ID:', beatId);
-    // For example: navigate(`/beat/${beatId}/purchase`);
+    // Get the beat from the array
+    const beat = featuredBeats.find(b => b.id === beatId);
+    if (!beat) return;
+    
+    // Get existing cart or initialize empty array
+    let cart = [];
+    try {
+      cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    } catch (error) {
+      console.error("Error parsing cart:", error);
+      cart = [];
+    }
+    
+    // Check if beat is already in cart
+    const beatInCart = cart.some(item => item.id === beatId);
+    
+    if (beatInCart) {
+      alert(`"${beat.title}" is already in your cart`);
+      return;
+    }
+    
+    // Add beat to cart
+    cart.push(beat);
+    
+    // Save updated cart
+    localStorage.setItem('cart', JSON.stringify(cart));
+    
+    // Show feedback to user
+    alert(`${beat.title} added to cart!`);
   };
   
   return (
@@ -115,12 +190,26 @@ const FeaturedBeatsCarousel = () => {
             <div className={styles.carouselSlide} key={beat.id}>
               <div className={styles.beatCard}>
                 <div className={styles.imageContainer}>
-                  <img src={beat.image} alt={beat.title} />
+                  <img 
+                    src={beat.image} 
+                    alt={beat.title} 
+                    onError={(e) => {
+                      console.log("Image error, using fallback");
+                      e.target.src = "https://via.placeholder.com/300x160";
+                    }}
+                  />
                   <button 
                     className={styles.playButton}
                     onClick={() => togglePlay(beat.id, beat.audioUrl)}
+                    disabled={audioLoading && currentPlayingId === beat.id}
                   >
-                    {isPlaying && currentPlayingId === beat.id ? <FaPause /> : <FaPlay />}
+                    {audioLoading && currentPlayingId === beat.id ? (
+                      <span>...</span>
+                    ) : isPlaying && currentPlayingId === beat.id ? (
+                      <FaPause />
+                    ) : (
+                      <FaPlay />
+                    )}
                   </button>
                 </div>
                 <h3>{beat.title}</h3>
