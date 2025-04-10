@@ -95,7 +95,8 @@ const CheckoutSuccess = () => {
               totalAmount: pendingOrderData.totalAmount,
               customerEmail: pendingOrderData.customerEmail,
               paymentMethod: "khalti",
-              paymentId: transaction_id || pidx
+              paymentId: transaction_id,
+              paymentPidx: pidx
             };
             
             const orderResponse = await API.post("/api/orders", orderData, {

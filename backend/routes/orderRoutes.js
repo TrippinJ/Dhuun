@@ -11,7 +11,7 @@ router.use(authenticateUser);
 // Create a new order
 router.post('/', async (req, res) => {
   try {
-    const { items, totalAmount, customerEmail, paymentMethod, paymentId } = req.body;
+    const { items, totalAmount, customerEmail, paymentMethod, paymentId, paymentPidx } = req.body;
     
     if (!items || items.length === 0) {
       return res.status(400).json({ message: 'Order must contain at least one item' });
@@ -20,7 +20,7 @@ router.post('/', async (req, res) => {
     // Verify Khalti payment if payment method is Khalti
     if (paymentMethod === 'khalti' && paymentId) {
       try {
-        await verifyPayment(paymentId);
+        await verifyPayment(paymentPidx);
       } catch (paymentError) {
         console.error('Payment verification error:', paymentError);
         return res.status(400).json({ message: 'Payment verification failed' });
@@ -38,7 +38,8 @@ router.post('/', async (req, res) => {
       totalAmount,
       customerEmail: customerEmail || req.user.email,
       paymentMethod: paymentMethod || 'khalti',
-      paymentId,
+      paymentId, 
+      paymentPidx,
       paymentStatus: 'Completed'
     });
     

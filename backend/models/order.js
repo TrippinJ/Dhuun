@@ -45,7 +45,10 @@ const OrderSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
-  }
+  },
+  paymentPidx: {
+    type: String
+  },
 });
 
 module.exports = mongoose.model('Order', OrderSchema);
