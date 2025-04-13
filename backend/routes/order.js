@@ -1,8 +1,8 @@
 // backend/routes/order.js
-const express = require("express");
-const router = express.Router();
-const { initiatePayment } = require("../utils/khaltiPayment");  // Import the shared Khalti logic
-const Order = require("../models/order");
+import express from ("express");
+import router from express.Router();
+import  { initiatePayment } from ("../utils/khaltiPayment");  // Import the shared Khalti logic
+import Order from ("../models/order");
 
 router.post("/order-payment", async (req, res) => {
   const { userId, orderId } = req.body;
@@ -32,4 +32,4 @@ router.post("/order-payment", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

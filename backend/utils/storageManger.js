@@ -1,7 +1,12 @@
-const fs = require('fs');
-const path = require('path');
-const multer = require('multer');
-const { uploadToCloudinary, deleteFromCloudinary, getPublicIdFromUrl } = require('./cloudinaryConfig');
+import fs from 'fs';
+import path from 'path';
+import multer from 'multer';
+import { fileURLToPath } from 'url';
+import { uploadToCloudinary, deleteFromCloudinary, getPublicIdFromUrl } from './cloudinaryConfig.js';
+
+// Resolve __dirname in ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Define constants
 const TEMP_UPLOAD_DIR = path.join(__dirname, '../temp_uploads');
@@ -10,13 +15,11 @@ const IMAGES_FOLDER = 'dhuun/images';
 
 // Resource types for Cloudinary
 const RESOURCE_TYPES = {
-  AUDIO: 'video',  // Cloudinary handles audio files under "video" resource type
+  AUDIO: 'video', // Cloudinary handles audio files under "video" resource type
   IMAGE: 'image'
 };
 
-/**
- * Ensure the temporary upload directory exists
- */
+// Ensure the temporary upload directory exists
 const ensureTempDirExists = () => {
   if (!fs.existsSync(TEMP_UPLOAD_DIR)) {
     fs.mkdirSync(TEMP_UPLOAD_DIR, { recursive: true });
@@ -24,18 +27,13 @@ const ensureTempDirExists = () => {
   }
 };
 
-/**
- * Initialize storage system
- */
+// Initialize storage system
 const initializeStorage = () => {
   ensureTempDirExists();
   console.log('✅ Storage manager initialized with Cloudinary integration');
 };
 
-/**
- * Remove a temp file if it exists
- * @param {string} filePath - Path to the file to remove
- */
+// Remove a temp file if it exists
 const removeTempFile = (filePath) => {
   if (fs.existsSync(filePath)) {
     fs.unlinkSync(filePath);
@@ -43,11 +41,8 @@ const removeTempFile = (filePath) => {
   }
 };
 
-/**
- * Clean up temporary files after a certain period
- * @param {number} maxAgeMs - Maximum age of files in milliseconds
- */
-const cleanupTempFiles = (maxAgeMs = 24 * 60 * 60 * 1000) => { // Default: 24 hours
+// Clean up temporary files after a certain period
+const cleanupTempFiles = (maxAgeMs = 24 * 60 * 60 * 1000) => {
   try {
     if (!fs.existsSync(TEMP_UPLOAD_DIR)) return;
 
@@ -64,7 +59,7 @@ const cleanupTempFiles = (maxAgeMs = 24 * 60 * 60 * 1000) => { // Default: 24 ho
       }
     });
 
-    console.log(`✅ Temp directory cleaned up`);
+    console.log('✅ Temp directory cleaned up');
   } catch (error) {
     console.error('Error cleaning up temp files:', error);
   }
@@ -77,18 +72,17 @@ const storage = multer.diskStorage({
     cb(null, TEMP_UPLOAD_DIR);
   },
   filename: (req, file, cb) => {
-    // Generate unique filename while preserving original extension
     const fileExt = path.extname(file.originalname);
     const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1E9)}${fileExt}`;
     cb(null, uniqueName);
   }
 });
 
-// Filter to only accept specific file types
+// File filter for multer
 const fileFilter = (req, file, cb) => {
   const allowedAudioTypes = ['audio/mpeg', 'audio/wav', 'audio/mp3'];
   const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-  
+
   if (allowedAudioTypes.includes(file.mimetype) || allowedImageTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
@@ -96,42 +90,28 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-// Create multer upload middleware
+// Multer upload middleware
 const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
+    fileSize: 10 * 1024 * 1024 // 10MB
   }
 });
 
-/**
- * Upload a file to Cloudinary
- * @param {string} filePath - Path to the file
- * @param {boolean} isAudio - Whether the file is an audio file
- * @param {Object} options - Additional upload options
- * @returns {Promise<Object>} - Cloudinary upload result
- */
+// Upload a file to Cloudinary
 const uploadFileToCloudinary = async (filePath, isAudio = false, options = {}) => {
   try {
     const folder = isAudio ? AUDIO_FOLDER : IMAGES_FOLDER;
-    
-    // Additional options for audio files
-    const uploadOptions = {
-      ...options
-    };
-    
-    // Add specific options for audio files
+    const uploadOptions = { ...options };
+
     if (isAudio) {
-      uploadOptions.resource_type = 'video'; // Cloudinary handles audio files as 'video' type
+      uploadOptions.resource_type = 'video';
     }
-    
-    // Upload to Cloudinary
+
     const result = await uploadToCloudinary(filePath, folder, uploadOptions);
-    
-    // Remove temp file after successful upload
     removeTempFile(filePath);
-    
+
     return {
       url: result.secure_url,
       publicId: result.public_id,
@@ -144,25 +124,19 @@ const uploadFileToCloudinary = async (filePath, isAudio = false, options = {}) =
   }
 };
 
-/**
- * Delete a file from Cloudinary
- * @param {string} publicIdOrUrl - Public ID or URL of the file to delete
- * @param {string} resourceType - Resource type (image or video for audio)
- * @returns {Promise<Object>} - Cloudinary deletion result
- */
+// Delete file from Cloudinary
 const deleteFile = async (publicIdOrUrl, resourceType = RESOURCE_TYPES.IMAGE) => {
   try {
     let publicId = publicIdOrUrl;
-    
-    // If a URL was provided, extract the public ID
-    if (publicIdOrUrl && publicIdOrUrl.startsWith('http')) {
+
+    if (publicIdOrUrl.startsWith('http')) {
       publicId = getPublicIdFromUrl(publicIdOrUrl);
     }
-    
+
     if (!publicId) {
       throw new Error('Invalid public ID or URL provided');
     }
-    
+
     return await deleteFromCloudinary(publicId, resourceType);
   } catch (error) {
     console.error('Error deleting file from Cloudinary:', error);
@@ -170,7 +144,8 @@ const deleteFile = async (publicIdOrUrl, resourceType = RESOURCE_TYPES.IMAGE) =>
   }
 };
 
-module.exports = {
+// ✅ Export ESM-style
+export {
   initializeStorage,
   upload,
   uploadFileToCloudinary,

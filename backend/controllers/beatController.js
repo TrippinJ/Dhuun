@@ -1,13 +1,13 @@
-const Beat = require('../models/beat');
-const { uploadFileToCloudinary, deleteFile, RESOURCE_TYPES } = require('../utils/storageManger');
-const fs = require('fs');
 
+import Beat from '../models/beat.js';
+import { uploadFileToCloudinary, deleteFile, RESOURCE_TYPES } from '../utils/storageManger.js';
+import fs from 'fs';
 /**
  * Create and upload a new beat
  * @route POST /api/beats
  * @access Private
  */
-exports.createBeat = async (req, res) => {
+export const createBeat = async (req, res) => {
   try {
     // Extract beat data from request body
     const { title, genre, bpm, price, description, key, mood, tags } = req.body;
@@ -96,7 +96,7 @@ exports.createBeat = async (req, res) => {
  * @route GET /api/beats
  * @access Public
  */
-exports.getAllBeats = async (req, res) => {
+export const getAllBeats = async (req, res) => {
   try {
     // Extract query parameters for filtering
     const { 
@@ -168,7 +168,7 @@ exports.getAllBeats = async (req, res) => {
  * @route GET /api/beats/:id
  * @access Public
  */
-exports.getBeatById = async (req, res) => {
+export const getBeatById = async (req, res) => {
   try {
     const beat = await Beat.findById(req.params.id)
       .populate('producer', 'name username');
@@ -198,7 +198,7 @@ exports.getBeatById = async (req, res) => {
  * @route GET /api/beats/producer/:producerId
  * @access Public
  */
-exports.getBeatsByProducer = async (req, res) => {
+export const getBeatsByProducer = async (req, res) => {
   try {
     // Handle special 'me' parameter for own beats
     const producerId = req.params.producerId === 'me' 
@@ -252,7 +252,7 @@ exports.getBeatsByProducer = async (req, res) => {
  * @route PUT /api/beats/:id
  * @access Private
  */
-exports.updateBeat = async (req, res) => {
+export const updateBeat = async (req, res) => {
   try {
     const beatId = req.params.id;
     const { title, genre, bpm, price, description, key, mood, tags, isPublished } = req.body;
@@ -365,7 +365,7 @@ exports.updateBeat = async (req, res) => {
  * @route DELETE /api/beats/:id
  * @access Private
  */
-exports.deleteBeat = async (req, res) => {
+export const deleteBeat = async (req, res) => {
   try {
     const beatId = req.params.id;
     
@@ -418,7 +418,7 @@ exports.deleteBeat = async (req, res) => {
  * @route POST /api/beats/:id/play
  * @access Public
  */
-exports.incrementPlayCount = async (req, res) => {
+export const incrementPlayCount = async (req, res) => {
   try {
     const beatId = req.params.id;
     
@@ -454,7 +454,7 @@ exports.incrementPlayCount = async (req, res) => {
  * @route GET /api/beats/featured
  * @access Public
  */
-exports.getFeaturedBeats = async (req, res) => {
+export const getFeaturedBeats = async (req, res) => {
   try {
     const featuredBeats = await Beat.find({ 
       isPublished: true,
@@ -484,7 +484,7 @@ exports.getFeaturedBeats = async (req, res) => {
  * @route GET /api/beats/trending
  * @access Public
  */
-exports.getTrendingBeats = async (req, res) => {
+export const getTrendingBeats = async (req, res) => {
   try {
     console.log('Fetching trending beats...');
     
@@ -545,7 +545,7 @@ exports.getTrendingBeats = async (req, res) => {
  * @route PATCH /api/beats/:id/featured
  * @access Private/Admin
  */
-exports.toggleFeaturedStatus = async (req, res) => {
+export const toggleFeaturedStatus = async (req, res) => {
   try {
     const beatId = req.params.id;
     

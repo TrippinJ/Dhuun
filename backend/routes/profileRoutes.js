@@ -1,13 +1,19 @@
 // backend/routes/profileRoutes.js
-const express = require('express');
+import express from 'express';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { authenticateUser } from '../routes/auth.js';
+import User from '../models/user.js';
+import Profile from '../models/profile.js';
+import { uploadToCloudinary, deleteFromCloudinary } from '../utils/cloudinaryConfig.js';
+
+// Get __dirname equivalent in ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-const { authenticateUser } = require('../routes/auth'); // Make sure to import from the correct file
-const User = require('../models/user');
-const Profile = require('../models/profile');
-const { uploadToCloudinary, deleteFromCloudinary } = require('../utils/cloudinaryConfig');
 
 // Configure temporary storage for avatar uploads
 const storage = multer.diskStorage({
@@ -206,4 +212,4 @@ router.put('/update', authenticateUser, upload.single('avatar'), async (req, res
   }
 });
 
-module.exports = router;
+export default router;

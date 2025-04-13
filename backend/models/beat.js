@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const BeatSchema = new mongoose.Schema({
   title: { 
@@ -82,4 +82,4 @@ BeatSchema.index({
   tags: 'text' 
 });
 
-module.exports = mongoose.model("Beat", BeatSchema);
+export default mongoose.model("Beat", BeatSchema);

@@ -1,7 +1,7 @@
 // middleware/auth.js
-const jwt = require('jsonwebtoken');
-const User = require('../models/user');
-const mongoose = require('mongoose');
+import jwt from 'jsonwebtoken';
+import User from '../models/user.js';
+import mongoose from 'mongoose';
 
 const auth = async (req, res, next) => {
   try {
@@ -84,4 +84,4 @@ const auth = async (req, res, next) => {
   }
 };
 
-module.exports = auth;
+export default auth;

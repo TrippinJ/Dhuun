@@ -1,6 +1,7 @@
-const passport = require("passport");
-const GoogleStrategy = require("passport-google-oauth20").Strategy;
-require("dotenv").config();
+import passport from ("passport");
+import GoogleStrategy from ("passport-google-oauth20").Strategy;
+import dotenv from 'dotenv';
+dotenv.config();
 passport.use(
   new GoogleStrategy(
     {
@@ -22,3 +23,6 @@ passport.serializeUser((user, done) => {
 passport.deserializeUser((obj, done) => {
   done(null, obj);
 });
+
+
+export default passport;

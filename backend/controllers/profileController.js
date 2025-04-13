@@ -1,12 +1,12 @@
 // backend/controllers/profileController.js
 
-const User = require('../models/user');
-const Profile = require('../models/profile');
-const fs = require('fs');
-const { uploadToCloudinary, deleteFromCloudinary } = require('../utils/cloudinaryConfig');
+import user from "../models/user.js";
+import Profile from ('../models/profile.js');
+import fs from ('fs');
+import { uploadToCloudinary, deleteFromCloudinary } from ('../utils/cloudinaryConfig');
 
 // Get current user's profile
-exports.getProfile = async (req, res) => {
+export const getProfile = async (req, res) => {
   try {
     // Look for existing profile
     let profile = await Profile.findOne({ user: req.user.id });
@@ -28,7 +28,7 @@ exports.getProfile = async (req, res) => {
 };
 
 // Get profile by username
-exports.getProfileByUsername = async (req, res) => {
+export const getProfileByUsername = async (req, res) => {
   try {
     const profile = await Profile.findOne({ 
       username: req.params.username 
@@ -46,7 +46,7 @@ exports.getProfileByUsername = async (req, res) => {
 };
 
 // Update profile
-exports.updateProfile = async (req, res) => {
+export const updateProfile = async (req, res) => {
   try {
     const { username, bio, location, website, socialLinks } = req.body;
     

@@ -1,9 +1,9 @@
 // backend/controllers/subscriptionController.js
 
-const User = require("../models/user");
+import User from "../models/user.js";
 
 // Get current user's subscription details
-exports.getSubscription = async (req, res) => {
+export const getSubscription = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("subscription");
     
@@ -19,7 +19,7 @@ exports.getSubscription = async (req, res) => {
 };
 
 // Update user subscription
-exports.updateSubscription = async (req, res) => {
+export const updateSubscription = async (req, res) => {
   try {
     const { plan } = req.body;
     
@@ -72,7 +72,7 @@ exports.updateSubscription = async (req, res) => {
 };
 
 // For future implementation: Verify payment and update subscription
-exports.verifyPayment = async (req, res) => {
+export const verifyPayment = async (req, res) => {
   try {
     const { token, amount, plan } = req.body;
     

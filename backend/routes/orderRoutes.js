@@ -1,9 +1,11 @@
-const express = require('express');
+import express from 'express';
+import Order from '../models/order.js';
+import Beat from '../models/beat.js';
+import { authenticateUser } from '../routes/auth.js';
+import { verifyPayment } from '../utils/khaltiPayment.js';
+
+// Define router first
 const router = express.Router();
-const Order = require('../models/order');
-const Beat = require('../models/beat');
-const { authenticateUser } = require('../routes/auth');
-const { verifyPayment } = require('../utils/khaltiPayment');
 
 // Protect all order routes
 router.use(authenticateUser);
@@ -129,4 +131,4 @@ router.post('/verify-payment', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

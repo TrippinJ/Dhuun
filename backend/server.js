@@ -1,83 +1,89 @@
-require("dotenv").config();
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-const session = require("express-session");
-const passport = require("passport");
-const path = require("path");
-const fs = require("fs"); // <-- Add this import
-const expressListRoutes = require("express-list-routes");
-const orderRoutes = require('./routes/orderRoutes');
-const producerRoutes = require('./routes/producerRoutes');
-const profileRoutes = require('./routes/profileRoutes');
-const paymentRoutes = require('./routes/paymentRoutes');
-// Import Routes
-const { router: authRoutes } = require("./routes/auth");
-const beatRoutes = require('./routes/beatRoutes');
-const subscriptionRoutes = require("./routes/subscription");
+// server.js
+import 'dotenv/config';
+import express from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
+import session from 'express-session';
+import passport from 'passport';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import expressListRoutes from 'express-list-routes';
 
-// Initialize Express
+import orderRoutes from './routes/orderRoutes.js';
+import producerRoutes from './routes/producerRoutes.js';
+import profileRoutes from './routes/profileRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
+import { router as authRoutes } from './routes/auth.js';
+import beatRoutes from './routes/beatRoutes.js';
+import subscriptionRoutes from './routes/subscription.js';
+
+// Get __dirname equivalent
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
-// CORS Middleware Setup
+// Middleware
 app.use(cors({
-  origin: ["http://localhost:3000", "https://accounts.google.com"],
+  origin: ["http://localhost:3000", "http://localhost:5173", "https://accounts.google.com"],
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   credentials: true
 }));
-
-// Basic Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Static files middleware - Important for serving uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Request logger middleware
+// Enhanced request logging
 app.use((req, res, next) => {
-  console.log(`${req.method} ${req.path}`);
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`, 
+    req.method === 'POST' ? `Body: ${JSON.stringify(req.body)}` : '');
   next();
 });
 
-// Session Middleware (for OAuth)
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "your_session_secret",
-    resave: false,
-    saveUninitialized: true,
-  })
-);
+app.use(session({
+  secret: process.env.SESSION_SECRET || "your_session_secret",
+  resave: false,
+  saveUninitialized: true,
+}));
+
 app.use(passport.initialize());
 app.use(passport.session());
 
 // MongoDB Connection
-mongoose
-  .connect(process.env.MONGO_URI)
+mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB Connected"))
   .catch((err) => {
     console.error("❌ DB Connection Error:", err);
-    process.exit(1); // Stop the server if DB connection fails
+    process.exit(1);
   });
 
-// Create uploads directories if they don't exist
+// Directory setup
 const uploadsDir = path.join(__dirname, 'uploads');
 const usersDir = path.join(uploadsDir, 'users');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir);
-}
-if (!fs.existsSync(usersDir)) {
-  fs.mkdirSync(usersDir);
-}
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
+if (!fs.existsSync(usersDir)) fs.mkdirSync(usersDir);
 
-// Create temp upload directory
 const tempDir = path.join(__dirname, 'temp_uploads');
 if (!fs.existsSync(tempDir)) {
   fs.mkdirSync(tempDir, { recursive: true });
   console.log('✅ Temporary upload directory created');
 }
 
-// Register API Routes
+// Test routes
+app.get("/", (req, res) => {
+  res.send("Dhuun Backend is Running...");
+});
+
+app.get("/test", (req, res) => {
+  res.json({ 
+    message: "Dhuun Backend API is working!", 
+    timestamp: new Date().toISOString() 
+  });
+});
+
+// Register API Routes - THIS WAS MISSING
 app.use("/api/auth", authRoutes);
 app.use("/api/subscription", subscriptionRoutes);
 app.use('/api/beats', beatRoutes);
@@ -86,51 +92,51 @@ app.use('/api/producers', producerRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/payments', paymentRoutes);
 
-// Test Route
-app.get("/", (req, res) => {
-  res.send("Dhuun Backend is Running...");
-});
-
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: 'Internal server error' });
+  console.error('ERROR:', err.stack);
+  res.status(500).json({ 
+    message: 'Server error', 
+    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
+  });
+});
+
+// 404 handler for unmatched routes
+app.use((req, res) => {
+  console.log(`404 - Route not found: ${req.method} ${req.originalUrl}`);
+  res.status(404).json({ message: 'Route not found' });
 });
 
 // Log registered routes
 console.log("✅ Registered API Routes:");
 expressListRoutes(app);
 
-// Start Server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`🚀 Test at: http://localhost:${PORT}/`);
 });
 
-// Schedule cleaning of temp files (run once a day)
+// Temp file cleanup (keep this part unchanged)
 setInterval(() => {
   try {
     if (!fs.existsSync(tempDir)) return;
-    
     const files = fs.readdirSync(tempDir);
     const now = Date.now();
-    const maxAge = 24 * 60 * 60 * 1000; // 24 hours
-    
+    const maxAge = 24 * 60 * 60 * 1000;
+
     files.forEach(file => {
       const filePath = path.join(tempDir, file);
       const stats = fs.statSync(filePath);
       const fileAge = now - stats.mtimeMs;
-      
+
       if (fileAge > maxAge) {
         fs.unlinkSync(filePath);
-        console.log(`Deleted temp file: ${filePath}`);
+        console.log(`🗑️ Deleted temp file: ${filePath}`);
       }
     });
-    
+
     console.log('✅ Temp directory cleaned up');
   } catch (error) {
-    console.error('Error cleaning up temp files:', error);
+    console.error('❌ Error cleaning up temp files:', error);
   }
 }, 24 * 60 * 60 * 1000);
-
-

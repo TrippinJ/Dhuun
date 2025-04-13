@@ -1,13 +1,13 @@
 // In backend/controllers/producerController.js
 
-const User = require('../models/user');
+import User from "../models/user.js";
 
 /**
  * Get featured producers
  * @route GET /api/producers/featured
  * @access Public
  */
-exports.getFeaturedProducers = async (req, res) => {
+export const getFeaturedProducers = async (req, res) => {
   try {
     // Find users with role 'seller' that have the most beats
     const featuredProducers = await User.aggregate([
@@ -62,3 +62,4 @@ exports.getFeaturedProducers = async (req, res) => {
     });
   }
 };
+

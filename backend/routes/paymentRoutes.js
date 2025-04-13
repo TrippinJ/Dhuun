@@ -1,9 +1,9 @@
-// Add this to your orderRoutes.js file or create a new file called paymentRoutes.js
+import express from 'express';
+import { authenticateUser } from '../routes/auth.js'; // Adjust path as needed
+import { initiatePayment, verifyPayment } from '../utils/khaltiPayment.js';
 
-const express = require('express');
+// Define router
 const router = express.Router();
-const { authenticateUser } = require('../routes/auth'); // Adjust path as needed
-const { initiatePayment, verifyPayment } = require('../utils/khaltiPayment');
 
 /**
  * Initiate a new payment
@@ -88,4 +88,4 @@ router.post('/verify', authenticateUser, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

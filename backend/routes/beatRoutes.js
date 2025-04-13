@@ -1,13 +1,17 @@
-const express = require('express');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+import express from 'express';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { authenticateUser } from '../routes/auth.js';
+import Beat from '../models/beat.js';
+import User from '../models/user.js';
+import cloudinary from 'cloudinary';
+import * as beatController from '../controllers/beatController.js';
+
 const router = express.Router();
-const { authenticateUser } = require('../routes/auth');
-const Beat = require('../models/beat');
-const User = require('../models/user');
-const cloudinary = require('cloudinary').v2;
-const beatController = require('../controllers/beatController');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Configure Cloudinary with credentials from environment variables
 cloudinary.config({
@@ -479,4 +483,4 @@ router.post('/:id/like', authenticateUser, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

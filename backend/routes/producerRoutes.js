@@ -1,10 +1,11 @@
 // In backend/routes/producerRoutes.js
 
-const express = require('express');
+import express from 'express';
+import * as producerController from '../controllers/producerController.js';
+
 const router = express.Router();
-const producerController = require('../controllers/producerController');
 
 // Get featured producers
 router.get('/featured', producerController.getFeaturedProducers);
 
-module.exports = router;
+export default router;
