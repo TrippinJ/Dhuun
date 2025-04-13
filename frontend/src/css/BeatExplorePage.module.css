@@ -78,14 +78,16 @@
 
 /* Content layout */
 .contentContainer {
-  display: flex;
+  /* display: flex; */
   gap: 20px;
 }
 
 /* Sidebar filters */
 .filterSidebar {
-  width: 250px;
-  flex-shrink: 0;
+  display: flex;
+  /* width: 250px; */
+  /* flex-shrink: 0; */
+  gap: 20px;
 }
 
 .filterSection {

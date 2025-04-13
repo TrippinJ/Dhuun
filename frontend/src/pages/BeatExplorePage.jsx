@@ -18,7 +18,7 @@ const BeatExplorePage = () => {
   const [cartItems, setCartItems] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [displayMode, setDisplayMode] = useState("grid"); // 'row' or 'grid'
-  const itemsPerPage = 6; // Show 6 beats per page
+  const itemsPerPage = 50; // Show 6 beats per page
   const [currentlyPlaying, setCurrentlyPlaying] = useState(null);
   const [audioLoading, setAudioLoading] = useState(false);
   const [player, setPlayer] = useState(null);
