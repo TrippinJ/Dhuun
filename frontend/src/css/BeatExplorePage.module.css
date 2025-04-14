@@ -1,27 +1,28 @@
-/* Main container */
+/* BeatExplorePage.module.css */
 .exploreContainer {
-  /* max-width: 1200px; */
-  margin: auto;
-  padding: 20px;
-  color: #FFFFFF;
-  background-color: #121212; /* Dark background */
+  background-color: #121212;
+  color: #ffffff;
+  min-height: 100vh;
+  padding: 0 20px 40px;
 }
 
-/* Page header with title and search */
+/* Page header styling */
 .pageHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
   flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 30px;
+  padding-top: 20px;
 }
 
 .pageTitle {
-  font-size: 2.5rem;
-  margin-bottom: 30px;
-  color: #FFFFFF;
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin: 0;
   position: relative;
-  display: inline-block;
+  color: #ffffff;
 }
 
 .pageTitle::after {
@@ -29,430 +30,568 @@
   position: absolute;
   bottom: -10px;
   left: 0;
-  width: 60px;
+  width: 50px;
   height: 4px;
-  background-color: #7B2CBF; /* Purple accent line under heading */
+  background-color: #7B2CBF;
   border-radius: 2px;
 }
 
-/* Search form */
+/* Search form styling */
 .searchForm {
   display: flex;
-  margin-bottom: 20px;
-  width: 100%;
+  flex: 1;
   max-width: 500px;
 }
 
 .searchInput {
   flex: 1;
-  padding: 12px 15px;
-  background-color: #1E1E1E;
-  border: 1px solid #333333;
-  border-radius: 8px 0 0 8px;
-  font-size: 16px;
-  color: #FFFFFF;
+  background-color: #1e1e1e;
+  border: 1px solid #333;
+  border-right: none;
+  padding: 12px 16px;
+  font-size: 0.95rem;
+  color: #ffffff;
+  border-radius: 5px 0 0 5px;
+  transition: all 0.3s ease;
 }
 
 .searchInput:focus {
   outline: none;
   border-color: #7B2CBF;
+  box-shadow: 0 0 0 1px rgba(123, 44, 191, 0.3);
 }
 
 .searchButton {
-  padding: 12px 20px;
   background-color: #7B2CBF;
   color: white;
   border: none;
-  border-radius: 0 8px 8px 0;
+  padding: 12px 20px;
+  border-radius: 0 5px 5px 0;
+  font-size: 0.95rem;
+  font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 8px;
   transition: all 0.3s ease;
 }
 
 .searchButton:hover {
   background-color: #8E44AD;
-  transform: scale(1.05);
 }
 
-/* Content layout */
-.contentContainer {
-  /* display: flex; */
-  gap: 20px;
-}
-
-/* Sidebar filters */
-.filterSidebar {
+/* Filters toolbar */
+.filtersToolbar {
   display: flex;
-  /* width: 250px; */
-  /* flex-shrink: 0; */
-  gap: 20px;
-}
-
-.filterSection {
-  margin-bottom: 25px;
-  background-color: #1E1E1E;
-  padding: 20px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  background-color: #1e1e1e;
   border-radius: 10px;
-  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.3);
-  border: 1px solid #333333;
+  padding: 15px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
-.filterTitle {
-  font-size: 1.3rem;
-  margin-bottom: 15px;
-  color: #FFFFFF;
-  position: relative;
-  padding-bottom: 8px;
-}
-
-.filterTitle::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 40px;
-  height: 3px;
-  background-color: #7B2CBF;
-  border-radius: 2px;
-}
-
-.categoryList {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.categoryButton, .categoryButtonActive {
-  padding: 10px 15px;
-  border: 1px solid #333333;
-  border-radius: 8px;
-  background-color: #1E1E1E;
-  color: #AAAAAA;
+.filterToggle {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
   cursor: pointer;
-  text-align: left;
+  padding: 10px 15px;
+  background-color: #252525;
+  border-radius: 5px;
   transition: all 0.3s ease;
 }
 
-.categoryButtonActive {
-  background-color: #7B2CBF;
-  color: white;
-  border-color: #7B2CBF;
+.filterToggle:hover {
+  background-color: #2a2a2a;
 }
 
-.categoryButton:hover {
-  background-color: #2A2A2A;
-  border-color: #7B2CBF;
-}
-
-.priceSlider {
-  width: 100%;
-  margin-top: 15px;
-  -webkit-appearance: none;
-  height: 8px;
-  border-radius: 4px;
-  background: #333333;
-  outline: none;
-}
-
-.priceSlider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #7B2CBF;
-  cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-}
-
-.priceDisplay {
-  margin-top: 15px;
-  text-align: right;
-  font-weight: bold;
-  color: #7B2CBF;
-}
-
-/* Main content area */
-.mainContent {
-  flex: 1;
-}
-
-/* Grid layout for beats */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+.filtersContainer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 20px;
 }
 
-/* Row layout styles (from your original CSS) */
-.beatList {
+.filterGroup {
   display: flex;
   flex-direction: column;
+  min-width: 150px;
+}
+
+.filterLabel {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #999;
+  margin-bottom: 8px;
+}
+
+/* View toggle buttons */
+.viewToggle {
+  display: flex;
+  gap: 5px;
+  background-color: #252525;
+  padding: 5px;
+  border-radius: 5px;
+}
+
+.viewButton {
+  display: flex;
   align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  width: 36px;
+  height: 36px;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: #aaa;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.viewButton.active {
+  background-color: #7B2CBF;
+  color: white;
+}
+
+.viewButton:not(.active):hover {
+  background-color: #333;
+  color: white;
+}
+
+/* Genre select */
+.genreSelect {
+  background-color: #252525;
+  color: white;
+  padding: 10px;
+  border: 1px solid #333;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.genreSelect:focus {
+  outline: none;
+  border-color: #7B2CBF;
+}
+
+/* Price slider */
+.priceSlider {
+  appearance: none;
+  height: 6px;
+  background: #333;
+  border-radius: 3px;
   width: 100%;
+}
+
+.priceSlider::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #7B2CBF;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.resultsCount {
+  font-size: 0.9rem;
+  color: #aaa;
+}
+
+/* Grid layout for beats */
+.beatsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 25px;
+  margin-bottom: 40px;
+}
+
+/* Beat card styling */
+.beatCard {
+  background-color: #1e1e1e;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.beatCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+.beatImageContainer {
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-bottom: 100%; /* Square aspect ratio */
+  overflow: hidden;
+}
+
+.beatImage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.beatCard:hover .beatImage {
+  transform: scale(1.05);
+}
+
+.beatImageOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.beatCard:hover .beatImageOverlay {
+  opacity: 1;
+}
+
+.playButton {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: rgba(123, 44, 191, 0.8);
+  color: white;
+  font-size: 1.5rem;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.playButton:hover {
+  background-color: #7B2CBF;
+  transform: scale(1.1);
+}
+
+.beatInfo {
+  padding: 16px;
+}
+
+.beatTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.producerName {
+  font-size: 0.9rem;
+  color: #aaa;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.verifiedBadge {
+  color: #7B2CBF;
+  font-size: 0.9rem;
+}
+
+.beatStats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.beatPrice {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #7B2CBF;
+}
+
+.beatGenre {
+  font-size: 0.8rem;
+  color: #aaa;
+  padding: 3px 8px;
+  background-color: #252525;
+  border-radius: 4px;
+}
+
+.beatActions {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-top: 1px solid #333;
+}
+
+.cartButton {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  background-color: #FF1A1A;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cartButton:hover:not(:disabled) {
+  background-color: #ff4d4d;
+}
+
+.cartButton.inCart {
+  background-color: #444;
+  color: #aaa;
+  cursor: default;
+}
+
+.wishlistButton {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #252525;
+  color: #aaa;
+  border: none;
+  border-radius: 6px;
+  margin-left: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.wishlistButton:hover {
+  background-color: #333;
+}
+
+.wishlistButton.inWishlist {
+  color: #FF1A1A;
+}
+
+/* List view styling */
+.beatsList {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 40px;
 }
 
 .beatRow {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  background-color: #1E1E1E;
-  border-radius: 10px;
-  padding: 20px;
-  margin: 15px 0;
-  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.3);
-  transition: all 0.3s ease;
-  border: 1px solid #333333;
-}
-
-.beatRow:hover {
-  transform: translateY(-5px);
-  box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.4);
-  border-color: #7B2CBF;
-}
-
-.coverArt {
-  width: 120px;
-  height: 120px;
-  border-radius: 10px;
-  margin-right: 20px;
-  object-fit: cover;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-}
-
-.controls {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-/* Display mode toggle button */
-.modeToggleButton {
-  width: 100%;
-  padding: 10px 15px;
-  background-color: #2A2A2A;
-  color: #FFFFFF;
-  border: 1px solid #333333;
-  border-radius: 8px;
+  gap: 20px;
+  padding: 15px;
+  background-color: #1e1e1e;
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
-.modeToggleButton:hover {
-  background-color: #7B2CBF;
-  color: white;
-  border-color: #7B2CBF;
+.beatRow:hover {
+  background-color: #252525;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-/* Beat card styling */
-.card {
-  border-radius: 10px;
-  overflow: hidden;
-  background-color: #1E1E1E;
-  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.3);
-  transition: all 0.3s ease;
-  border: 1px solid #333333;
-}
-
-.card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.4);
-  border-color: #7B2CBF;
-}
-
-.cardImage {
+.beatRowImageContainer {
   position: relative;
-  height: 200px;
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
-.cover {
+.beatRowImage {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.3s;
 }
 
-.card:hover .cover {
-  transform: scale(1.05);
-}
-
-.discountBadge {
+.rowPlayButton {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  background-color: #FF1A1A;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
   color: white;
-  padding: 5px 10px;
-  border-radius: 4px;
-  font-weight: bold;
-  font-size: 14px;
-}
-
-.cardInfo {
-  padding: 20px;
-  text-align: left;
-}
-
-.cardInfo h3 {
-  margin: 0 0 10px 0;
-  font-size: 1.5rem;
-  color: #FFFFFF;
-}
-
-.artist {
-  color: #AAAAAA;
-  margin: 5px 0;
-  font-size: 1rem;
-}
-
-.price {
-  font-weight: bold;
-  font-size: 1.3rem;
-  color: #7B2CBF;
-  margin: 10px 0;
-}
-
-.category {
-  font-size: 14px;
-  color: #AAAAAA;
-  background-color: #2A2A2A;
-  display: inline-block;
-  padding: 5px 10px;
-  border-radius: 4px;
-  margin-top: 5px;
-}
-
-.cardActions {
+  font-size: 1.2rem;
+  border: none;
   display: flex;
-  padding: 15px;
-  gap: 10px;
-  border-top: 1px solid #333333;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.3s ease;
 }
 
-.buyButton, .downloadButton, .favoriteButton {
+.beatRowImageContainer:hover .rowPlayButton {
+  opacity: 1;
+}
+
+.beatRowInfo {
   flex: 1;
+}
+
+.beatRowTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0 0 5px 0;
+}
+
+.beatRowProducer {
+  font-size: 0.9rem;
+  color: #aaa;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.beatRowGenre {
+  font-size: 0.9rem;
+  color: #aaa;
+  padding: 3px 8px;
+  background-color: #252525;
+  border-radius: 4px;
+  margin-right: 20px;
+}
+
+.beatRowPrice {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #7B2CBF;
+  width: 80px;
+  text-align: right;
+  margin-right: 20px;
+}
+
+.beatRowActions {
+  display: flex;
+  gap: 10px;
+}
+
+.rowCartButton, .rowWishlistButton {
+  width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
-  padding: 12px 18px;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 1rem;
-  font-weight: 600;
   transition: all 0.3s ease;
 }
 
-.buyButton {
-  background-color: #FF1A1A; /* Red cart button */
+.rowCartButton {
+  background-color: #FF1A1A;
   color: white;
 }
 
-.buyButton:hover {
-  background-color: #ff4a4a;
-  transform: scale(1.05);
+.rowCartButton:hover:not(:disabled) {
+  background-color: #ff4d4d;
 }
 
-.downloadButton {
-  background-color: #7B2CBF; /* Purple play button */
-  color: white;
+.rowCartButton.inCart {
+  background-color: #444;
+  color: #aaa;
+  cursor: default;
 }
 
-.downloadButton:hover {
-  background-color: #8E44AD;
-  transform: scale(1.05);
+.rowWishlistButton {
+  background-color: #252525;
+  color: #aaa;
 }
 
-.favoriteButton {
-  background-color: #2A2A2A;
-  color: #AAAAAA;
+.rowWishlistButton:hover {
+  background-color: #333;
 }
 
-.favoriteButton:hover {
-  background-color: #333333;
+.rowWishlistButton.inWishlist {
   color: #FF1A1A;
-  transform: scale(1.05);
 }
 
-/* Loading spinner */
-.loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 200px;
-  width: 100%;
-  font-size: 1.2rem;
-  color: #AAAAAA;
-}
-
-.loading::after {
-  content: '';
-  width: 30px;
-  height: 30px;
-  border: 4px solid #333333;
-  border-top: 4px solid #7B2CBF;
-  border-radius: 50%;
-  margin-left: 15px;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Error message */
-.errorMessage {
-  color: #FF1A1A;
-  background-color: rgba(255, 26, 26, 0.1);
-  border: 1px solid rgba(255, 26, 26, 0.3);
-  padding: 15px;
-  border-radius: 8px;
-  margin: 20px 0;
-  text-align: center;
-}
-
+/* No beats message */
 .noBeats {
   grid-column: 1 / -1;
   text-align: center;
-  padding: 40px;
-  color: #AAAAAA;
-  background-color: #1E1E1E;
-  border-radius: 10px;
-  border: 1px solid #333333;
+  padding: 60px 20px;
+  background-color: #1e1e1e;
+  border-radius: 12px;
+  color: #aaa;
+}
+
+.noBeatsIcon {
+  font-size: 2rem;
+  color: #555;
+  margin-bottom: 15px;
+}
+
+.resetButton {
+  background-color: #7B2CBF;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 24px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: all 0.3s ease;
+}
+
+.resetButton:hover {
+  background-color: #8E44AD;
 }
 
 /* Pagination */
 .pagination {
   display: flex;
   justify-content: center;
+  align-items: center;
   margin-top: 30px;
-  gap: 10px;
 }
 
-.paginationButton, .paginationButtonActive {
-  padding: 10px 15px;
-  border: 1px solid #333333;
-  background-color: #1E1E1E;
-  color: #AAAAAA;
+.paginationButton {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #252525;
+  color: #aaa;
+  border: none;
+  border-radius: 6px;
   cursor: pointer;
-  border-radius: 8px;
   transition: all 0.3s ease;
 }
 
-.paginationButtonActive {
-  background-color: #7B2CBF;
-  color: white;
-  border-color: #7B2CBF;
-}
-
 .paginationButton:hover:not(:disabled) {
-  background-color: #2A2A2A;
-  border-color: #7B2CBF;
+  background-color: #333;
+  color: white;
 }
 
 .paginationButton:disabled {
@@ -460,104 +599,120 @@
   cursor: not-allowed;
 }
 
+.pageNumbers {
+  display: flex;
+  gap: 8px;
+  margin: 0 15px;
+}
 
-/* Favorite button styles */
-.favoriteButton {
-  background-color: transparent;
-  color: #AAAAAA;
-  border: 1px solid #333333;
+.pageNumber {
   width: 40px;
   height: 40px;
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  background-color: #252525;
+  color: #aaa;
+  border: none;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.3s ease;
-  flex-shrink: 0;
 }
 
-.favoriteButton:hover {
-  background-color: rgba(255, 26, 26, 0.1);
-  color: #FF1A1A;
-  border-color: #FF1A1A;
+.pageNumber:hover {
+  background-color: #333;
+  color: white;
 }
 
-.favoriteActive {
-  background-color: rgba(255, 26, 26, 0.1);
-  color: #FF1A1A;
-  border-color: #FF1A1A;
+.pageNumber.currentPage {
+  background-color: #7B2CBF;
+  color: white;
 }
 
-/* Update card actions to include the favorite button */
-.cardActions {
-  display: flex;
-  padding: 15px;
-  gap: 10px;
-  border-top: 1px solid #333333;
-}
-
-/* Update grid card styles */
-.card {
-  border-radius: 10px;
-  overflow: hidden;
-  background-color: #1E1E1E;
-  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.3);
-  transition: all 0.3s ease;
-  border: 1px solid #333333;
-  height: 100%;
+/* Loading */
+.loadingContainer {
   display: flex;
   flex-direction: column;
-}
-
-.cardInfo {
-  padding: 20px;
-  flex-grow: 1;
-}
-
-/* Update row view to include favorite button */
-.controls {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-/* For row view favorite button */
-.beatRow .favoriteButton {
-  background-color: transparent;
-  color: #AAAAAA;
-  border: 1px solid #333333;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
+  height: 300px;
+  color: #aaa;
 }
 
-.beatRow .favoriteButton:hover {
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(123, 44, 191, 0.2);
+  border-top-color: #7B2CBF;
+  border-radius: 50%;
+  animation: spin 1s infinite linear;
+  margin-bottom: 20px;
+}
+
+.loadingDots {
+  display: flex;
+  gap: 4px;
+}
+
+.loadingDots::before,
+.loadingDots::after,
+.loadingDots {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: white;
+  animation: dots 1.4s infinite ease;
+}
+
+.loadingDots::before {
+  animation-delay: 0.2s;
+}
+
+.loadingDots {
+  animation-delay: 0.4s;
+}
+
+.loadingDots::after {
+  animation-delay: 0.6s;
+}
+
+/* Error message */
+.errorMessage {
   background-color: rgba(255, 26, 26, 0.1);
+  border: 1px solid rgba(255, 26, 26, 0.3);
   color: #FF1A1A;
-  border-color: #FF1A1A;
+  padding: 15px 20px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  text-align: center;
 }
 
-.beatRow .favoriteActive {
-  background-color: rgba(255, 26, 26, 0.1);
-  color: #FF1A1A;
-  border-color: #FF1A1A;
-}
-
-/* Responsive design */
-@media (max-width: 980px) {
-  .contentContainer {
-    flex-direction: column;
+/* Animations */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
   }
-  
-  .filterSidebar {
-    width: 100%;
-    margin-bottom: 20px;
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes dots {
+  0%, 80%, 100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Responsive styles */
+@media (max-width: 992px) {
+  .beatsGrid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   }
 }
 
@@ -572,21 +727,65 @@
     max-width: none;
   }
   
-  .grid {
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  .filterToggle {
+    display: flex;
   }
   
-  .cardActions {
+  .filtersContainer {
+    display: none;
+    width: 100%;
     flex-direction: column;
+    align-items: flex-start;
+    margin-top: 15px;
+  }
+  
+  .showFilters {
+    display: flex;
+  }
+  
+  .filterGroup {
+    width: 100%;
+  }
+  
+  .beatsGrid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+  
+  .beatRow {
+    flex-wrap: wrap;
+  }
+  
+  .beatRowInfo {
+    width: calc(100% - 100px);
+  }
+  
+  .beatRowGenre, 
+  .beatRowPrice, 
+  .beatRowActions {
+    margin-top: 10px;
+  }
+  
+  .beatRowGenre {
+    order: 3;
+    margin-left: 100px;
+  }
+  
+  .beatRowPrice {
+    order: 4;
+  }
+  
+  .beatRowActions {
+    order: 5;
   }
 }
 
 @media (max-width: 480px) {
-  .grid {
+  .beatsGrid {
     grid-template-columns: 1fr;
   }
   
   .pagination {
     flex-wrap: wrap;
+    gap: 10px;
   }
 }
