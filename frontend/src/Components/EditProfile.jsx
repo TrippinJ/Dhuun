@@ -173,7 +173,7 @@ const EditProfile = () => {
       }
 
       // Use axios directly instead of your API helper to ensure proper configuration
-      const apiBaseUrl = process.env.REACT_APP_BACKEND_URL || "http://localhost:8080";
+      const apiBaseUrl = import.meta.env.VITE_APP_BACKEND_URL || "http://localhost:8080";
       const response = await axios.put(
         `${apiBaseUrl}/api/profile/update`, 
         formData, 
