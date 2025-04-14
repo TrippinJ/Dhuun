@@ -11,6 +11,93 @@ const Subscription = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const navigate = useNavigate();
 
+  const handleKhaltiPayment = async (plan, price) => {
+    try {
+      setProcessingPayment(true);
+      setError(null);
+      
+      // Get authentication token
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("You must be logged in to purchase a subscription");
+        setProcessingPayment(false);
+        return;
+      }
+      
+      // Prepare the payment data
+      const paymentData = {
+        amount: price,
+        items: [{
+          type: 'subscription',
+          name: `${plan} Subscription`,
+          price: price
+        }],
+        // This will be the URL to return to after payment
+        returnUrl: `${window.location.origin}/subscription?success=true&plan=${plan}`
+      };
+      
+      // Call your payment API endpoint
+      const response = await API.post('/api/payments/initiate', paymentData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (response.data && response.data.payment_url) {
+        // Store selected plan in localStorage to retrieve after payment
+        localStorage.setItem('selectedPlan', plan);
+        
+        // Redirect to Khalti payment page
+        window.location.href = response.data.payment_url;
+      } else {
+        throw new Error('Invalid payment response');
+      }
+    } catch (error) {
+      console.error('Payment initiation error:', error);
+      setError('Failed to initiate payment. Please try again.');
+      setProcessingPayment(false);
+    }
+  };
+  
+  // 3. Add this effect to handle the return from Khalti
+  // This should be added to your existing useEffect hooks in the component
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const success = params.get('success');
+    const plan = params.get('plan');
+    
+    if (success === 'true' && plan) {
+      // Update subscription with the selected plan
+      const updateSubscription = async () => {
+        try {
+          const token = localStorage.getItem('token');
+          
+          const res = await API.post(
+            '/api/subscription/update',
+            { plan },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            }
+          );
+          
+          setSubscription(res.data.subscription);
+          setSuccessMessage(`${plan} plan activated successfully!`);
+          
+          // Clear URL parameters
+          window.history.replaceState({}, document.title, "/subscription");
+          
+          // Remove stored plan
+          localStorage.removeItem('selectedPlan');
+        } catch (error) {
+          console.error('Error updating subscription after payment:', error);
+          setError('Failed to activate your subscription. Please contact support.');
+        }
+      };
+      
+      updateSubscription();
+    }
+  }, []);
+
   // Fetch subscription data
   const fetchSubscription = useCallback(async () => {
     try {
@@ -82,11 +169,7 @@ const Subscription = () => {
         return;
       }
       
-      // Load Khalti script dynamically
-      const script = document.createElement('script');
-      script.src = 'https://khalti.s3.ap-south-1.amazonaws.com/KPG/dist/2020.12.22.0.0.0/khalti-checkout.iffe.js';
-      script.async = true;
-      
+    
       script.onload = () => {
         // Once Khalti is loaded, initialize payment
         const khaltiKey = process.env.REACT_APP_KHALTI_PUBLIC_KEY || '994dad9a767e4b57a455035549d3d6b1';

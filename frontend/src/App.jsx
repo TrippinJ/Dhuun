@@ -21,6 +21,7 @@ import Checkout from "./pages/Checkout";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
 import EditProfile from "./Components/EditProfile";
 import EditBeat from "./Components/EditBeat"
+import Favorites from "./Components/Favourites";
 
 
 function App() {
@@ -89,6 +90,7 @@ function App() {
           {/* Public Music Routes */}
           <Route path="/BeatExplorePage" element={<BeatExplorePage />} />
           <Route path="/creator-community" element={<CreatorCommunity />} />
+          <Route path="/favorites" element={<Favorites />} />
           {/* Cart and Checkout Routes */}
           <Route path="/cart" element={<Cart />} />
           <Route

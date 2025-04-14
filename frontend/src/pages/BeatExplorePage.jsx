@@ -16,12 +16,14 @@ const BeatExplorePage = () => {
   const [priceRange, setPriceRange] = useState(0);
   const [maxPrice, setMaxPrice] = useState(0);
   const [cartItems, setCartItems] = useState([]);
+  const [wishlistItems, setWishlistItems] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [displayMode, setDisplayMode] = useState("grid"); // 'row' or 'grid'
-  const itemsPerPage = 50; // Show 6 beats per page
+  const itemsPerPage = 50; // Show beats per page
   const [currentlyPlaying, setCurrentlyPlaying] = useState(null);
   const [audioLoading, setAudioLoading] = useState(false);
   const [player, setPlayer] = useState(null);
+  const [wishlistCount, setWishlistCount] = useState(0);
 
   const navigate = useNavigate();
 
@@ -63,6 +65,18 @@ const BeatExplorePage = () => {
     fetchBeats();
   }, []);
 
+  // Load wishlist from localStorage
+  useEffect(() => {
+    try {
+      const storedWishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
+      setWishlistItems(storedWishlist);
+      setWishlistCount(storedWishlist.length);
+    } catch (error) {
+      console.error("Error loading wishlist:", error);
+      setWishlistItems([]);
+    }
+  }, []);
+
   // Cleanup audio when component unmounts
   useEffect(() => {
     return () => {
@@ -96,6 +110,11 @@ const BeatExplorePage = () => {
     };
     fetchCategories();
   }, []);
+
+  // Helper function to check if a beat is in wishlist
+  const isInWishlist = (beatId) => {
+    return wishlistItems.some(item => item._id === beatId);
+  };
 
   // Filter functions
   const filterBeatsByKeyword = () => {
@@ -221,8 +240,54 @@ const BeatExplorePage = () => {
     }
   };
 
+  // Handle favorite/wishlist functionality
+  const handleToggleFavorite = (beat, event) => {
+    // Prevent the event from propagating to other handlers
+    if (event) {
+      event.stopPropagation();
+    }
+    
+    try {
+      // Get current wishlist
+      let wishlist = [];
+      try {
+        wishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
+      } catch (error) {
+        console.error("Error parsing wishlist:", error);
+        wishlist = [];
+      }
+      
+      // Check if beat is already in wishlist
+      const beatIndex = wishlist.findIndex(item => item._id === beat._id);
+      
+      if (beatIndex !== -1) {
+        // Remove from wishlist if already there
+        wishlist.splice(beatIndex, 1);
+        localStorage.setItem("wishlist", JSON.stringify(wishlist));
+        setWishlistItems(wishlist);
+        setWishlistCount(wishlist.length);
+      } else {
+        // Add to wishlist
+        wishlist.push(beat);
+        localStorage.setItem("wishlist", JSON.stringify(wishlist));
+        setWishlistItems(wishlist);
+        setWishlistCount(wishlist.length);
+      }
+      
+      // Force storage event to update other components
+      window.dispatchEvent(new Event('storage'));
+    } catch (error) {
+      console.error("Error updating wishlist:", error);
+    }
+  };
+  
   // Handlers
-  const handleBuy = (beat) => {
+  const handleBuy = (beat, event) => {
+    // Prevent the event from propagating to other handlers
+    if (event) {
+      event.stopPropagation();
+    }
+    
     const isLoggedIn = localStorage.getItem('token'); // Check if user is logged in
 
     if (isLoggedIn) {
@@ -254,6 +319,9 @@ const BeatExplorePage = () => {
       
       console.log(`Added ${beat.title} to cart`);
       alert(`${beat.title} added to cart!`);
+      
+      // Force storage event to update other components
+      window.dispatchEvent(new Event('storage'));
     } else {
       alert("Please log in to add items to cart");
       navigate("/login");
@@ -285,7 +353,12 @@ const BeatExplorePage = () => {
   };
 
   if (loading) {
-    return <div className={styles.loading}>Loading beats...</div>;
+    return (
+      <div className={styles.exploreContainer}>
+        <NavbarBeatExplore />
+        <div className={styles.loading}>Loading beats...</div>
+      </div>
+    );
   }
 
   const filteredBeats = applyAllFilters();
@@ -394,7 +467,10 @@ const BeatExplorePage = () => {
                       {beat.category && <p className={styles.category}>{beat.category}</p>}
                     </div>
                     <div className={styles.cardActions}>
-                      <button className={styles.buyButton} onClick={() => handleBuy(beat)}>
+                      <button 
+                        className={styles.buyButton} 
+                        onClick={(e) => handleBuy(beat, e)}
+                      >
                         <FaCartPlus /> Add to Cart
                       </button>
                       <button 
@@ -410,6 +486,12 @@ const BeatExplorePage = () => {
                           <FaPlay />
                         )} {currentlyPlaying === beat._id ? 'Pause' : 'Play'}
                       </button>
+                      <button 
+                        className={`${styles.favoriteButton} ${isInWishlist(beat._id) ? styles.favoriteActive : ''}`}
+                        onClick={(e) => handleToggleFavorite(beat, e)}
+                      >
+                        <FaHeart />
+                      </button>
                     </div>
                   </div>
                 ))
@@ -418,7 +500,7 @@ const BeatExplorePage = () => {
               )}
             </div>
           ) : (
-            /* Row View (based on your original style) */
+            /* Row View */
             <div className={styles.beatList}>
               {displayedBeats.length > 0 ? (
                 displayedBeats.map((beat) => (
@@ -448,8 +530,17 @@ const BeatExplorePage = () => {
                           <FaPlay />
                         )} {currentlyPlaying === beat._id ? 'Pause' : 'Play'}
                       </button>
-                      <button className={styles.cartButton} onClick={() => handleBuy(beat)}>
+                      <button 
+                        className={styles.cartButton} 
+                        onClick={(e) => handleBuy(beat, e)}
+                      >
                         <FaCartPlus /> Add to Cart
+                      </button>
+                      <button 
+                        className={`${styles.favoriteButton} ${isInWishlist(beat._id) ? styles.favoriteActive : ''}`}
+                        onClick={(e) => handleToggleFavorite(beat, e)}
+                      >
+                        <FaHeart />
                       </button>
                     </div>
                   </div>
