@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/api";
 import styles from "../css/Dashboard.module.css";
+import NavbarBeatExplore from '../Components/NavbarBeatExplore';
 import {
   FaUserCircle,
   FaMusic,
@@ -287,11 +288,13 @@ const Dashboard = () => {
     if (error) {
       return <div className={styles.error}>{error}</div>;
     }
-
+     
     // Return different content based on user role
     if (user?.role === "seller") {
       return (
+        
         <>
+          
           <div className={styles.statsSection}>
             <div className={styles.statCard}>
               <h3>Total Beats</h3>
@@ -441,6 +444,8 @@ const Dashboard = () => {
 
   // Main render function for the dashboard
   return (
+    <>
+    <NavbarBeatExplore />
     <div className={styles.dashboardContainer}>
       {/* Sidebar */}
       <aside className={styles.sidebar}>
@@ -521,6 +526,7 @@ const Dashboard = () => {
         )}
       </main>
     </div>
+    </>
   );
 };
 
