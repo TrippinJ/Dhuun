@@ -31,9 +31,10 @@ const Home = () => {
             Explore Beats <FiArrowRight />{" "}
           </button>
         </div>
-        <div className="home-image-section">
+        {/* <div className="home-image-section">
           <img src={BannerImage} alt="Music artist" />
-        </div>
+        </div> */}
+        
       </div>
       
       {/* Featured Producers Carousel */}

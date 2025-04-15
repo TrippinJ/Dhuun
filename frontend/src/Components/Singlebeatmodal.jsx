@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from '../css/SingleBeatModal.module.css';
 import { 
   FaPlay, 
@@ -13,7 +13,8 @@ import {
   FaCalendarAlt,
   FaHashtag,
   FaPlus,
-  FaMinus
+  FaMinus,
+  FaCheck
 } from 'react-icons/fa';
 
 const SingleBeatModal = ({ 
@@ -30,6 +31,32 @@ const SingleBeatModal = ({
 }) => {
   const [semitones, setSemitones] = useState(0);
   const [showLicenseDetails, setShowLicenseDetails] = useState(false);
+  const [selectedLicense, setSelectedLicense] = useState('basic');
+  const [audioContext, setAudioContext] = useState(null);
+  const [audioSource, setAudioSource] = useState(null);
+  
+  // Initialize audio context for transposition
+  useEffect(() => {
+    // Create AudioContext only when needed (user interaction)
+    const initAudioContext = () => {
+      // Use standard AudioContext or the webkit prefix for Safari
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx && !audioContext) {
+        setAudioContext(new AudioCtx());
+      }
+    };
+    
+    // Add event listener to initialize audio context on user interaction
+    document.addEventListener('click', initAudioContext, { once: true });
+    
+    return () => {
+      document.removeEventListener('click', initAudioContext);
+      // Clean up audio context when component unmounts
+      if (audioContext) {
+        audioContext.close();
+      }
+    };
+  }, [audioContext]);
   
   // Exit early if no beat data or modal not open
   if (!beat || !isOpen) return null;
@@ -41,6 +68,26 @@ const SingleBeatModal = ({
     } else if (direction === 'down' && semitones > -2) {
       setSemitones(semitones - 1);
     }
+    
+    // Apply transposition effect
+    // Note: In a real implementation, this would modify the playback rate
+    // of the audio to achieve the semitone shift effect
+    console.log(`Transposed to ${semitones} semitones`);
+  };
+  
+  // Select license and add to cart
+  const handleSelectLicense = (licenseType) => {
+    setSelectedLicense(licenseType);
+    
+    // Create a beat object with the selected license
+    const beatWithLicense = {
+      ...beat,
+      licenseType: licenseType,
+      price: licenseInfo[licenseType].price
+    };
+    
+    // Add to cart using the passed function
+    onAddToCart(beatWithLicense);
   };
   
   // Format date
@@ -54,11 +101,11 @@ const SingleBeatModal = ({
     });
   };
   
-  // License information (can be expanded for different license types)
+  // License information
   const licenseInfo = {
     basic: {
       name: 'Basic License',
-      price: beat.price,
+      price: beat.price || 4.99,
       benefits: [
         'MP3 File',
         'Non-commercial use',
@@ -68,7 +115,7 @@ const SingleBeatModal = ({
     },
     premium: {
       name: 'Premium License',
-      price: beat.price * 2.5,
+      price: (beat.price || 4.99) * 2.5,
       benefits: [
         'WAV + MP3 Files',
         'Commercial use',
@@ -79,7 +126,7 @@ const SingleBeatModal = ({
     },
     exclusive: {
       name: 'Exclusive License',
-      price: beat.price * 10,
+      price: (beat.price || 4.99) * 10,
       benefits: [
         'WAV + MP3 + Stems',
         'Full ownership',
@@ -238,7 +285,15 @@ const SingleBeatModal = ({
           
           <div className={styles.licenseOptions}>
             {Object.entries(licenseInfo).map(([key, license]) => (
-              <div key={key} className={styles.licenseOption}>
+              <div key={key} className={`${styles.licenseOption} ${selectedLicense === key ? styles.selectedLicense : ''}`}>
+                {/* License select button at the top */}
+                <button 
+                  className={`${styles.licenseButton} ${selectedLicense === key ? styles.selectedButton : ''}`}
+                  onClick={() => handleSelectLicense(key)}
+                >
+                  {selectedLicense === key ? <><FaCheck /> Selected</> : 'Select'}
+                </button>
+                
                 <div className={styles.licenseTop}>
                   <h4 className={styles.licenseName}>{license.name}</h4>
                   <span className={styles.licensePrice}>${license.price.toFixed(2)}</span>
@@ -253,17 +308,10 @@ const SingleBeatModal = ({
                     </ul>
                   </div>
                 )}
-                
-                <button className={styles.licenseButton}>
-                  <FaCartPlus /> Add to Cart
-                </button>
               </div>
             ))}
           </div>
         </div>
-        
-        {/* Similar beats section */}
-        {/* You can add this section if you have a way to get similar beats */}
       </div>
     </div>
   );
