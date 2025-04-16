@@ -120,6 +120,11 @@ const NavbarBeatExplore = () => {
   // User menu items
   const userMenuItems = [
     {
+      text: "Dashboard",
+      icon: <FaCog className={styles.dropdownIcon} />,
+      onClick: () => navigate("/dashboard")
+    },
+    {
       text: "Upgrade Plan",
       icon: <FaCrown className={styles.dropdownIcon} />,
       onClick: () => navigate("/subscription")
@@ -134,11 +139,7 @@ const NavbarBeatExplore = () => {
       icon: <FaDownload className={styles.dropdownIcon} />,
       onClick: () => navigate("/dashboard")
     },
-    {
-      text: "Account Settings",
-      icon: <FaCog className={styles.dropdownIcon} />,
-      onClick: () => navigate("/dashboard")
-    },
+    
     {
       text: "Logout",
       icon: <FaSignOutAlt className={styles.dropdownIcon} />,

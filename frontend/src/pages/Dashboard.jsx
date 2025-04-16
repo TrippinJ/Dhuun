@@ -482,9 +482,9 @@ const Dashboard = () => {
               <FaTools /> {user?.role === "seller" ? "Selling Tools" : "Account Settings"}
             </li> */}
 
-            <li onClick={handleLogout}>
+            {/* <li onClick={handleLogout}>
               <FaSignOutAlt /> Logout
-            </li>
+            </li> */}
           </ul>
         </nav>
       </aside>
