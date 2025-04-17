@@ -95,7 +95,7 @@ nav {
   right: -170px;
   z-index: -2;
   max-width: 700px;
-  opacity: 0.4; /* Make background image more subtle */
+  /* opacity: 0.4;  */
 }
 
 .home-image-section {

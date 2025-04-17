@@ -46,8 +46,8 @@ const TrendingBeats = () => {
           // Fallback test beats with guaranteed working URLs
           {
             _id: "sample1",
-            title: "Summer Vibes",
-            producer: { name: "DJ Beats", verified: true },
+            title: "Never Give Up",
+            producer: { name: "TrippinJ", verified: true },
             coverImage: "https://via.placeholder.com/300x300",
             audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
             price: 19.99
