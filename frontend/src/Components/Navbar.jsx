@@ -154,6 +154,11 @@ const Navbar = () => {
   // User menu items (when logged in)
   const userMenuItems = [
     {
+      text: "Dashboard",
+      icon: <FaCog />,
+      route: "/dashboard"
+    },
+    {
       text: "Upgrade Plan",
       icon: <FaCrown />,
       route: "/subscription"
@@ -168,11 +173,7 @@ const Navbar = () => {
       icon: <DownloadIcon />,
       route: "/dashboard"
     },
-    {
-      text: "Account Settings",
-      icon: <FaCog />,
-      route: "/dashboard"
-    },
+    
     {
       text: "Logout",
       icon: <FaSignOutAlt />,

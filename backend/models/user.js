@@ -28,7 +28,7 @@ const UserSchema = new mongoose.Schema({
     plan: { type: String, enum: ["Free", "Standard", "Pro"], default: "Free" },
     status: { type: String, enum: ["active", "expired", "canceled"], default: "active" },
     expiryDate: { type: Date, default: null },
-    uploadLimit: { type: Number, default: 10 }, // Free plan allows 5 uploads
+    uploadLimit: { type: Number, default: 10 }, // Free plan allows 10 uploads
     revenueShare: { type: Number, default: 60 }, // Free plan revenue share 60%
   },
 
