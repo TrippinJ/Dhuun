@@ -154,6 +154,51 @@
   font-weight: bold;
 }
 
+/* Plan badge styles */
+.planBadge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 12px;
+  margin-left: 6px;
+  text-transform: uppercase;
+}
+
+.proBadge {
+  background-color: #FF1A1A;
+  color: white;
+}
+
+.standardBadge {
+  background-color: #FFBA00;
+  color: #1a1a1a;
+}
+
+.freeBadge {
+  background-color: #7B2CBF;
+  color: white;
+}
+
+/* Menu badge styles */
+.menuBadge {
+  margin-left: auto;
+  font-size: 0.7rem;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+}
+
+/* Update profile button to accommodate the badge */
+.profileButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 12px;
+}
+
+
 /* Responsive styles */
 @media (max-width: 1024px) {
   .navLinks {
