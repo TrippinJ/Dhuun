@@ -1,0 +1,53 @@
+/* frontend/src/css/Admin/AdminAnalytics.module.css */
+.analyticsContainer {
+    padding: 20px;
+  }
+  
+  .analyticsHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .analyticsHeader h2 {
+    margin: 0;
+  }
+  
+  .timeFilter {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .timeButton {
+    background-color: #1a1a1a;
+    border: 1px solid #333333;
+    color: #FFFFFF;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .timeButton:hover {
+    background-color: #2a2a2a;
+  }
+  
+  .timeButton.active {
+    background-color: #7B2CBF;
+    border-color: #7B2CBF;
+  }
+  
+  .statsCards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+  
+  .statCard {
+    background-color: #1e1e1e;
+    border-radius: 10px;
+    padding: 20px;
+
+  }

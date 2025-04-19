@@ -22,6 +22,7 @@ import CheckoutSuccess from "./pages/CheckoutSuccess";
 import EditProfile from "./Components/EditProfile";
 import EditBeat from "./Components/EditBeat"
 import Favorites from "./Components/Favourites";
+import AdminDashboard from "./pages/Admin/AdminDashboard";
 
 
 function App() {
@@ -83,6 +84,15 @@ function App() {
             element={
               <PrivateRoute>
                 <EditBeat />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/admin"
+            element={
+              <PrivateRoute>
+                <AdminDashboard />
               </PrivateRoute>
             }
           />

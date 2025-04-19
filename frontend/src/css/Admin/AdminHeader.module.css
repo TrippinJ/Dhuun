@@ -1,0 +1,63 @@
+/* frontend/src/css/Admin/AdminHeader.module.css */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background-color: #1a1a1a;
+    border-bottom: 1px solid #333333;
+  }
+  
+  .pageTitle h2 {
+    margin: 0;
+    font-size: 1.5rem;
+  }
+  
+  .headerRight {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  
+  .notifications {
+    position: relative;
+    font-size: 1.2rem;
+    cursor: pointer;
+  }
+  
+  .badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: #FF1A1A;
+    color: #FFFFFF;
+    font-size: 0.7rem;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .userInfo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  .avatarIcon {
+    font-size: 1.8rem;
+    color: #AAAAAA;
+  }
+  
+  .userName {
+    font-weight: 500;
+  }
