@@ -14,8 +14,8 @@ import BeatExplorePage from "./pages/BeatExplorePage";
 import Dashboard from "./pages/Dashboard";
 import ChooseRole from "./pages/ChooseRole";
 import SubscriptionPage from "./pages/Subscription";
-import PrivateRoute from "./Components/PrivateRoute"; // This needs to be created (see below)
-import CreatorCommunity from "./pages/CreatorCommunity"; // This needs to be created (see below)
+import PrivateRoute from "./Components/PrivateRoute"; 
+import CreatorCommunity from "./pages/CreatorCommunity"; 
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
@@ -23,10 +23,12 @@ import EditProfile from "./Components/EditProfile";
 import EditBeat from "./Components/EditBeat"
 import Favorites from "./Components/Favourites";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
-
+import { AudioProvider } from "./context/AudioContext";
+import GlobalAudioPlayer from "./Components/GlobalAudioPlayer";
 
 function App() {
   return (
+    <AudioProvider>
     <div className="App">
       <BrowserRouter>
         <Routes>
@@ -120,8 +122,10 @@ function App() {
             }
           />
         </Routes>
+        <GlobalAudioPlayer />
       </BrowserRouter>
     </div>
+    </AudioProvider>
   );
 }
 

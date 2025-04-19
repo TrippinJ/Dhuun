@@ -1,0 +1,233 @@
+/* src/css/GlobalAudioPlayer.module.css */
+.playerContainer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #1E1E1E;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid #333;
+    z-index: 1000;
+    height: 80px;
+    transform: translateY(0);
+    transition: transform 0.3s ease;
+    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.2);
+  }
+  
+  .playerHidden {
+    transform: translateY(100%);
+  }
+  
+  .trackInfo {
+    display: flex;
+    align-items: center;
+    flex: 0 0 250px;
+    overflow: hidden;
+  }
+  
+  .trackCover {
+    width: 56px;
+    height: 56px;
+    border-radius: 4px;
+    object-fit: cover;
+    margin-right: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  }
+  
+  .trackText {
+    overflow: hidden;
+  }
+  
+  .trackText h3 {
+    margin: 0 0 4px 0;
+    font-size: 0.95rem;
+    color: #fff;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .trackText p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #aaa;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .controls {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    max-width: 800px;
+    margin: 0 20px;
+  }
+  
+  .playButton {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #7B2CBF;
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-right: 15px;
+    flex-shrink: 0;
+  }
+  
+  .playButton:hover {
+    background-color: #8E44AD;
+    transform: scale(1.05);
+  }
+  
+  .progressContainer {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .progressBar {
+    flex: 1;
+    height: 5px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #333;
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  
+  .progressBar::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #7B2CBF;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .progressBar::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+  }
+  
+  .time {
+    font-size: 0.8rem;
+    color: #aaa;
+    min-width: 40px;
+    text-align: center;
+  }
+  
+  .volumeContainer {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin-left: 15px;
+  }
+  
+  .volumeButton {
+    background: none;
+    border: none;
+    color: #aaa;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 5px;
+    transition: color 0.3s ease;
+  }
+  
+  .volumeButton:hover {
+    color: #fff;
+  }
+  
+  .volumeSlider {
+    position: absolute;
+    bottom: 40px;
+    right: 0;
+    background-color: #2a2a2a;
+    padding: 10px;
+    border-radius: 8px;
+    width: 100px;
+    height: 36px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    transform-origin: bottom right;
+    animation: fadeIn 0.2s ease;
+  }
+  
+  .volumeSlider input {
+    width: 100%;
+    height: 4px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: #555;
+    border-radius: 2px;
+    outline: none;
+  }
+  
+  .volumeSlider input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #7B2CBF;
+    cursor: pointer;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  
+  /* Responsive styles */
+  @media (max-width: 768px) {
+    .trackInfo {
+      flex: 0 0 180px;
+    }
+    
+    .controls {
+      margin: 0 10px;
+    }
+    
+    .trackCover {
+      width: 46px;
+      height: 46px;
+    }
+    
+    .playButton {
+      width: 36px;
+      height: 36px;
+      margin-right: 10px;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .trackInfo {
+      flex: 0 0 120px;
+    }
+    
+    .trackCover {
+      width: 40px;
+      height: 40px;
+      margin-right: 8px;
+    }
+    
+    .time {
+      display: none;
+    }
+    
+    .playerContainer {
+      padding: 10px;
+    }
+  }

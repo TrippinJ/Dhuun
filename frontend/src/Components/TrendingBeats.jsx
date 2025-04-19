@@ -3,6 +3,7 @@ import { FaPlay, FaPause, FaHeart, FaShoppingCart } from 'react-icons/fa';
 import { BsCheckCircleFill } from 'react-icons/bs';
 import styles from '../css/TrendingBeats.module.css';
 import API from '../api/api';
+import { useAudio } from '../context/AudioContext';
 
 const TrendingBeats = () => {
   const [trendingBeats, setTrendingBeats] = useState([]);
@@ -11,7 +12,7 @@ const TrendingBeats = () => {
   const [currentlyPlaying, setCurrentlyPlaying] = useState(null);
   const [audioLoading, setAudioLoading] = useState(false);
   const audioRef = useRef(new Audio());
-  
+  const { playTrack, currentTrack, isPlaying } = useAudio();
   // Fetch trending beats from API
   useEffect(() => {
     const fetchTrendingBeats = async () => {
