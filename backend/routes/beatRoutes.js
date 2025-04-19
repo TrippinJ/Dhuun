@@ -6,10 +6,10 @@ import { fileURLToPath } from 'url';
 import { authenticateUser } from '../routes/auth.js';
 import Beat from '../models/beat.js';
 import User from '../models/user.js';
-import cloudinary from 'cloudinary';
+import { v2 as cloudinary } from 'cloudinary';
 import * as beatController from '../controllers/beatController.js';
 
-const router = express.Router();
+// Get current file directory equivalent for ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -136,6 +136,8 @@ const getPublicIdFromUrl = (url) => {
   
   return publicId;
 };
+
+const router = express.Router();
 
 // Get all beats (public route)
 router.get('/', async (req, res) => {

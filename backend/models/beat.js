@@ -23,12 +23,11 @@ const BeatSchema = new mongoose.Schema({
     required: true,
     min: 0
   },
-  licenseTypes: [{
-    type: { type: String, enum: ['basic', 'premium', 'exclusive'] },
-    name: String,
-    price: Number,
-    selected: { type: Boolean, default: true }
-  }],
+  licenseType: {
+    type: String,
+    required: true,
+    trim: true
+  },
   description: { 
     type: String,
     trim: true
@@ -83,4 +82,6 @@ BeatSchema.index({
   tags: 'text' 
 });
 
-export default mongoose.model("Beat", BeatSchema);
+const Beat = mongoose.model("Beat", BeatSchema);
+
+export default Beat;

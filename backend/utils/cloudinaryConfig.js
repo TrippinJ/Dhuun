@@ -1,5 +1,7 @@
-import { v2 as cloudinary}  from 'cloudinary';
+import { v2 as cloudinary } from 'cloudinary';
 import dotenv from 'dotenv';
+
+// Load environment variables
 dotenv.config();
 
 // Configure Cloudinary with credentials from environment variables
@@ -96,7 +98,7 @@ const getPublicIdFromUrl = (url) => {
   }
 };
 
-export {
+export { 
   cloudinary,
   uploadToCloudinary,
   deleteFromCloudinary,
