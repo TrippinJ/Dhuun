@@ -141,7 +141,7 @@ const Navbar = () => {
     },
     { 
       text: "Sell Beats", 
-      route: "/register?role=seller",
+      route: "/login?role=seller",
       icon: <SellIcon />
     },
     { 

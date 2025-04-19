@@ -23,11 +23,12 @@ const BeatSchema = new mongoose.Schema({
     required: true,
     min: 0
   },
-  licenseType: {
-    type: String,
-    required: true,
-    trim: true
-  },
+  licenseTypes: [{
+    type: { type: String, enum: ['basic', 'premium', 'exclusive'] },
+    name: String,
+    price: Number,
+    selected: { type: Boolean, default: true }
+  }],
   description: { 
     type: String,
     trim: true

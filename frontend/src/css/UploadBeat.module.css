@@ -224,6 +224,338 @@
   background-color: #ff3b30;
 }
 
+/* Add these styles to your UploadBeat.module.css file */
+
+.licenseOptions {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
+  margin-top: 15px;
+}
+
+.licenseOption {
+  background-color: #2A2A2A;
+  border-radius: 10px;
+  padding: 20px;
+  border: 1px solid #444444;
+  transition: all 0.3s ease;
+}
+
+.licenseOption.selectedLicense {
+  border-color: #7B2CBF;
+  box-shadow: 0 0 10px rgba(123, 44, 191, 0.2);
+}
+
+.licenseHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.licenseHeader h4 {
+  margin: 0;
+  color: #FFFFFF;
+}
+
+.licenseToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: #AAAAAA;
+  font-size: 0.9rem;
+}
+
+.licenseToggle input {
+  margin: 0;
+  cursor: pointer;
+}
+
+.licenseContent {
+  padding-top: 15px;
+  border-top: 1px solid #333333;
+}
+
+.licensePrice {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.licensePrice label {
+  color: #AAAAAA;
+  font-size: 0.9rem;
+}
+
+.licensePrice input {
+  padding: 10px;
+  background-color: #333333;
+  border: 1px solid #444444;
+  border-radius: 5px;
+  color: #FFFFFF;
+  transition: all 0.3s ease;
+}
+
+.licensePrice input:focus {
+  border-color: #7B2CBF;
+  outline: none;
+}
+
+.licensePrice input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Enhanced file preview styles */
+.filePreview {
+  background-color: #222222;
+  border-radius: 10px;
+  padding: 20px;
+  margin-top: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.fileInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  font-size: 0.9rem;
+}
+
+.fileSize {
+  color: #AAAAAA;
+  font-weight: 500;
+}
+
+.previewActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.removeFile, .cropButton {
+  background-color: transparent;
+  border: none;
+  color: #FFFFFF;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.removeFile {
+  background-color: rgba(255, 26, 26, 0.1);
+  color: #FF1A1A;
+}
+
+.removeFile:hover {
+  background-color: rgba(255, 26, 26, 0.2);
+}
+
+.cropButton {
+  background-color: rgba(123, 44, 191, 0.1);
+  color: #7B2CBF;
+}
+
+.cropButton:hover {
+  background-color: rgba(123, 44, 191, 0.2);
+}
+
+/* Enhanced audio player */
+.audioPlayerContainer {
+  margin-top: 15px;
+  padding: 15px;
+  background-color: #1E1E1E;
+  border-radius: 8px;
+  border: 1px solid #333333;
+}
+
+.audioPlayerControls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.playPauseButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #7B2CBF;
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.playPauseButton:hover {
+  background-color: #8E44AD;
+  transform: scale(1.05);
+}
+
+.audioProgress {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.progressBar {
+  width: 100%;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #333333;
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+}
+
+.progressBar::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #7B2CBF;
+  cursor: pointer;
+}
+
+.timeDisplay {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #AAAAAA;
+  margin-top: 5px;
+}
+
+/* Enhanced image preview */
+.imagePreviewContainer {
+  margin-top: 15px;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.imagePreview {
+  width: 100%;
+  height: auto;
+  max-height: 300px;
+  object-fit: contain;
+  display: block;
+}
+
+/* Image cropper styles */
+.cropperModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+}
+
+.cropperContainer {
+  position: relative;
+  flex: 1;
+  background-color: #1A1A1A;
+}
+
+.cropperControls {
+  background-color: #222222;
+  padding: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: center;
+}
+
+.cropperControls label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+  min-width: 150px;
+}
+
+.cropperControls span {
+  font-size: 0.9rem;
+  color: #AAAAAA;
+}
+
+.cropperControls input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  background: #333333;
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+}
+
+.cropperControls input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #7B2CBF;
+  cursor: pointer;
+}
+
+.cropperActions {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.cancelCropButton, .applyCropButton {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.3s ease;
+}
+
+.cancelCropButton {
+  background-color: transparent;
+  border: 1px solid #333333;
+  color: #FFFFFF;
+}
+
+.cancelCropButton:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.applyCropButton {
+  background-color: #7B2CBF;
+  color: #FFFFFF;
+}
+
+.applyCropButton:hover {
+  background-color: #8E44AD;
+}
+
+
 /* Responsive styles */
 @media (max-width: 768px) {
   .formGrid {

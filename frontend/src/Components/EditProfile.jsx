@@ -4,6 +4,7 @@ import axios from "axios"; // Make sure to import axios
 import API from "../api/api";
 import styles from "../css/EditProfile.module.css";
 import { FaSave, FaUserCircle, FaUpload } from "react-icons/fa";
+import NavbarBeatExplore from '../Components/NavbarBeatExplore';
 
 const EditProfile = () => {
   const navigate = useNavigate();
@@ -214,8 +215,9 @@ const EditProfile = () => {
   if (loading && !userProfile.name) {
     return <div className={styles.loadingContainer}>Loading profile...</div>;
   }
-
+  
   return (
+    
     <div className={styles.profileContainer}>
       <h2 className={styles.profileHeading}>Edit Profile</h2>
       

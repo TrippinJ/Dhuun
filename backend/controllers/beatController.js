@@ -10,7 +10,7 @@ import fs from 'fs';
 export const createBeat = async (req, res) => {
   try {
     // Extract beat data from request body
-    const { title, genre, bpm, price, description, key, mood, tags } = req.body;
+    const { title, genre, bpm, price, description, key, mood, tags, licenseTypes } = req.body;
     
     // Validate required files
     if (!req.files || !req.files.audio || !req.files.coverImage) {
@@ -42,6 +42,21 @@ export const createBeat = async (req, res) => {
     if (tags && typeof tags === 'string') {
       processedTags = tags.split(',').map(tag => tag.trim().toLowerCase());
     }
+
+    // Process license types
+    let parsedLicenseTypes = [];
+    if (licenseTypes) {
+      try {
+        parsedLicenseTypes = typeof licenseTypes === 'string' 
+          ? JSON.parse(licenseTypes) 
+          : licenseTypes;
+
+          console.log("Parsed license types:", parsedLicenseTypes);
+
+      } catch (e) {
+        console.error('Error parsing license types:', e);
+      }
+    }
     
     // Create new beat document
     const newBeat = new Beat({
@@ -52,6 +67,7 @@ export const createBeat = async (req, res) => {
       description,
       key,
       mood,
+      licenseTypes: parsedLicenseTypes,
       tags: processedTags,
       producer: req.user.id,
       // Store both URL and public ID for future reference

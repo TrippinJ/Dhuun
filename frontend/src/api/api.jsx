@@ -2,9 +2,9 @@ import axios from "axios";
 
 const API = axios.create({
   baseURL: import.meta.env.VITE_BACKEND_URL || "http://localhost:8080",
-  headers: {
-    "Content-Type": "application/json",
-  },
+  // headers: {
+  //   "Content-Type": "application/json",
+  // },
 });
 
 // Add request interceptor for authorization and logging
@@ -19,7 +19,9 @@ API.interceptors.request.use(
     if (import.meta.env.DEV) {
       console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
     }
-    
+    if (!(config.data instanceof FormData)) {
+      config.headers["Content-Type"] = "application/json";
+    }
     return config;
   },
   (error) => Promise.reject(error)

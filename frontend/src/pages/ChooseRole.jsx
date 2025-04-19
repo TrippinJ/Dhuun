@@ -18,7 +18,7 @@ const ChooseRole = () => {
     
     if (!token) {
       // If not logged in, redirect to register with role as query param
-      navigate(`/register?role=${role}`);
+      navigate(`/login?role=${role}`);
       return;
     }
     

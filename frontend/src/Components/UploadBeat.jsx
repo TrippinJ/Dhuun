@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import API from "../api/api";
 import styles from "../css/UploadBeat.module.css";
-import { FaMusic, FaImage, FaUpload, FaTimes } from "react-icons/fa";
+import { FaMusic, FaImage, FaUpload, FaTimes, FaCrop, FaCheck, FaPlay, FaPause } from "react-icons/fa";
+import Cropper from "react-easy-crop";
 
 const UploadBeat = ({ onUploadComplete }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -12,9 +13,16 @@ const UploadBeat = ({ onUploadComplete }) => {
     key: "",
     tags: "",
     price: "",
-    licenseType: "non-exclusive",
     description: ""
   });
+
+  // Add license types
+  const [licenseTypes, setLicenseTypes] = useState([
+    { type: "basic", name: "Basic License", price: "4.99", selected: true },
+    { type: "premium", name: "Premium License", price: "9.99", selected: true },
+    { type: "exclusive", name: "Exclusive License", price: "49.99", selected: true }
+  ]);
+
   const [audioFile, setAudioFile] = useState(null);
   const [coverImage, setCoverImage] = useState(null);
   const [audioPreview, setAudioPreview] = useState(null);
@@ -22,6 +30,20 @@ const UploadBeat = ({ onUploadComplete }) => {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [validationErrors, setValidationErrors] = useState({});
+
+  // Audio player state
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [duration, setDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const audioRef = useRef(null);
+
+  // Image cropper state
+  const [showCropper, setShowCropper] = useState(false);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [rotation, setRotation] = useState(0);
+  const [originalImage, setOriginalImage] = useState(null);
 
   // Clean up object URLs on component unmount
   useEffect(() => {
@@ -37,7 +59,7 @@ const UploadBeat = ({ onUploadComplete }) => {
       ...beatData,
       [name]: value
     });
-    
+
     // Clear validation error when user fixes the field
     if (validationErrors[name]) {
       setValidationErrors({
@@ -45,6 +67,20 @@ const UploadBeat = ({ onUploadComplete }) => {
         [name]: null
       });
     }
+  };
+
+  // Handle license price changes
+  const handleLicensePriceChange = (index, price) => {
+    const updatedLicenseTypes = [...licenseTypes];
+    updatedLicenseTypes[index].price = price;
+    setLicenseTypes(updatedLicenseTypes);
+  };
+
+  // Toggle license selection
+  const handleLicenseToggle = (index) => {
+    const updatedLicenseTypes = [...licenseTypes];
+    updatedLicenseTypes[index].selected = !updatedLicenseTypes[index].selected;
+    setLicenseTypes(updatedLicenseTypes);
   };
 
   const handleAudioChange = (e) => {
@@ -58,7 +94,7 @@ const UploadBeat = ({ onUploadComplete }) => {
         });
         return;
       }
-      
+
       // Validate file type
       if (!file.type.startsWith("audio/")) {
         setValidationErrors({
@@ -67,11 +103,11 @@ const UploadBeat = ({ onUploadComplete }) => {
         });
         return;
       }
-      
+
       setAudioFile(file);
       if (audioPreview) URL.revokeObjectURL(audioPreview);
       setAudioPreview(URL.createObjectURL(file));
-      
+
       // Clear error if exists
       if (validationErrors.audio) {
         setValidationErrors({
@@ -93,7 +129,7 @@ const UploadBeat = ({ onUploadComplete }) => {
         });
         return;
       }
-      
+
       // Validate file type
       if (!file.type.startsWith("image/")) {
         setValidationErrors({
@@ -102,11 +138,18 @@ const UploadBeat = ({ onUploadComplete }) => {
         });
         return;
       }
-      
-      setCoverImage(file);
+
+      // Save original file for cropping
+      setOriginalImage(file);
+
+      // Create URL for preview
       if (imagePreview) URL.revokeObjectURL(imagePreview);
-      setImagePreview(URL.createObjectURL(file));
-      
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
+
+      // Show cropper on image select
+      setShowCropper(true);
+
       // Clear error if exists
       if (validationErrors.coverImage) {
         setValidationErrors({
@@ -117,27 +160,179 @@ const UploadBeat = ({ onUploadComplete }) => {
     }
   };
 
+  // Audio player functions
+  const toggleAudioPlay = () => {
+    if (!audioRef.current) return;
+
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+
+    setIsPlaying(!isPlaying);
+  };
+
+  const handleTimeUpdate = () => {
+    if (!audioRef.current) return;
+    setCurrentTime(audioRef.current.currentTime);
+  };
+
+  const handleLoadedMetadata = () => {
+    if (!audioRef.current) return;
+    setDuration(audioRef.current.duration);
+  };
+
+  const handleEnded = () => {
+    setIsPlaying(false);
+    setCurrentTime(0);
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+    }
+  };
+
+  const handleSeek = (e) => {
+    const seekTime = parseFloat(e.target.value);
+    setCurrentTime(seekTime);
+    if (audioRef.current) {
+      audioRef.current.currentTime = seekTime;
+    }
+  };
+
+  // Format time for audio player
+  const formatTime = (time) => {
+    if (isNaN(time)) return "0:00";
+
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60).toString().padStart(2, "0");
+    return `${minutes}:${seconds}`;
+  };
+
+  // Crop image functions
+  const onCropComplete = (croppedArea, croppedAreaPixels) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  };
+
+  // Apply the crop
+  const applyCrop = async () => {
+    try {
+      if (!originalImage || !croppedAreaPixels) return;
+
+      // Create a canvas element to draw the cropped image
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      // Load the image to get its dimensions
+      const image = new Image();
+      image.src = imagePreview;
+
+      await new Promise((resolve) => {
+        image.onload = resolve;
+      });
+
+      // Set canvas dimensions to the cropped size
+      canvas.width = croppedAreaPixels.width;
+      canvas.height = croppedAreaPixels.height;
+
+      // Apply rotation if needed
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.rotate((rotation * Math.PI) / 180);
+      ctx.translate(-canvas.width / 2, -canvas.height / 2);
+
+      // Draw the cropped part of the image onto the canvas
+      ctx.drawImage(
+        image,
+        croppedAreaPixels.x,
+        croppedAreaPixels.y,
+        croppedAreaPixels.width,
+        croppedAreaPixels.height,
+        0,
+        0,
+        croppedAreaPixels.width,
+        croppedAreaPixels.height
+      );
+
+      // Convert canvas to a Blob
+      canvas.toBlob((blob) => {
+        if (blob) {
+          // Create file from blob
+          const croppedFile = new File([blob], originalImage.name, {
+            type: originalImage.type,
+          });
+
+          // Set the cropped image as the cover image
+          setCoverImage(croppedFile);
+
+          // Update the preview URL
+          if (imagePreview) URL.revokeObjectURL(imagePreview);
+          setImagePreview(URL.createObjectURL(blob));
+
+          // Hide cropper
+          setShowCropper(false);
+        }
+      }, originalImage.type);
+
+    } catch (error) {
+      console.error("Error applying crop:", error);
+    }
+  };
+
+  // Cancel the crop
+  const cancelCrop = () => {
+    setShowCropper(false);
+
+    // If no previous image, clear everything
+    if (!coverImage) {
+      if (imagePreview) URL.revokeObjectURL(imagePreview);
+      setImagePreview(null);
+      setOriginalImage(null);
+    }
+  };
+
   const validateForm = () => {
     const errors = {};
-    
+
     if (!beatData.title.trim()) errors.title = "Title is required";
     if (!beatData.genre) errors.genre = "Genre is required";
-    if (beatData.price === "" || isNaN(beatData.price) || parseFloat(beatData.price) <= 0) {
-      errors.price = "Please enter a valid price";
+
+    // Check if at least one license type is selected
+    if (!licenseTypes.some(license => license.selected)) {
+      errors.licenseTypes = "At least one license type must be selected";
     }
+
+    // Get price from basic license if not set
+    if (!beatData.price) {
+      const basicLicense = licenseTypes.find(l => l.type === "basic" && l.selected);
+      if (basicLicense) {
+        beatData.price = basicLicense.price;
+      } else {
+        errors.price = "Please enter a valid price";
+      }
+    }
+
+    // Validate prices for selected licenses
+    licenseTypes.forEach((license, index) => {
+      if (license.selected) {
+        const price = parseFloat(license.price);
+        if (isNaN(price) || price <= 0) {
+          errors[`licensePrice${index}`] = `Please enter a valid price for ${license.name}`;
+        }
+      }
+    });
+
     if (!audioFile) errors.audio = "Audio file is required";
     if (!coverImage) errors.coverImage = "Cover image is required";
-    
+
     return errors;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Clear previous messages
     setErrorMessage("");
     setSuccessMessage("");
-    
+
     // Validate form
     const errors = validateForm();
     if (Object.keys(errors).length > 0) {
@@ -145,7 +340,7 @@ const UploadBeat = ({ onUploadComplete }) => {
       setErrorMessage("Please fix the errors before submitting");
       return;
     }
-    
+
     setIsLoading(true);
 
     try {
@@ -160,22 +355,43 @@ const UploadBeat = ({ onUploadComplete }) => {
       const formData = new FormData();
       formData.append("audio", audioFile);
       formData.append("coverImage", coverImage);
-      
-      // Append beat metadata
-      Object.keys(beatData).forEach(key => {
-        formData.append(key, beatData[key]);
-      });
+
+      // Append basic beat metadata
+      formData.append("title", beatData.title);
+      formData.append("genre", beatData.genre);
+      formData.append("bpm", beatData.bpm);
+      formData.append("key", beatData.key);
+      formData.append("tags", beatData.tags);
+      formData.append("description", beatData.description);
+      formData.append("price", beatData.price);
+      formData.append("licenseType", beatData.licenseType);
+
+      // Append license data as JSON string
+      formData.append("licenseTypes", JSON.stringify(
+        licenseTypes.filter(license => license.selected)
+      ));
+
+      // Debug log
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}: ${value instanceof File ? `File: ${value.name}` : value}`);
+      }
+
+      console.log("Uploading beat with form data...");
+
+      // For debugging, log what we're sending
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}: ${value instanceof File ? `File: ${value.name}` : value}`);
+      }
 
       const response = await API.post("/api/beats", formData, {
-        headers: { 
+        headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data"
         }
       });
 
       console.log("Beat uploaded successfully:", response.data);
       setSuccessMessage("Beat uploaded successfully!");
-      
+
       // Reset form after successful upload
       setBeatData({
         title: "",
@@ -184,12 +400,18 @@ const UploadBeat = ({ onUploadComplete }) => {
         key: "",
         tags: "",
         price: "",
-        licenseType: "non-exclusive",
         description: ""
       });
+
+      setLicenseTypes([
+        { type: "basic", name: "Basic License", price: "4.99", selected: true },
+        { type: "premium", name: "Premium License", price: "9.99", selected: true },
+        { type: "exclusive", name: "Exclusive License", price: "49.99", selected: true }
+      ]);
+
       setAudioFile(null);
       setCoverImage(null);
-      
+
       // Cleanup URLs
       if (audioPreview) {
         URL.revokeObjectURL(audioPreview);
@@ -199,14 +421,21 @@ const UploadBeat = ({ onUploadComplete }) => {
         URL.revokeObjectURL(imagePreview);
         setImagePreview(null);
       }
-      
+
+      // Reset audio player
+      setIsPlaying(false);
+      setCurrentTime(0);
+      setDuration(0);
+
       // Call the callback to notify parent component
       if (onUploadComplete) {
         onUploadComplete(response.data);
       }
-      
+
     } catch (error) {
       console.error("Error uploading beat:", error);
+      console.error("Error response:", error.response?.data);
+
       if (error.response?.status === 403) {
         setErrorMessage("You've reached your upload limit. Please upgrade your subscription.");
       } else {
@@ -223,6 +452,9 @@ const UploadBeat = ({ onUploadComplete }) => {
       URL.revokeObjectURL(audioPreview);
       setAudioPreview(null);
     }
+    setIsPlaying(false);
+    setCurrentTime(0);
+    setDuration(0);
   };
 
   const removeImageFile = () => {
@@ -231,6 +463,7 @@ const UploadBeat = ({ onUploadComplete }) => {
       URL.revokeObjectURL(imagePreview);
       setImagePreview(null);
     }
+    setOriginalImage(null);
   };
 
   return (
@@ -240,13 +473,13 @@ const UploadBeat = ({ onUploadComplete }) => {
           {errorMessage}
         </div>
       )}
-      
+
       {successMessage && (
         <div className={styles.successMessage}>
           {successMessage}
         </div>
       )}
-      
+
       <form onSubmit={handleSubmit} className={styles.uploadForm}>
         <div className={styles.formSection}>
           <h3>Beat Files</h3>
@@ -277,16 +510,50 @@ const UploadBeat = ({ onUploadComplete }) => {
                       {(audioFile.size / (1024 * 1024)).toFixed(2)} MB
                     </span>
                   </div>
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     className={styles.removeFile}
                     onClick={removeAudioFile}
                   >
                     <FaTimes />
                   </button>
+
+                  {/* Enhanced audio player */}
                   {audioPreview && (
-                    <div className={styles.preview}>
-                      <audio controls src={audioPreview}></audio>
+                    <div className={styles.audioPlayerContainer}>
+                      <audio
+                        ref={audioRef}
+                        src={audioPreview}
+                        onTimeUpdate={handleTimeUpdate}
+                        onLoadedMetadata={handleLoadedMetadata}
+                        onEnded={handleEnded}
+                        style={{ display: 'none' }}
+                      />
+
+                      <div className={styles.audioPlayerControls}>
+                        <button
+                          type="button"
+                          className={styles.playPauseButton}
+                          onClick={toggleAudioPlay}
+                        >
+                          {isPlaying ? <FaPause /> : <FaPlay />}
+                        </button>
+
+                        <div className={styles.audioProgress}>
+                          <input
+                            type="range"
+                            min="0"
+                            max={duration || 0}
+                            value={currentTime}
+                            onChange={handleSeek}
+                            className={styles.progressBar}
+                          />
+                          <div className={styles.timeDisplay}>
+                            <span>{formatTime(currentTime)}</span>
+                            <span>{formatTime(duration)}</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -319,18 +586,94 @@ const UploadBeat = ({ onUploadComplete }) => {
                       {(coverImage.size / (1024 * 1024)).toFixed(2)} MB
                     </span>
                   </div>
-                  <button 
-                    type="button" 
-                    className={styles.removeFile}
-                    onClick={removeImageFile}
-                  >
-                    <FaTimes />
-                  </button>
-                  {imagePreview && (
-                    <div className={styles.preview}>
-                      <img src={imagePreview} alt="Cover preview" />
+                  <div className={styles.previewActions}>
+                    <button
+                      type="button"
+                      className={styles.cropButton}
+                      onClick={() => setShowCropper(true)}
+                    >
+                      <FaCrop /> Edit
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.removeFile}
+                      onClick={removeImageFile}
+                    >
+                      <FaTimes />
+                    </button>
+                  </div>
+
+                  {/* Enhanced image preview */}
+                  {imagePreview && !showCropper && (
+                    <div className={styles.imagePreviewContainer}>
+                      <img
+                        src={imagePreview}
+                        alt="Cover preview"
+                        className={styles.imagePreview}
+                      />
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Image Cropper Modal */}
+              {showCropper && imagePreview && (
+                <div className={styles.cropperModal}>
+                  <div className={styles.cropperContainer}>
+                    <Cropper
+                      image={imagePreview}
+                      crop={crop}
+                      zoom={zoom}
+                      aspect={1}
+                      onCropChange={setCrop}
+                      onCropComplete={onCropComplete}
+                      onZoomChange={setZoom}
+                      rotation={rotation}
+                    />
+                  </div>
+
+                  <div className={styles.cropperControls}>
+                    <label>
+                      <span>Zoom</span>
+                      <input
+                        type="range"
+                        min="1"
+                        max="3"
+                        step="0.1"
+                        value={zoom}
+                        onChange={(e) => setZoom(parseFloat(e.target.value))}
+                      />
+                    </label>
+
+                    <label>
+                      <span>Rotation</span>
+                      <input
+                        type="range"
+                        min="0"
+                        max="360"
+                        step="1"
+                        value={rotation}
+                        onChange={(e) => setRotation(parseInt(e.target.value))}
+                      />
+                    </label>
+
+                    <div className={styles.cropperActions}>
+                      <button
+                        type="button"
+                        className={styles.cancelCropButton}
+                        onClick={cancelCrop}
+                      >
+                        <FaTimes /> Cancel
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.applyCropButton}
+                        onClick={applyCrop}
+                      >
+                        <FaCheck /> Apply
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -430,38 +773,6 @@ const UploadBeat = ({ onUploadComplete }) => {
                 placeholder="e.g. dark, moody, aggressive (comma separated)"
               />
             </div>
-
-            <div className={styles.formGroup}>
-              <label htmlFor="price">Price ($)*</label>
-              <input
-                type="number"
-                id="price"
-                name="price"
-                className={validationErrors.price ? styles.errorInput : ""}
-                min="0"
-                step="0.01"
-                value={beatData.price}
-                onChange={handleInputChange}
-                placeholder="e.g. 29.99"
-              />
-              {validationErrors.price && (
-                <div className={styles.fieldError}>{validationErrors.price}</div>
-              )}
-            </div>
-
-            <div className={styles.formGroup}>
-              <label htmlFor="licenseType">License Type*</label>
-              <select
-                id="licenseType"
-                name="licenseType"
-                value={beatData.licenseType}
-                onChange={handleInputChange}
-              >
-                <option value="non-exclusive">Non-Exclusive</option>
-                <option value="exclusive">Exclusive</option>
-                <option value="both">Both (Different Pricing)</option>
-              </select>
-            </div>
           </div>
 
           <div className={styles.formGroup}>
@@ -474,6 +785,50 @@ const UploadBeat = ({ onUploadComplete }) => {
               placeholder="Describe your beat (mood, inspiration, best uses, etc.)"
               rows="4"
             ></textarea>
+          </div>
+        </div>
+
+        {/* Add License Types Section */}
+        <div className={styles.formSection}>
+          <h3>Available Licenses</h3>
+          {validationErrors.licenseTypes && (
+            <div className={styles.fieldError}>{validationErrors.licenseTypes}</div>
+          )}
+
+          <div className={styles.licenseOptions}>
+            {licenseTypes.map((license, index) => (
+              <div key={index} className={`${styles.licenseOption} ${license.selected ? styles.selectedLicense : ''}`}>
+                <div className={styles.licenseHeader}>
+                  <h4>{license.name}</h4>
+                  <label className={styles.licenseToggle}>
+                    <input
+                      type="checkbox"
+                      checked={license.selected}
+                      onChange={() => handleLicenseToggle(index)}
+                    />
+                    <span>Offer this license</span>
+                  </label>
+                </div>
+
+                <div className={styles.licenseContent}>
+                  <div className={styles.licensePrice}>
+                    <label>Price ($)</label>
+                    <input
+                      type="number"
+                      value={license.price}
+                      onChange={(e) => handleLicensePriceChange(index, e.target.value)}
+                      disabled={!license.selected}
+                      min="0.99"
+                      step="0.01"
+                      className={validationErrors[`licensePrice${index}`] ? styles.errorInput : ""}
+                    />
+                    {validationErrors[`licensePrice${index}`] && (
+                      <div className={styles.fieldError}>{validationErrors[`licensePrice${index}`]}</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
