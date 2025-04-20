@@ -195,7 +195,7 @@ const TrendingBeats = () => {
         {trendingBeats.length > 0 ? (
           trendingBeats.map((beat) => {
             // Check if this beat is currently playing
-            const isCurrentlyPlaying = 
+            const isThisPlaying = 
               isPlaying && 
               currentTrack && 
               (currentTrack._id === beat._id || currentTrack.id === beat.id);
@@ -220,7 +220,7 @@ const TrendingBeats = () => {
                     >
                       {audioLoading && currentTrack?._id === beat._id ? (
                         <span>...</span>
-                      ) : isCurrentlyPlaying ? (
+                      ) : isThisPlaying ? (
                         <FaPause />
                       ) : (
                         <FaPlay />
