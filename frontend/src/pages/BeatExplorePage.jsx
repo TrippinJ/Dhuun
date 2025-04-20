@@ -370,24 +370,7 @@ const BeatExplorePage = () => {
         </div>
         
         <div className={`${styles.filtersContainer} ${showFilters ? styles.showFilters : ''}`}>
-          {/* View mode toggle */}
-          <div className={styles.filterGroup}>
-            <h3 className={styles.filterLabel}>View Mode</h3>
-            <div className={styles.viewToggle}>
-              <button 
-                className={`${styles.viewButton} ${displayMode === 'grid' ? styles.active : ''}`}
-                onClick={() => setDisplayMode('grid')}
-              >
-                <FaThLarge />
-              </button>
-              <button 
-                className={`${styles.viewButton} ${displayMode === 'list' ? styles.active : ''}`}
-                onClick={() => setDisplayMode('list')}
-              >
-                <FaListUl />
-              </button>
-            </div>
-          </div>
+          
 
           {/* Genre filter */}
           <div className={styles.filterGroup}>
@@ -419,11 +402,32 @@ const BeatExplorePage = () => {
         </div>
         
         {/* Results count */}
-        <div className={styles.resultsCount}>
+        {/* <div className={styles.resultsCount}>
           {filteredBeats.length} beats found
-        </div>
-      </div>
+        </div> */}
 
+        {/* View mode toggle */}
+        <div className={styles.filterGroup}>
+            <h3 className={styles.filterLabel}>View Mode</h3>
+            <div className={styles.viewToggle}>
+              <button 
+                className={`${styles.viewButton} ${displayMode === 'grid' ? styles.active : ''}`}
+                onClick={() => setDisplayMode('grid')}
+              >
+                <FaThLarge />
+              </button>
+              <button 
+                className={`${styles.viewButton} ${displayMode === 'list' ? styles.active : ''}`}
+                onClick={() => setDisplayMode('list')}
+              >
+                <FaListUl />
+              </button>
+            </div>
+          </div>
+
+      </div>
+        
+        
       {/* Error message */}
       {errorMessage && <div className={styles.errorMessage}>{errorMessage}</div>}
 
