@@ -63,9 +63,9 @@ const SingleBeatModal = ({
   
   // Handle transposition
   const handleTranspose = (direction) => {
-    if (direction === 'up' && semitones < 2) {
+    if (direction === 'up' && semitones < 12) {
       setSemitones(semitones + 1);
-    } else if (direction === 'down' && semitones > -2) {
+    } else if (direction === 'down' && semitones > -12) {
       setSemitones(semitones - 1);
     }
     
@@ -108,8 +108,6 @@ const SingleBeatModal = ({
       price: beat.price || 4.99,
       benefits: [
         'MP3 File',
-        'Non-commercial use',
-        'Up to 10,000 streams',
         'No royalties'
       ]
     },
@@ -118,9 +116,6 @@ const SingleBeatModal = ({
       price: (beat.price || 4.99) * 2.5,
       benefits: [
         'WAV + MP3 Files',
-        'Commercial use',
-        'Unlimited streams',
-        'Monetization allowed',
         'No royalties'
       ]
     },
@@ -130,8 +125,6 @@ const SingleBeatModal = ({
       benefits: [
         'WAV + MP3 + Stems',
         'Full ownership',
-        'Unlimited commercial use',
-        'Full rights transfer',
         'Beat removed from store'
       ]
     }

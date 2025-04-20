@@ -1,233 +1,393 @@
 /* src/css/GlobalAudioPlayer.module.css */
 .playerContainer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background-color: #1E1E1E;
-    padding: 12px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-top: 1px solid #333;
-    z-index: 1000;
-    height: 80px;
-    transform: translateY(0);
-    transition: transform 0.3s ease;
-    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.2);
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #121212;
+  color: #ffffff;
+  z-index: 1000;
+  height: 56px;
+  border-top: 1px solid #2a2a2a;
+  box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.playerContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.trackInfo {
+  display: flex;
+  align-items: center;
+  width: 25%;
+  min-width: 180px;
+  overflow: hidden;
+}
+
+.trackCover {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  margin-right: 12px;
+  border-radius: 2px;
+}
+
+.trackDetails {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  justify-content: center;
+}
+
+.trackText {
+  overflow: hidden;
+}
+
+.trackTitle {
+  margin: 0;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+}
+
+.trackArtist {
+  margin: 0;
+  font-size: 11px;
+  color: #b3b3b3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bpmInfo {
+  font-size: 10px;
+  color: #888;
+  margin-top: 2px;
+}
+
+.centerControls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 50%;
+  max-width: 600px;
+}
+
+.controlButtons {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.controlButton {
+  background: transparent;
+  border: none;
+  color: #b3b3b3;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  margin: 0 8px;
+  transition: color 0.2s;
+}
+
+.controlButton:hover {
+  color: #ffffff;
+}
+
+.playButton {
+  background: #ffffff;
+  color: #000000;
+  border: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin: 0 12px;
+  transition: transform 0.2s;
+  font-size: 12px;
+}
+
+.playButton:hover {
+  transform: scale(1.05);
+  background: #ffffff;
+}
+
+.timeInfo {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  font-size: 11px;
+}
+
+.progressContainer {
+  flex-grow: 1;
+  margin: 0 8px;
+}
+
+.progressBar {
+  height: 3px;
+  background-color: #404040;
+  border-radius: 1.5px;
+  cursor: pointer;
+  position: relative;
+}
+
+.progressBar:hover {
+  height: 5px;
+}
+
+.progressFill {
+  height: 100%;
+  background-color: #7b2cbf; /* Purple color similar to Beatstars */
+  border-radius: inherit;
+}
+
+.currentTime, .duration {
+  color: #b3b3b3;
+  min-width: 30px;
+  font-size: 10px;
+}
+
+.rightControls {
+  display: flex;
+  align-items: center;
+  width: 25%;
+  min-width: 150px;
+  justify-content: flex-end;
+}
+
+.actionButton {
+  background: transparent;
+  border: none;
+  color: #b3b3b3;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px;
+  margin: 0 8px;
+  transition: color 0.2s;
+}
+
+.actionButton:hover {
+  color: #ffffff;
+}
+
+.actionButton.liked {
+  color: #7b2cbf; /* Purple for liked */
+}
+
+.volumeControl {
+  position: relative;
+  margin: 0 8px;
+}
+
+.volumeButton {
+  background: transparent;
+  border: none;
+  color: #b3b3b3;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s;
+}
+
+.volumeButton:hover {
+  color: #ffffff;
+}
+
+.volumeSlider {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 20px;
+  background-color: #282828;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  z-index: 1001;
+}
+
+.volumeSlider input[type="range"] {
+  width: 100%;
+  background: transparent;
+  -webkit-appearance: none;
+}
+
+.volumeSlider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 10px;
+  width: 10px;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+  margin-top: -4px;
+}
+
+.volumeSlider input[type="range"]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 3px;
+  background: #404040;
+  border-radius: 1.5px;
+}
+
+.optionsMenu {
+  position: relative;
+  margin: 0 8px;
+}
+
+.menuButton {
+  background: transparent;
+  border: none;
+  color: #b3b3b3;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s;
+}
+
+.menuButton:hover {
+  color: #ffffff;
+}
+
+.menuDropdown {
+  position: absolute;
+  bottom: 30px;
+  right: 0;
+  width: 150px;
+  background-color: #282828;
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  z-index: 1001;
+}
+
+.menuDropdown ul {
+  list-style: none;
+  padding: 4px 0;
+  margin: 0;
+}
+
+.menuDropdown li {
+  padding: 8px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.menuDropdown li:hover {
+  background-color: #333333;
+}
+
+.buyButton {
+  background-color: #7b2cbf; /* Purple similar to Beatstars */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  margin-left: 8px;
+  transition: background-color 0.2s;
+}
+
+.buyButton:hover {
+  background-color: #9b4ddf;
+}
+
+.cartIcon {
+  margin-right: 5px;
+  font-size: 12px;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+  .trackInfo {
+    width: 30%;
+    min-width: 120px;
   }
   
-  .playerHidden {
-    transform: translateY(100%);
+  .centerControls {
+    width: 40%;
+  }
+  
+  .rightControls {
+    width: 30%;
+  }
+  
+  .trackTitle {
+    font-size: 12px;
+  }
+  
+  .trackArtist {
+    font-size: 10px;
+  }
+  
+  .actionButton, .volumeButton, .menuButton {
+    font-size: 12px;
+    padding: 3px;
+    margin: 0 4px;
+  }
+  
+  .buyButton {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 576px) {
+  .playerContainer {
+    height: 80px;
+  }
+  
+  .playerContent {
+    flex-wrap: wrap;
+    padding: 4px 8px;
   }
   
   .trackInfo {
-    display: flex;
-    align-items: center;
-    flex: 0 0 250px;
-    overflow: hidden;
+    width: 70%;
+    order: 1;
   }
   
-  .trackCover {
-    width: 56px;
-    height: 56px;
-    border-radius: 4px;
-    object-fit: cover;
-    margin-right: 12px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  .rightControls {
+    width: 30%;
+    order: 2;
+    justify-content: flex-end;
   }
   
-  .trackText {
-    overflow: hidden;
-  }
-  
-  .trackText h3 {
-    margin: 0 0 4px 0;
-    font-size: 0.95rem;
-    color: #fff;
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  
-  .trackText p {
-    margin: 0;
-    font-size: 0.8rem;
-    color: #aaa;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  
-  .controls {
-    display: flex;
-    align-items: center;
-    flex: 1;
-    max-width: 800px;
-    margin: 0 20px;
-  }
-  
-  .playButton {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: #7B2CBF;
-    color: white;
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    margin-right: 15px;
-    flex-shrink: 0;
-  }
-  
-  .playButton:hover {
-    background-color: #8E44AD;
-    transform: scale(1.05);
-  }
-  
-  .progressContainer {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  
-  .progressBar {
-    flex: 1;
-    height: 5px;
-    -webkit-appearance: none;
-    appearance: none;
-    background: #333;
-    border-radius: 2px;
-    outline: none;
-    cursor: pointer;
-  }
-  
-  .progressBar::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: #7B2CBF;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-  
-  .progressBar::-webkit-slider-thumb:hover {
-    transform: scale(1.2);
-  }
-  
-  .time {
-    font-size: 0.8rem;
-    color: #aaa;
-    min-width: 40px;
-    text-align: center;
-  }
-  
-  .volumeContainer {
-    position: relative;
-    display: flex;
-    align-items: center;
-    margin-left: 15px;
-  }
-  
-  .volumeButton {
-    background: none;
-    border: none;
-    color: #aaa;
-    font-size: 1.2rem;
-    cursor: pointer;
-    padding: 5px;
-    transition: color 0.3s ease;
-  }
-  
-  .volumeButton:hover {
-    color: #fff;
-  }
-  
-  .volumeSlider {
-    position: absolute;
-    bottom: 40px;
-    right: 0;
-    background-color: #2a2a2a;
-    padding: 10px;
-    border-radius: 8px;
-    width: 100px;
-    height: 36px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    transform-origin: bottom right;
-    animation: fadeIn 0.2s ease;
-  }
-  
-  .volumeSlider input {
+  .centerControls {
     width: 100%;
-    height: 4px;
-    -webkit-appearance: none;
-    appearance: none;
-    background: #555;
-    border-radius: 2px;
-    outline: none;
+    order: 3;
+    margin-top: 4px;
   }
   
-  .volumeSlider input::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: #7B2CBF;
-    cursor: pointer;
+  .controlButtons {
+    margin-bottom: 0;
   }
   
-  @keyframes fadeIn {
-    from { opacity: 0; transform: scale(0.9); }
-    to { opacity: 1; transform: scale(1); }
+  .buyButton {
+    font-size: 10px;
+    padding: 3px 6px;
   }
   
-  /* Responsive styles */
-  @media (max-width: 768px) {
-    .trackInfo {
-      flex: 0 0 180px;
-    }
-    
-    .controls {
-      margin: 0 10px;
-    }
-    
-    .trackCover {
-      width: 46px;
-      height: 46px;
-    }
-    
-    .playButton {
-      width: 36px;
-      height: 36px;
-      margin-right: 10px;
-    }
+  .volumeControl, .actionButton {
+    display: none; /* Hide volume and like buttons on very small screens */
   }
-  
-  @media (max-width: 576px) {
-    .trackInfo {
-      flex: 0 0 120px;
-    }
-    
-    .trackCover {
-      width: 40px;
-      height: 40px;
-      margin-right: 8px;
-    }
-    
-    .time {
-      display: none;
-    }
-    
-    .playerContainer {
-      padding: 10px;
-    }
-  }
+}

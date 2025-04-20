@@ -1,4 +1,4 @@
-// src/components/MiniPlayer.jsx
+// src/Components/MiniPlayer.jsx
 import React from 'react';
 import { FaPlay, FaPause } from 'react-icons/fa';
 import { useAudio } from '../context/AudioContext';
@@ -11,21 +11,12 @@ const MiniPlayer = ({ beat, showProgress = false }) => {
   const isThisPlaying = 
     isPlaying && 
     currentTrack && 
-    (currentTrack.id === beat.id || currentTrack._id === beat._id);
+    (currentTrack._id === beat._id || currentTrack.id === beat.id);
   
   // Handle play button click
   const handlePlay = (e) => {
     e.stopPropagation(); // Prevent parent click event
     playTrack(beat);
-  };
-  
-  // Format time (e.g. 3:45)
-  const formatTime = (time) => {
-    if (isNaN(time)) return '0:00';
-    
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60).toString().padStart(2, '0');
-    return `${minutes}:${seconds}`;
   };
   
   // Calculate progress percentage
@@ -49,11 +40,6 @@ const MiniPlayer = ({ beat, showProgress = false }) => {
               style={{ width: `${progressPercentage}%` }}
             ></div>
           </div>
-          {isThisPlaying && (
-            <span className={styles.time}>
-              {formatTime(currentTime)} / {formatTime(duration)}
-            </span>
-          )}
         </div>
       )}
     </div>

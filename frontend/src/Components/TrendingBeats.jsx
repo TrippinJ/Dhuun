@@ -1,18 +1,22 @@
+// src/Components/TrendingBeats.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { FaPlay, FaPause, FaHeart, FaShoppingCart } from 'react-icons/fa';
 import { BsCheckCircleFill } from 'react-icons/bs';
 import styles from '../css/TrendingBeats.module.css';
 import API from '../api/api';
 import { useAudio } from '../context/AudioContext';
+import { useNavigate } from 'react-router-dom';
 
 const TrendingBeats = () => {
   const [trendingBeats, setTrendingBeats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [currentlyPlaying, setCurrentlyPlaying] = useState(null);
   const [audioLoading, setAudioLoading] = useState(false);
-  const audioRef = useRef(new Audio());
+  const navigate = useNavigate();
+  
+  // Use the audio context
   const { playTrack, currentTrack, isPlaying } = useAudio();
+  
   // Fetch trending beats from API
   useEffect(() => {
     const fetchTrendingBeats = async () => {
@@ -92,117 +96,38 @@ const TrendingBeats = () => {
     };
     
     fetchTrendingBeats();
-    
-    // Cleanup
-    return () => {
-      const audio = audioRef.current;
-      if (audio) {
-        audio.pause();
-        audio.src = '';
-      }
-    };
   }, []);
 
-  // Handle play button click
+  // Handle play button click - now uses the global audio context
   const handlePlay = (beat) => {
     try {
-      const beatId = beat._id;
       // Check ALL possible audio URL properties
       const audioUrl = beat.audioFile || beat.audioUrl || beat.audio;
       
-      console.log("Beat details:", {
-        id: beatId,
-        audioFile: beat.audioFile, 
-        audioUrl: beat.audioUrl,
-        audio: beat.audio
-      });
-      
-      // If no audio URL is found, try a fallback URL format
+      // If no audio URL is found, add a fallback URL
       if (!audioUrl) {
-        console.error("No audio URL found for this beat - attempting to construct one");
-        // Try constructing a URL based on the beat ID pattern you see in console
-        const fallbackUrl = `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3`;
-        console.log("Using fallback URL:", fallbackUrl);
-        
-        // Use the fallback URL
-        playAudio(beatId, fallbackUrl);
-        return;
+        console.error("No audio URL found for this beat - using fallback");
+        // Add fallback URL to the beat object
+        beat = {
+          ...beat,
+          audioUrl: `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3`
+        };
       }
       
-      console.log(`Playing beat ${beatId}, URL: ${audioUrl}`);
-      playAudio(beatId, audioUrl);
+      // Use the AudioContext's playTrack function
+      playTrack(beat);
+      
+      // Try to increment play count via API
+      try {
+        API.post(`/api/beats/${beat._id}/play`).catch(err => {
+          console.log("Could not update play count, ignoring:", err);
+        });
+      } catch (e) {
+        // Silently ignore tracking errors
+      }
     } catch (error) {
       console.error("Error in handlePlay:", error);
-      setAudioLoading(false);
     }
-  };
-  
-  // Create a separate function for the actual audio playback
-  const playAudio = (beatId, audioUrl) => {
-    const audio = audioRef.current;
-    
-    // If already playing this beat, toggle pause
-    if (currentlyPlaying === beatId) {
-      if (!audio.paused) {
-        audio.pause();
-        setCurrentlyPlaying(null);
-      } else {
-        audio.play()
-          .catch(error => console.error("Error resuming audio:", error));
-        setCurrentlyPlaying(beatId);
-      }
-      return;
-    }
-    
-    // Stop current audio if different beat is playing
-    if (currentlyPlaying) {
-      audio.pause();
-    }
-    
-    // Set new audio source
-    setAudioLoading(true);
-    audio.src = audioUrl;
-    
-    // Add event listener for errors to see detailed error information
-    audio.addEventListener('error', (e) => {
-      console.error("Audio error event:", e);
-      console.error("Audio error details:", {
-        code: audio.error?.code,
-        message: audio.error?.message,
-        URL: audioUrl
-      });
-      setAudioLoading(false);
-      setCurrentlyPlaying(null);
-    }, { once: true });
-    
-    // Handle events
-    audio.oncanplaythrough = () => {
-      console.log("Audio can play through now");
-      setAudioLoading(false);
-      audio.play()
-        .then(() => {
-          console.log("Audio playback started successfully");
-          setCurrentlyPlaying(beatId);
-          
-          // Try to increment play count via API
-          try {
-            API.post(`/api/beats/${beatId}/play`).catch(err => {
-              console.log("Could not update play count, ignoring:", err);
-            });
-          } catch (e) {
-            // Silently ignore tracking errors
-          }
-        })
-        .catch(error => {
-          console.error("Error playing audio:", error);
-          setAudioLoading(false);
-          setCurrentlyPlaying(null);
-        });
-    };
-    
-    audio.onended = () => {
-      setCurrentlyPlaying(null);
-    };
   };
 
   // Handle add to cart
@@ -246,7 +171,7 @@ const TrendingBeats = () => {
   // Handle see more click
   const handleSeeMore = () => {
     console.log('See more beats');
-    window.location.href = '/BeatExplorePage';
+    navigate('/BeatExplorePage');
   };
 
   if (loading) {
@@ -268,61 +193,69 @@ const TrendingBeats = () => {
 
       <div className={styles.beatsGrid}>
         {trendingBeats.length > 0 ? (
-          trendingBeats.map((beat) => (
-            <div key={beat._id} className={styles.beatCard}>
-              <div className={styles.imageContainer}>
-                <img 
-                  src={beat.coverImage || "https://via.placeholder.com/300x300"} 
-                  alt={beat.title} 
-                  className={styles.beatImage}
-                  onError={(e) => {
-                    console.log("Image error, using fallback");
-                    e.target.src = "https://via.placeholder.com/300x300";
-                  }}
-                />
-                <div className={styles.imageOverlay}>
-                  <button 
-                    className={styles.playButton}
-                    onClick={() => handlePlay(beat)}
-                    disabled={audioLoading && currentlyPlaying === beat._id}
-                  >
-                    {audioLoading && currentlyPlaying === beat._id ? (
-                      <span>...</span>
-                    ) : currentlyPlaying === beat._id ? (
-                      <FaPause />
-                    ) : (
-                      <FaPlay />
-                    )}
-                  </button>
-                  <button 
-                    className={styles.favoriteButton}
-                    onClick={() => handleFavorite(beat._id)}
-                  >
-                    <FaHeart />
-                  </button>
+          trendingBeats.map((beat) => {
+            // Check if this beat is currently playing
+            const isCurrentlyPlaying = 
+              isPlaying && 
+              currentTrack && 
+              (currentTrack._id === beat._id || currentTrack.id === beat.id);
+              
+            return (
+              <div key={beat._id} className={styles.beatCard}>
+                <div className={styles.imageContainer}>
+                  <img 
+                    src={beat.coverImage || "https://via.placeholder.com/300x300"} 
+                    alt={beat.title} 
+                    className={styles.beatImage}
+                    onError={(e) => {
+                      console.log("Image error, using fallback");
+                      e.target.src = "https://via.placeholder.com/300x300";
+                    }}
+                  />
+                  <div className={styles.imageOverlay}>
+                    <button 
+                      className={styles.playButton}
+                      onClick={() => handlePlay(beat)}
+                      disabled={audioLoading && currentTrack?._id === beat._id}
+                    >
+                      {audioLoading && currentTrack?._id === beat._id ? (
+                        <span>...</span>
+                      ) : isCurrentlyPlaying ? (
+                        <FaPause />
+                      ) : (
+                        <FaPlay />
+                      )}
+                    </button>
+                    <button 
+                      className={styles.favoriteButton}
+                      onClick={() => handleFavorite(beat._id)}
+                    >
+                      <FaHeart />
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              <div className={styles.beatInfo}>
-                <h3 className={styles.beatTitle}>{beat.title}</h3>
-                <div className={styles.producerInfo}>
-                  <span className={styles.producerName}>{beat.producer?.name || "Unknown"}</span>
-                  {beat.producer?.verified && (
-                    <BsCheckCircleFill className={styles.verifiedIcon} />
-                  )}
-                </div>
-                <div className={styles.beatActions}>
-                  <span className={styles.price}>${beat.price?.toFixed(2) || "0.00"}</span>
-                  <button 
-                    className={styles.cartButton}
-                    onClick={() => handleAddToCart(beat)}
-                  >
-                    <FaShoppingCart />
-                  </button>
+                <div className={styles.beatInfo}>
+                  <h3 className={styles.beatTitle}>{beat.title}</h3>
+                  <div className={styles.producerInfo}>
+                    <span className={styles.producerName}>{beat.producer?.name || "Unknown"}</span>
+                    {beat.producer?.verified && (
+                      <BsCheckCircleFill className={styles.verifiedIcon} />
+                    )}
+                  </div>
+                  <div className={styles.beatActions}>
+                    <span className={styles.price}>${beat.price?.toFixed(2) || "0.00"}</span>
+                    <button 
+                      className={styles.cartButton}
+                      onClick={() => handleAddToCart(beat)}
+                    >
+                      <FaShoppingCart />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         ) : (
           <div className={styles.noBeats}>No trending beats available</div>
         )}

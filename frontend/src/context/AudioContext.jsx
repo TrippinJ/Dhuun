@@ -1,154 +1,189 @@
 // src/context/AudioContext.jsx
-import React, { createContext, useState, useRef, useContext, useEffect } from 'react';
+import React, { createContext, useState, useRef, useEffect, useContext } from 'react';
 
+// Create the context
 const AudioContext = createContext();
 
+// Provider component
 export const AudioProvider = ({ children }) => {
   const [currentTrack, setCurrentTrack] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
-  const [volume, setVolume] = useState(0.8);
+  const [volume, setVolume] = useState(0.8); // Start at 80% volume
+  const [audioError, setAudioError] = useState(null);
+  
   const audioRef = useRef(new Audio());
-
-  // Set up audio event listeners
+  
+  // Set up audio element
   useEffect(() => {
     const audio = audioRef.current;
-
+    
     const handleTimeUpdate = () => {
       setCurrentTime(audio.currentTime);
     };
-
+    
     const handleLoadedMetadata = () => {
       setDuration(audio.duration);
+      setAudioError(null);
     };
-
+    
     const handleEnded = () => {
       setIsPlaying(false);
       setCurrentTime(0);
+      // Could implement auto-next functionality here
     };
-
-    // Add event listeners
+    
+    const handleError = (e) => {
+      console.error("Audio error:", e);
+      setAudioError(`Error loading audio: ${audio.error?.message || 'Unknown error'}`);
+      setIsPlaying(false);
+    };
+    
+    // Set up event listeners
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('loadedmetadata', handleLoadedMetadata);
     audio.addEventListener('ended', handleEnded);
-
-    // Set volume
+    audio.addEventListener('error', handleError);
     audio.volume = volume;
-
-    // Cleanup
+    
     return () => {
+      // Clean up
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
       audio.removeEventListener('ended', handleEnded);
+      audio.removeEventListener('error', handleError);
+      
+      audio.pause();
+      audio.src = '';
     };
-  }, [volume]);
-
-  // Play a track
-  const playTrack = (track) => {
+  }, []);
+  
+  // Update audio source when currentTrack changes
+  useEffect(() => {
     const audio = audioRef.current;
-
-    // If selecting the same track that's already playing
-    if (currentTrack && currentTrack._id === track._id) {
-      if (isPlaying) {
-        audio.pause();
-        setIsPlaying(false);
-      } else {
-        audio.play()
-          .catch(error => console.error("Error playing audio:", error));
-        setIsPlaying(true);
-      }
-      return;
-    }
-
-    // Handle a new track
-    audio.pause();
-    setCurrentTrack(track);
-    setIsPlaying(false);
-    setCurrentTime(0);
     
-    // Set new audio source
-    const audioUrl = track.audioFile || track.audioUrl;
-    if (!audioUrl) {
-      console.error("No audio URL found for this track");
-      return;
-    }
-    
-    audio.src = audioUrl;
-    
-    // Play the track
-    audio.load();
-    audio.play()
-      .then(() => {
-        setIsPlaying(true);
+    if (currentTrack) {
+      // Set loading state
+      setAudioError(null);
+      
+      // Determine the audio URL
+      const audioUrl = currentTrack.audioFile || currentTrack.audioUrl || currentTrack.audio;
+      
+      if (audioUrl) {
+        // Reset current time
+        setCurrentTime(0);
         
-        // Try to increment play count via API if available
-        const trackId = track._id || track.id;
-        if (trackId) {
-          try {
-            fetch(`/api/beats/${trackId}/play`, { 
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              }
-            }).catch(err => {
-              console.log("Could not update play count");
-            });
-          } catch (e) {
-            // Silently ignore tracking errors
-          }
+        // Set new source
+        audio.src = audioUrl;
+        
+        if (isPlaying) {
+          audio.play().catch(err => {
+            console.error("Error playing audio:", err);
+            setIsPlaying(false);
+            setAudioError(`Failed to play: ${err.message}`);
+          });
         }
-      })
-      .catch(error => {
-        console.error("Error playing audio:", error);
+      } else {
+        setAudioError("No audio URL found for this track");
+      }
+    }
+  }, [currentTrack]);
+  
+  // Update when isPlaying changes
+  useEffect(() => {
+    const audio = audioRef.current;
+    
+    if (isPlaying) {
+      // Try to play
+      audio.play().catch(err => {
+        console.error("Error playing audio:", err);
+        setIsPlaying(false);
+        setAudioError(`Failed to play: ${err.message}`);
       });
+    } else {
+      // Pause
+      audio.pause();
+    }
+  }, [isPlaying]);
+  
+  // Handle volume changes
+  useEffect(() => {
+    audioRef.current.volume = volume;
+  }, [volume]);
+  
+  // Control functions
+  const playTrack = (track) => {
+    const isSameTrack = currentTrack && 
+      ((currentTrack._id && track._id && currentTrack._id === track._id) || 
+       (currentTrack.id && track.id && currentTrack.id === track.id));
+    
+    if (isSameTrack) {
+      // Toggle play/pause for current track
+      setIsPlaying(!isPlaying);
+    } else {
+      // Set new track and play it
+      setCurrentTrack(track);
+      setIsPlaying(true);
+    }
   };
-
-  // Pause current track
+  
   const pauseTrack = () => {
-    audioRef.current.pause();
     setIsPlaying(false);
   };
-
-  // Seek to a specific time
+  
   const seekTo = (time) => {
-    if (audioRef.current.src) {
+    if (time >= 0 && time <= duration) {
       audioRef.current.currentTime = time;
       setCurrentTime(time);
     }
   };
-
-  // Change volume
+  
   const changeVolume = (value) => {
     const newVolume = parseFloat(value);
-    setVolume(newVolume);
-    audioRef.current.volume = newVolume;
+    if (newVolume >= 0 && newVolume <= 1) {
+      setVolume(newVolume);
+    }
   };
-
+  
+  // Additional functions for playlist management
+  const playNextTrack = () => {
+    // This would need playlist implementation
+    console.log("Play next track - feature coming soon");
+  };
+  
+  const playPreviousTrack = () => {
+    // This would need playlist implementation
+    console.log("Play previous track - feature coming soon");
+  };
+  
+  // Make all these functions and state available to components
   const value = {
     currentTrack,
     isPlaying,
     duration,
     currentTime,
     volume,
+    audioError,
     playTrack,
     pauseTrack,
     seekTo,
     changeVolume,
+    playNextTrack,
+    playPreviousTrack
   };
-
-
+  
   return (
     <AudioContext.Provider value={value}>
       {children}
     </AudioContext.Provider>
-  );;
+  );
 };
 
 // Custom hook to use the audio context
 export const useAudio = () => {
   const context = useContext(AudioContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAudio must be used within an AudioProvider');
   }
   return context;
