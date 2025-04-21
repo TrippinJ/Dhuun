@@ -142,7 +142,11 @@ const router = express.Router();
 // Get all beats (public route)
 router.get('/', async (req, res) => {
   try {
-    const beats = await Beat.find()
+    const beats = await Beat.find(
+      {
+        isExclusiveSold: { $ne: true } 
+      }
+    )
       .populate('producer', 'name username')
       .sort({ createdAt: -1 });
     

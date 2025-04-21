@@ -66,6 +66,24 @@ const BeatSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  isExclusiveSold: {
+    type: Boolean,
+    default: false
+  },
+  exclusiveSoldTo: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'User',
+    default: null
+  },
+  exclusiveSoldDate: { 
+    type: Date,
+    default: null
+  },
+  exclusiveOrderId: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'Order',
+    default: null
+  },
   // Track purchases
   purchases: {
     type: Number,

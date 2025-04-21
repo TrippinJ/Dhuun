@@ -11,7 +11,7 @@ export const createBeat = async (req, res) => {
   try {
     // Extract beat data from request body
     const { title, genre, bpm, price, description, key, mood, tags } = req.body;
-    
+
     // Validate required files
     if (!req.files || !req.files.audio || !req.files.coverImage) {
       return res.status(400).json({
@@ -19,30 +19,30 @@ export const createBeat = async (req, res) => {
         message: 'Both audio file and cover image are required'
       });
     }
-    
+
     // Get file information
     const audioFile = req.files.audio[0];
     const imageFile = req.files.coverImage[0];
-    
+
     // Upload files to Cloudinary
     console.log(`⏳ Uploading audio file: ${audioFile.path}`);
     const audioResult = await uploadFileToCloudinary(
-      audioFile.path, 
+      audioFile.path,
       true // isAudio = true
     );
-    
+
     console.log(`⏳ Uploading cover image: ${imageFile.path}`);
     const imageResult = await uploadFileToCloudinary(
       imageFile.path,
       false // isAudio = false
     );
-    
+
     // Process tags if provided
     let processedTags = [];
     if (tags && typeof tags === 'string') {
       processedTags = tags.split(',').map(tag => tag.trim().toLowerCase());
     }
-    
+
     // Create new beat document
     const newBeat = new Beat({
       title,
@@ -60,10 +60,10 @@ export const createBeat = async (req, res) => {
       coverImage: imageResult.url,
       imagePublicId: imageResult.publicId
     });
-    
+
     // Save to database
     await newBeat.save();
-    
+
     res.status(201).json({
       success: true,
       message: 'Beat uploaded successfully',
@@ -71,18 +71,18 @@ export const createBeat = async (req, res) => {
     });
   } catch (error) {
     console.error('Beat upload error:', error);
-    
+
     // Clean up any temporary files that might still exist
     if (req.files) {
       if (req.files.audio && req.files.audio[0] && fs.existsSync(req.files.audio[0].path)) {
         fs.unlinkSync(req.files.audio[0].path);
       }
-      
+
       if (req.files.coverImage && req.files.coverImage[0] && fs.existsSync(req.files.coverImage[0].path)) {
         fs.unlinkSync(req.files.coverImage[0].path);
       }
     }
-    
+
     res.status(500).json({
       success: false,
       message: 'Failed to upload beat',
@@ -99,52 +99,55 @@ export const createBeat = async (req, res) => {
 export const getAllBeats = async (req, res) => {
   try {
     // Extract query parameters for filtering
-    const { 
-      genre, 
-      minPrice, 
-      maxPrice, 
-      sortBy = 'createdAt', 
+    const {
+      genre,
+      minPrice,
+      maxPrice,
+      sortBy = 'createdAt',
       sortOrder = 'desc',
       search,
       limit = 20,
       page = 1
     } = req.query;
-    
+
     // Build filter object
-    const filter = { isPublished: true };
-    
+    const filter = { 
+      isPublished: true,
+      isExclusiveSold: { $ne: true }  
+    };
+
     if (genre) {
       filter.genre = genre;
     }
-    
+
     if (minPrice !== undefined || maxPrice !== undefined) {
       filter.price = {};
       if (minPrice !== undefined) filter.price.$gte = parseFloat(minPrice);
       if (maxPrice !== undefined) filter.price.$lte = parseFloat(maxPrice);
     }
-    
+
     // Add text search if provided
     if (search) {
       filter.$text = { $search: search };
     }
-    
+
     // Calculate pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
-    
+
     // Build sort object
     const sort = {};
     sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
-    
+
     // Execute query with pagination
     const beats = await Beat.find(filter)
       .populate('producer', 'name username')
       .sort(sort)
       .skip(skip)
       .limit(parseInt(limit));
-    
+
     // Get total count for pagination
     const total = await Beat.countDocuments(filter);
-    
+
     res.status(200).json({
       success: true,
       count: beats.length,
@@ -172,14 +175,14 @@ export const getBeatById = async (req, res) => {
   try {
     const beat = await Beat.findById(req.params.id)
       .populate('producer', 'name username');
-      
+
     if (!beat) {
       return res.status(404).json({
         success: false,
         message: 'Beat not found'
       });
     }
-    
+
     res.status(200).json({
       success: true,
       data: beat
@@ -201,34 +204,35 @@ export const getBeatById = async (req, res) => {
 export const getBeatsByProducer = async (req, res) => {
   try {
     // Handle special 'me' parameter for own beats
-    const producerId = req.params.producerId === 'me' 
-      ? req.user.id 
+    const producerId = req.params.producerId === 'me'
+      ? req.user.id
       : req.params.producerId;
-    
+
     // Get optional query parameters
     const { limit = 20, page = 1 } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
-    
+
     // Build filter
     const filter = { producer: producerId };
-    
+
     // Only show published beats for other producers, show all for own beats
     if (req.user && producerId === req.user.id) {
       // Show all beats for the current user
     } else {
       filter.isPublished = true;
+      filter.isExclusiveSold = { $ne: true };
     }
-    
+
     // Get beats with pagination
     const beats = await Beat.find(filter)
       .populate('producer', 'name username')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
-    
+
     // Get total count
     const total = await Beat.countDocuments(filter);
-    
+
     res.status(200).json({
       success: true,
       count: beats.length,
@@ -256,23 +260,23 @@ export const updateBeat = async (req, res) => {
   try {
     const beatId = req.params.id;
     const { title, genre, bpm, price, description, key, mood, tags, isPublished } = req.body;
-    
+
     // Make sure the beat exists and belongs to this user
-    const beat = await Beat.findOne({ 
+    const beat = await Beat.findOne({
       _id: beatId,
-      producer: req.user.id 
+      producer: req.user.id
     });
-    
+
     if (!beat) {
       return res.status(404).json({
         success: false,
         message: 'Beat not found or you do not have permission to update it'
       });
     }
-    
+
     // Process updates
     const updates = {};
-    
+
     if (title !== undefined) updates.title = title;
     if (genre !== undefined) updates.genre = genre;
     if (bpm !== undefined) updates.bpm = parseInt(bpm);
@@ -281,7 +285,7 @@ export const updateBeat = async (req, res) => {
     if (key !== undefined) updates.key = key;
     if (mood !== undefined) updates.mood = mood;
     if (isPublished !== undefined) updates.isPublished = isPublished;
-    
+
     // Handle tags if provided
     if (tags !== undefined) {
       if (typeof tags === 'string') {
@@ -290,49 +294,49 @@ export const updateBeat = async (req, res) => {
         updates.tags = tags.map(tag => tag.trim().toLowerCase());
       }
     }
-    
+
     // Update files if provided
     if (req.files) {
       // Handle audio file update
       if (req.files.audio) {
         // Upload new audio
         const audioResult = await uploadFileToCloudinary(
-          req.files.audio[0].path, 
+          req.files.audio[0].path,
           true // isAudio = true
         );
-        
+
         // Delete old audio file from Cloudinary
         await deleteFile(beat.audioPublicId, RESOURCE_TYPES.AUDIO);
-        
+
         // Update with new audio info
         updates.audioFile = audioResult.url;
         updates.audioPublicId = audioResult.publicId;
       }
-      
+
       // Handle cover image update
       if (req.files.coverImage) {
         // Upload new image
         const imageResult = await uploadFileToCloudinary(
-          req.files.coverImage[0].path, 
+          req.files.coverImage[0].path,
           false // isAudio = false
         );
-        
+
         // Delete old image from Cloudinary
         await deleteFile(beat.imagePublicId, RESOURCE_TYPES.IMAGE);
-        
+
         // Update with new image info
         updates.coverImage = imageResult.url;
         updates.imagePublicId = imageResult.publicId;
       }
     }
-    
+
     // Update the beat
     const updatedBeat = await Beat.findByIdAndUpdate(
       beatId,
       updates,
       { new: true, runValidators: true }
     ).populate('producer', 'name username');
-    
+
     res.status(200).json({
       success: true,
       message: 'Beat updated successfully',
@@ -340,18 +344,18 @@ export const updateBeat = async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating beat:', error);
-    
+
     // Clean up any temporary files
     if (req.files) {
       if (req.files.audio && req.files.audio[0] && fs.existsSync(req.files.audio[0].path)) {
         fs.unlinkSync(req.files.audio[0].path);
       }
-      
+
       if (req.files.coverImage && req.files.coverImage[0] && fs.existsSync(req.files.coverImage[0].path)) {
         fs.unlinkSync(req.files.coverImage[0].path);
       }
     }
-    
+
     res.status(500).json({
       success: false,
       message: 'Error updating beat',
@@ -368,26 +372,26 @@ export const updateBeat = async (req, res) => {
 export const deleteBeat = async (req, res) => {
   try {
     const beatId = req.params.id;
-    
+
     // Find beat and check ownership
-    const beat = await Beat.findOne({ 
+    const beat = await Beat.findOne({
       _id: beatId,
-      producer: req.user.id 
+      producer: req.user.id
     });
-    
+
     if (!beat) {
       return res.status(404).json({
         success: false,
         message: 'Beat not found or you do not have permission to delete it'
       });
     }
-    
+
     // Delete files from Cloudinary
     try {
       if (beat.audioPublicId) {
         await deleteFile(beat.audioPublicId, RESOURCE_TYPES.AUDIO);
       }
-      
+
       if (beat.imagePublicId) {
         await deleteFile(beat.imagePublicId, RESOURCE_TYPES.IMAGE);
       }
@@ -395,10 +399,10 @@ export const deleteBeat = async (req, res) => {
       console.error('Error deleting files from Cloudinary:', cloudinaryError);
       // Continue with beat deletion even if Cloudinary deletion fails
     }
-    
+
     // Delete from database
     await Beat.findByIdAndDelete(beatId);
-    
+
     res.status(200).json({
       success: true,
       message: 'Beat deleted successfully'
@@ -421,20 +425,20 @@ export const deleteBeat = async (req, res) => {
 export const incrementPlayCount = async (req, res) => {
   try {
     const beatId = req.params.id;
-    
+
     const updatedBeat = await Beat.findByIdAndUpdate(
       beatId,
       { $inc: { plays: 1 } }, // Increment plays by 1
       { new: true }
     );
-    
+
     if (!updatedBeat) {
       return res.status(404).json({
         success: false,
         message: 'Beat not found'
       });
     }
-    
+
     res.status(200).json({
       success: true,
       plays: updatedBeat.plays
@@ -456,14 +460,15 @@ export const incrementPlayCount = async (req, res) => {
  */
 export const getFeaturedBeats = async (req, res) => {
   try {
-    const featuredBeats = await Beat.find({ 
+    const featuredBeats = await Beat.find({
       isPublished: true,
-      isFeatured: true 
+      isFeatured: true,
+      isExclusiveSold: { $ne: true }
     })
-    .populate('producer', 'name username')
-    .sort({ createdAt: -1 })
-    .limit(8);
-    
+      .populate('producer', 'name username')
+      .sort({ createdAt: -1 })
+      .limit(8);
+
     res.status(200).json({
       success: true,
       count: featuredBeats.length,
@@ -487,15 +492,17 @@ export const getFeaturedBeats = async (req, res) => {
 export const getTrendingBeats = async (req, res) => {
   try {
     console.log('Fetching trending beats...');
-    
-    // Find beats that are most played
-    const trendingBeats = await Beat.find()
+
+    // Find beats that are most played AND not exclusively sold
+    const trendingBeats = await Beat.find({
+      isExclusiveSold: { $ne: true } // NEW CODE: Exclude exclusively sold beats
+    })
       .populate('producer', 'name username')
       .sort({ plays: -1, createdAt: -1 })
       .limit(8);
-    
+
     console.log(`Found ${trendingBeats.length} trending beats`);
-    
+
     res.json({
       success: true,
       count: trendingBeats.length,
@@ -503,7 +510,7 @@ export const getTrendingBeats = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching trending beats:', error);
-    
+
     // Return hardcoded sample data as fallback
     const sampleBeats = [
       {
@@ -531,7 +538,7 @@ export const getTrendingBeats = async (req, res) => {
         plays: 870
       }
     ];
-    
+
     res.json({
       success: true,
       count: sampleBeats.length,
@@ -548,21 +555,21 @@ export const getTrendingBeats = async (req, res) => {
 export const toggleFeaturedStatus = async (req, res) => {
   try {
     const beatId = req.params.id;
-    
+
     // Find the beat
     const beat = await Beat.findById(beatId);
-    
+
     if (!beat) {
       return res.status(404).json({
         success: false,
         message: 'Beat not found'
       });
     }
-    
+
     // Toggle featured status
     beat.isFeatured = !beat.isFeatured;
     await beat.save();
-    
+
     res.status(200).json({
       success: true,
       message: `Beat ${beat.isFeatured ? 'featured' : 'unfeatured'} successfully`,
