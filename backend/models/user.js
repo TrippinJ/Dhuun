@@ -3,16 +3,21 @@ import mongoose from 'mongoose';
 const UserSchema = new mongoose.Schema({
   name: { type: String, required: true },
   username: { type: String, required: true },
-  phonenumber: { type: String, required: false},
+  phonenumber: { type: String, required: false },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   googleId: { type: String, unique: true, sparse: true }, // For Google Auth Users
-  
+
+  //OTP verification fields
+  isVerified: { type: Boolean, default: false },
+  verificationOTP: { type: String },
+  otpExpires: { type: Date },
+
   // Profile fields
   avatar: { type: String }, // Profile picture URL
   avatarPublicId: { type: String }, // Cloudinary public ID for avatar
   bio: { type: String, default: "" }, // User biography/description
-  
+
   // Social media links
   socialLinks: {
     instagram: { type: String, default: "" },
@@ -20,8 +25,8 @@ const UserSchema = new mongoose.Schema({
     soundcloud: { type: String, default: "" },
     youtube: { type: String, default: "" }
   },
-  
-  role: { type: String, required: true, default: 'buyer' , enum: ["buyer", "seller"] },
+
+  role: { type: String, required: true, default: 'buyer', enum: ["buyer", "seller"] },
 
   // ✅ Subscription Details
   subscription: {
@@ -39,7 +44,7 @@ const UserSchema = new mongoose.Schema({
     sales: { type: Number, default: 0 },
     downloads: { type: Number, default: 0 }
   },
-  
+
   // Track when the profile was last updated
   lastUpdated: { type: Date, default: Date.now }
 }, { timestamps: true });

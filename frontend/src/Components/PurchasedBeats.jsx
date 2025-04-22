@@ -71,10 +71,16 @@ const PurchasedBeats = () => {
 
   // Handle download beat
   const handleDownload = (beat) => {
+
+    if (!beat || !beat.audioFile) {
+      alert("Download link not available");
+      return;
+    }
+
     // Create an anchor element and trigger the download
     const link = document.createElement('a');
     link.href = beat.audioFile;
-    link.download = `${beat.title}.mp3`; // Set filename
+    link.download = `${beat.title || 'beat'}.mp3`; // Set filename
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -103,7 +109,7 @@ const PurchasedBeats = () => {
   return (
     <div className={styles.purchasedBeatsContainer}>
       <h2>Your Purchased Beats</h2>
-      
+
       <div className={styles.beatsList}>
         {orders.map((order) => (
           <div key={order._id} className={styles.orderCard}>
@@ -113,28 +119,28 @@ const PurchasedBeats = () => {
                 {new Date(order.createdAt).toLocaleDateString()}
               </span>
             </div>
-            
+
             <div className={styles.beatsGrid}>
               {order.items.map((item, index) => (
                 <div key={index} className={styles.beatCard}>
                   <div className={styles.beatImage}>
-                    <img 
-                      src={item.beat?.coverImage || "/default-cover.jpg"} 
-                      alt={item.beat?.title || "Beat"} 
+                    <img
+                      src={item.beat?.coverImage || "/default-cover.jpg"}
+                      alt={item.beat?.title || "Beat"}
                     />
-                    <button 
+                    <button
                       className={styles.playButton}
                       onClick={() => handlePlayPause(item.beat?._id, item.beat?.audioFile)}
                     >
                       {currentlyPlaying === item.beat?._id ? <FaPause /> : <FaPlay />}
                     </button>
                   </div>
-                  
+
                   <div className={styles.beatInfo}>
                     <h4>{item.beat?.title || "Untitled Beat"}</h4>
                     <p>License: {item.license || "Basic"}</p>
                     <div className={styles.beatActions}>
-                      <button 
+                      <button
                         className={styles.downloadButton}
                         onClick={() => handleDownload(item.beat)}
                       >

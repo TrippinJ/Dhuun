@@ -21,11 +21,11 @@ const Checkout = () => {
       // Get cart from localStorage
       const cart = JSON.parse(localStorage.getItem("cart") || "[]");
       setCartItems(cart);
-      
+
       // Calculate total
-      const cartTotal = cart.reduce((sum, item) => sum + item.price, 0);
+      const cartTotal = cart.reduce((sum, item) => sum + (item.licensePrice || item.price), 0);
       setTotal(cartTotal);
-      
+
       setLoading(false);
     } catch (error) {
       console.error("Error loading cart:", error);
@@ -45,31 +45,32 @@ const Checkout = () => {
       setError("Please enter your email address");
       return;
     }
-    
+
     if (cartItems.length === 0) {
       setError("Your cart is empty");
       return;
     }
-    
+
     try {
       setPaymentProcessing(true);
       setProcessingState('loading');
       setError(null);
-      
+
       // Check if user is logged in
       const token = localStorage.getItem("token");
       if (!token) {
         navigate("/login");
         return;
       }
-      
+
       // Prepare the items data
       const itemsData = cartItems.map(item => ({
         beatId: item._id,
-        license: "Basic", // Basic license by default
-        price: item.price
+        license: item.selectedLicense || "Basic",
+        licenseName: item.licenseName || "Basic License",
+        price: item.licensePrice || item.price
       }));
-      
+
       // Initiate payment through our backend API
       const response = await API.post("/api/payments/initiate", {
         amount: total,
@@ -78,9 +79,9 @@ const Checkout = () => {
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       console.log("Payment initiation response:", response.data);
-      
+
       if (response.data.success && response.data.payment_url) {
         // Store order data in localStorage to retrieve after payment
         localStorage.setItem("pendingOrder", JSON.stringify({
@@ -89,7 +90,7 @@ const Checkout = () => {
           customerEmail: email,
           pidx: response.data.pidx
         }));
-        
+
         // Redirect to Khalti payment page
         window.location.href = response.data.payment_url;
       } else {
@@ -97,7 +98,7 @@ const Checkout = () => {
         setPaymentProcessing(false);
         setProcessingState('error');
       }
-      
+
     } catch (error) {
       console.error("Checkout error:", error);
       setError(error.response?.data?.message || "Payment failed. Please try again.");
@@ -113,10 +114,10 @@ const Checkout = () => {
   return (
     <div className={styles.checkoutContainer}>
       <NavbarBeatExplore />
-      
+
       <div className={styles.checkoutContent}>
         <div className={styles.checkoutHeader}>
-          <button 
+          <button
             className={styles.backButton}
             onClick={() => navigate("/cart")}
           >
@@ -124,27 +125,27 @@ const Checkout = () => {
           </button>
           <h1>Checkout</h1>
         </div>
-        
+
         {error && <div className={styles.errorMessage}>{error}</div>}
-        
+
         {processingState === 'loading' && (
           <div className={styles.processingMessage}>
             <div className={styles.loadingSpinner}></div>
             <p>Processing your payment. Please wait...</p>
           </div>
         )}
-        
+
         <div className={styles.checkoutGrid}>
           {/* Order Summary Section */}
           <div className={styles.orderSummary}>
             <h2>Order Summary</h2>
-            
+
             <div className={styles.cartItems}>
               {cartItems.length === 0 ? (
                 <p>Your cart is empty</p>
               ) : (
                 cartItems.map((item) => (
-                  <div key={item._id} className={styles.cartItem}>
+                  <div key={item._id + (item.selectedLicense || 'basic')} className={styles.cartItem}>
                     <img 
                       src={item.coverImage} 
                       alt={item.title} 
@@ -155,14 +156,18 @@ const Checkout = () => {
                       <p className={styles.itemProducer}>
                         {item.producer?.name || "Unknown Producer"}
                       </p>
-                      <p className={styles.itemLicense}>Basic License</p>
+                      <p className={styles.itemLicense}>
+                        {item.licenseName || item.selectedLicense || 'Basic License'}
+                      </p>
                     </div>
-                    <div className={styles.itemPrice}>${item.price}</div>
+                    <div className={styles.itemPrice}>
+                      ${(item.licensePrice || item.price).toFixed(2)}
+                    </div>
                   </div>
                 ))
               )}
             </div>
-            
+
             <div className={styles.orderTotal}>
               <div className={styles.totalRow}>
                 <span>Subtotal</span>
@@ -178,14 +183,14 @@ const Checkout = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Payment Form Section */}
           <div className={styles.paymentSection}>
             <h2>Payment Information</h2>
             <div className={styles.securePayment}>
               <FaLock /> Secure Checkout
             </div>
-            
+
             <div className={styles.paymentForm}>
               <div className={styles.formGroup}>
                 <label htmlFor="email">Email (for order confirmation)</label>
@@ -199,14 +204,8 @@ const Checkout = () => {
                   required
                 />
               </div>
-              
-              {/* <div className={styles.paymentOptions}>
-                <div className={styles.paymentMethod}>
-                  <span>Pay with Khalti</span>
-                </div>
-              </div> */}
-              
-              <button 
+
+              <button
                 type="button"
                 onClick={handleKhaltiPayment}
                 className={styles.khaltiButton}

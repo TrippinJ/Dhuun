@@ -5,6 +5,8 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { body, validationResult } from 'express-validator';
 import User from '../models/user.js';
+import crypto from 'crypto';
+import { sendOTPEmail } from '../utils/emailService.js';
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret_here";
@@ -36,16 +38,33 @@ router.post(
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
 
+      // Generate 6-digit OTP
+      const otp = crypto.randomInt(100000, 999999).toString();
+      const otpExpires = new Date();
+      otpExpires.setMinutes(otpExpires.getMinutes() + 10);
+
+
       user = new User({
         name,
         username,
         phonenumber,
         email,
         password: hashedPassword,
-        role
+        role,
+        isVerified: false,
+        verificationOTP: otp,
+        otpExpires
       });
 
       await user.save();
+
+      // Send OTP email
+      const emailResult = await sendOTPEmail(email, otp, name);
+
+      if (!emailResult.success) {
+        console.error("Failed to send OTP email:", emailResult.error);
+        // We'll continue anyway, user can request a new OTP if needed
+      }
 
       // Generate token for immediate login after registration
       const payload = { user: { id: user.id } };
@@ -58,7 +77,8 @@ router.post(
           id: user.id,
           name: user.name,
           email: user.email,
-          role: user.role
+          role: user.role,
+          isVerified: false
         }
       });
     } catch (error) {
@@ -100,8 +120,10 @@ router.post(
           name: user.name,
           email: user.email,
           role: user.role,
+          isVerified: user.isVerified,
           subscription: user.subscription
-        }
+        },
+        verificationRequired: !user.isVerified
       });
     } catch (error) {
       console.error("Login error:", error);
@@ -254,14 +276,14 @@ router.post("/google-login", async (req, res) => {
     // Check if user already exists
     let user = await User.findOne({ email });
     console.log("Existing user check:", user ? "User found" : "New user");
-    
+
     // Flag to indicate if this is a new user
     let isNewUser = false;
 
     if (!user) {
       // This is a new user
       isNewUser = true;
-      
+
       // Create a new user WITH a default role
       user = new User({
         name: name,
@@ -269,7 +291,7 @@ router.post("/google-login", async (req, res) => {
         username: email.split('@')[0], // Generate username from email
         phonenumber: "Not provided", // Give a default value for phone number
         googleId: googleId,
-        avatar: avatar, 
+        avatar: avatar,
         password: "google-auth",
         role: "buyer" // Explicitly set to buyer
       });
@@ -290,8 +312,8 @@ router.post("/google-login", async (req, res) => {
     const token = jwt.sign(payload, process.env.JWT_SECRET || "default_jwt_secret_replace_this", { expiresIn: "1h" });
 
     // Return user data WITH the isNewUser flag
-    res.json({ 
-      token, 
+    res.json({
+      token,
       user: {
         id: user.id,
         name: user.name,
@@ -311,30 +333,128 @@ router.post("/google-login", async (req, res) => {
 router.post("/update-role", authenticateUser, async (req, res) => {
   try {
     const { role } = req.body;
-    
+
     // Validate role input
     if (!role || !["buyer", "seller"].includes(role)) {
       return res.status(400).json({ message: "Invalid role specified" });
     }
-    
+
     // Update user's role
     const updatedUser = await User.findByIdAndUpdate(
       req.user.id,
       { role: role },
       { new: true }
     ).select("-password");
-    
+
     if (!updatedUser) {
       return res.status(404).json({ message: "User not found" });
     }
-    
-    res.json({ 
+
+    res.json({
       message: "Role updated successfully",
       user: updatedUser
     });
   } catch (error) {
     console.error("Role update error:", error);
     res.status(500).json({ message: "Server error updating role" });
+  }
+});
+
+// OTP Verification Route
+router.post("/verify-otp", async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ message: "Email and OTP are required" });
+    }
+
+    // Find user by email
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if OTP has expired
+    if (user.otpExpires < new Date()) {
+      return res.status(400).json({ message: "OTP has expired. Please request a new one." });
+    }
+
+    // Verify OTP
+    if (user.verificationOTP !== otp) {
+      return res.status(400).json({ message: "Invalid OTP. Please try again." });
+    }
+
+    // Mark user as verified and clear OTP fields
+    user.isVerified = true;
+    user.verificationOTP = undefined;
+    user.otpExpires = undefined;
+    await user.save();
+
+    // Generate new token with updated verification status
+    const payload = { user: { id: user.id } };
+    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "1h" });
+
+    res.json({
+      message: "Email verified successfully!",
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isVerified: true
+      }
+    });
+  } catch (error) {
+    console.error("OTP verification error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Resend OTP Route
+router.post("/resend-otp", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    // Find user by email
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // If already verified, no need to resend
+    if (user.isVerified) {
+      return res.status(400).json({ message: "User is already verified" });
+    }
+
+    // Generate new OTP
+    const otp = crypto.randomInt(100000, 999999).toString();
+    const otpExpires = new Date();
+    otpExpires.setMinutes(otpExpires.getMinutes() + 10); // OTP expires in 10 minutes
+
+    // Update user with new OTP
+    user.verificationOTP = otp;
+    user.otpExpires = otpExpires;
+    await user.save();
+
+    // Send OTP email
+    const emailResult = await sendOTPEmail(email, otp, user.name);
+
+    if (!emailResult.success) {
+      return res.status(500).json({ message: "Failed to send OTP email. Please try again." });
+    }
+
+    res.json({
+      message: "OTP sent successfully. Please check your email."
+    });
+  } catch (error) {
+    console.error("Resend OTP error:", error);
+    res.status(500).json({ error: error.message });
   }
 });
 

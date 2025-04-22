@@ -15,9 +15,11 @@ const Cart = () => {
       try {
         const cart = JSON.parse(localStorage.getItem("cart") || "[]");
         setCartItems(cart);
-        
-        // Calculate total
-        const cartTotal = cart.reduce((sum, item) => sum + item.price, 0);
+
+        // Calculate total with license prices
+        const cartTotal = cart.reduce((sum, item) => 
+          sum + (item.licensePrice || item.price), 0
+        );
         setTotal(cartTotal);
       } catch (error) {
         console.error("Error loading cart:", error);
@@ -25,26 +27,16 @@ const Cart = () => {
         setTotal(0);
       }
     };
-    
+
     loadCart();
   }, []);
 
-  const handleRemoveItem = (id) => {
-    const updatedCart = cartItems.filter(item => item._id !== id);
-    setCartItems(updatedCart);
-    
-    // Update total
-    const newTotal = updatedCart.reduce((sum, item) => sum + item.price, 0);
-    setTotal(newTotal);
-    
-    // Update localStorage
-    localStorage.setItem("cart", JSON.stringify(updatedCart));
-  };
-
+  // Add the missing handleContinueShopping function
   const handleContinueShopping = () => {
     navigate("/BeatExplorePage");
   };
 
+  // Add the missing handleCheckout function
   const handleCheckout = () => {
     // Only proceed to checkout if cart has items
     if (cartItems.length > 0) {
@@ -52,21 +44,37 @@ const Cart = () => {
     }
   };
 
+  const handleRemoveItem = (uniqueId) => {
+    const updatedCart = cartItems.filter(item => 
+      (item._id + (item.selectedLicense || 'basic')) !== uniqueId
+    );
+    setCartItems(updatedCart);
+    
+    // Update total
+    const newTotal = updatedCart.reduce((sum, item) => 
+      sum + (item.licensePrice || item.price), 0
+    );
+    setTotal(newTotal);
+    
+    // Update localStorage
+    localStorage.setItem("cart", JSON.stringify(updatedCart));
+  };
+
   return (
     <div className={styles.cartContainer}>
       <NavbarBeatExplore />
-      
+
       <div className={styles.cartContent}>
         <div className={styles.cartHeader}>
           <h1>Your Cart</h1>
           <span className={styles.itemCount}>{cartItems.length} item(s)</span>
         </div>
-        
+
         {cartItems.length === 0 ? (
           <div className={styles.emptyCart}>
             <h2>Your cart is empty</h2>
             <p>Looks like you haven't added any beats to your cart yet.</p>
-            <button 
+            <button
               className={styles.shopButton}
               onClick={handleContinueShopping}
             >
@@ -77,38 +85,37 @@ const Cart = () => {
           <div className={styles.cartGrid}>
             <div className={styles.cartItems}>
               {cartItems.map((item) => (
-                <div key={item._id} className={styles.cartItem}>
-                  <div className={styles.itemImageContainer}>
-                    <img 
-                      src={item.coverImage} 
-                      alt={item.title} 
-                      className={styles.itemImage} 
-                    />
-                  </div>
-                  
+                <div key={item._id + (item.selectedLicense || 'basic')} className={styles.cartItem}>
+                  <img
+                    src={item.coverImage}
+                    alt={item.title}
+                    className={styles.itemImage}
+                  />
                   <div className={styles.itemDetails}>
                     <h3>{item.title}</h3>
                     <p className={styles.itemProducer}>
                       {item.producer?.name || "Unknown Producer"}
                     </p>
-                    <p className={styles.itemLicense}>Basic License</p>
+                    <p className={styles.itemLicense}>
+                      {item.licenseName || item.selectedLicense || 'Basic License'}
+                    </p>
                   </div>
-                  
-                  <div className={styles.itemPrice}>${item.price}</div>
-                  
-                  <button 
+                  <div className={styles.itemPrice}>
+                    ${(item.licensePrice || item.price).toFixed(2)}
+                  </div>
+                  <button
                     className={styles.removeButton}
-                    onClick={() => handleRemoveItem(item._id)}
+                    onClick={() => handleRemoveItem(item._id + (item.selectedLicense || 'basic'))}
                   >
                     <FaTrash />
                   </button>
                 </div>
               ))}
             </div>
-            
+
             <div className={styles.cartSummary}>
               <h2>Order Summary</h2>
-              
+
               <div className={styles.summaryDetails}>
                 <div className={styles.summaryRow}>
                   <span>Subtotal</span>
@@ -123,15 +130,15 @@ const Cart = () => {
                   <span>${total.toFixed(2)}</span>
                 </div>
               </div>
-              
+
               <div className={styles.cartActions}>
-                <button 
+                <button
                   className={styles.continueButton}
                   onClick={handleContinueShopping}
                 >
                   <FaArrowLeft /> Continue Shopping
                 </button>
-                <button 
+                <button
                   className={styles.checkoutButton}
                   onClick={handleCheckout}
                 >

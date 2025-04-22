@@ -3,6 +3,7 @@ import Order from '../models/order.js';
 import Beat from '../models/beat.js';
 import { authenticateUser } from '../routes/auth.js';
 import { verifyPayment } from '../utils/khaltiPayment.js';
+import { sendOrderConfirmation, sendThankYouEmail } from '../utils/emailService.js';
 
 const router = express.Router();
 
@@ -47,6 +48,45 @@ router.post('/', async (req, res) => {
     // Save the order
     await order.save();
 
+
+    // Fetch user info for the email
+    const user = await User.findById(req.user.id);
+    
+    // Send order confirmation email
+    try {
+      // First populate the beat details for the email
+      const populatedOrder = await Order.findById(order._id).populate({
+        path: 'items.beat',
+        select: 'title producer'
+      });
+      
+      // Send confirmation email
+      await sendOrderConfirmation({
+        customerEmail: customerEmail || user.email,
+        orderId: order._id,
+        items: populatedOrder.items,
+        totalAmount,
+        userName: user.name
+      });
+      
+      // Schedule thank you email to be sent after a delay (1 hour)
+      setTimeout(async () => {
+        try {
+          await sendThankYouEmail({
+            customerEmail: customerEmail || user.email,
+            userName: user.name,
+            items: populatedOrder.items
+          });
+        } catch (emailError) {
+          console.error('Error sending thank you email:', emailError);
+          // Don't fail the order if thank you email fails
+        }
+      }, 60 * 60 * 1000); // 1 hour delay
+      
+    } catch (emailError) {
+      console.error('Error sending order confirmation email:', emailError);
+    }
+      
     // Process each item in the order
     for (const item of items) {
       // Increment purchases count

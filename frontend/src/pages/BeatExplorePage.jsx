@@ -3,14 +3,14 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/api";
 import styles from "../css/BeatExplorePage.module.css";
-import { 
-  FaCartPlus, 
-  FaPlay, 
-  FaSearch, 
-  FaHeart, 
-  FaPause, 
-  FaListUl, 
-  FaThLarge, 
+import {
+  FaCartPlus,
+  FaPlay,
+  FaSearch,
+  FaHeart,
+  FaPause,
+  FaListUl,
+  FaThLarge,
   FaInfoCircle,
   FaFilter,
   FaChevronDown,
@@ -20,6 +20,7 @@ import {
 import NavbarBeatExplore from '../Components/NavbarBeatExplore';
 import SingleBeatModal from '../Components/SingleBeatModal';
 import { useAudio } from '../context/AudioContext'; // Import the audio context
+import LicenseSelectionModal from '../Components/LicenseSelectionModal';
 
 const BeatExplorePage = () => {
   // State variables
@@ -37,21 +38,23 @@ const BeatExplorePage = () => {
   const [selectedBeat, setSelectedBeat] = useState(null); // For the single beat modal
   const [showFilters, setShowFilters] = useState(false); // Mobile filter toggle
   const [wishlist, setWishlist] = useState([]);
-  
+  const [showLicenseModal, setShowLicenseModal] = useState(false);
+  const [selectedBeatForLicense, setSelectedBeatForLicense] = useState(null);
+
   // Use the audio context
   const { playTrack, currentTrack, isPlaying } = useAudio();
-  
+
   const itemsPerPage = 12; // Show 12 beats per page
   const navigate = useNavigate();
 
   // Available genres (you could fetch these from your API)
   const genres = [
-    "All Genres", 
-    "Trap", 
-    "Hip-Hop", 
-    "R&B", 
-    "Pop", 
-    "Drill", 
+    "All Genres",
+    "Trap",
+    "Hip-Hop",
+    "R&B",
+    "Pop",
+    "Drill",
     "Lo-Fi",
     "Future"
   ];
@@ -79,7 +82,7 @@ const BeatExplorePage = () => {
       } catch (error) {
         console.error("Failed to fetch beats:", error);
         setErrorMessage("Error fetching beats. Please try again later.");
-        
+
         // Fallback data for development
         setBeats([
           {
@@ -132,9 +135,9 @@ const BeatExplorePage = () => {
         setLoading(false);
       }
     };
-    
+
     fetchBeats();
-    
+
     // Load wishlist from localStorage
     try {
       const savedWishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
@@ -142,7 +145,7 @@ const BeatExplorePage = () => {
     } catch (error) {
       console.error('Error loading wishlist:', error);
     }
-    
+
     // Load cart from localStorage
     try {
       const savedCart = JSON.parse(localStorage.getItem('cart') || '[]');
@@ -166,17 +169,17 @@ const BeatExplorePage = () => {
   const filterBeats = () => {
     return beats.filter(beat => {
       // Keyword filter
-      const keywordMatch = !keywords.trim() || 
+      const keywordMatch = !keywords.trim() ||
         beat.title?.toLowerCase().includes(keywords.toLowerCase()) ||
         beat.producer?.name?.toLowerCase().includes(keywords.toLowerCase());
-      
+
       // Genre filter
-      const genreMatch = selectedGenre === "All Genres" || 
+      const genreMatch = selectedGenre === "All Genres" ||
         beat.genre?.toLowerCase() === selectedGenre.toLowerCase();
-      
+
       // Price filter
       const priceMatch = !beat.price || beat.price <= priceRange;
-      
+
       return keywordMatch && genreMatch && priceMatch;
     });
   };
@@ -191,11 +194,11 @@ const BeatExplorePage = () => {
   // Modified: Handle play using the global audio context
   const handlePlayPreview = (event, beat) => {
     event.stopPropagation(); // Prevent opening the modal
-    
+
     try {
       // Check if valid audio URL exists
       const audioUrl = beat.audioFile || beat.audioUrl || beat.audio;
-      
+
       if (!audioUrl) {
         console.error("No audio URL for beat:", beat);
         // Add a fallback URL if needed
@@ -204,10 +207,10 @@ const BeatExplorePage = () => {
           audioUrl: `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${Math.floor(Math.random() * 5) + 1}.mp3`
         };
       }
-      
+
       // Use the audio context's playTrack function
       playTrack(beat);
-      
+
       // Optionally increment play count via API
       try {
         API.post(`/api/beats/${beat._id}/play`).catch(err => {
@@ -225,7 +228,7 @@ const BeatExplorePage = () => {
   // Handle adding to cart
   const handleAddToCart = (event, beat) => {
     event.stopPropagation(); // Prevent opening the modal
-    
+
     // Check if user is logged in
     const isLoggedIn = localStorage.getItem('token');
     if (!isLoggedIn) {
@@ -233,25 +236,40 @@ const BeatExplorePage = () => {
       navigate("/login");
       return;
     }
-    
-    // Check if already in cart
-    const isInCart = cartItems.some(item => item._id === beat._id);
+
+    // Show license selection modal instead of directly adding to cart
+    setSelectedBeatForLicense(beat);
+    setShowLicenseModal(true);
+  };
+
+  // Add new function to handle license selection
+  const handleLicenseSelect = (beatWithLicense) => {
+    // Check if already in cart (with same license)
+    const isInCart = cartItems.some(item =>
+      item._id === beatWithLicense._id &&
+      item.selectedLicense === beatWithLicense.selectedLicense
+    );
+
     if (isInCart) {
-      alert(`"${beat.title}" is already in your cart`);
+      alert(`"${beatWithLicense.title}" with ${beatWithLicense.licenseName} is already in your cart`);
       return;
     }
-    
+
     // Add to cart
-    const updatedCart = [...cartItems, beat];
+    const updatedCart = [...cartItems, beatWithLicense];
     setCartItems(updatedCart);
     localStorage.setItem('cart', JSON.stringify(updatedCart));
-    alert(`${beat.title} added to cart!`);
+
+    // Close modal and show success message
+    setShowLicenseModal(false);
+    setSelectedBeatForLicense(null);
+    alert(`${beatWithLicense.title} with ${beatWithLicense.licenseName} added to cart!`);
   };
 
   // Toggle wishlist
   const toggleWishlist = (event, beat) => {
     event.stopPropagation(); // Prevent opening the modal
-    
+
     // Check if user is logged in
     const isLoggedIn = localStorage.getItem('token');
     if (!isLoggedIn) {
@@ -259,11 +277,11 @@ const BeatExplorePage = () => {
       navigate("/login");
       return;
     }
-    
+
     // Check if already in wishlist
     const isInWishlist = wishlist.some(item => item._id === beat._id);
     let updatedWishlist;
-    
+
     if (isInWishlist) {
       // Remove from wishlist
       updatedWishlist = wishlist.filter(item => item._id !== beat._id);
@@ -273,7 +291,7 @@ const BeatExplorePage = () => {
       updatedWishlist = [...wishlist, beat];
       alert(`${beat.title} added to wishlist!`);
     }
-    
+
     setWishlist(updatedWishlist);
     localStorage.setItem('wishlist', JSON.stringify(updatedWishlist));
   };
@@ -303,22 +321,22 @@ const BeatExplorePage = () => {
   const toggleDisplayMode = () => {
     setDisplayMode(displayMode === "grid" ? "list" : "grid");
   };
-  
+
   // Handler for opening the single beat modal
   const handleBeatClick = (beat) => {
     setSelectedBeat(beat);
   };
-  
+
   // Handler for closing the single beat modal
   const handleCloseModal = () => {
     setSelectedBeat(null);
   };
-  
+
   // Check if a beat is in the wishlist
   const isInWishlist = (beatId) => {
     return wishlist.some(item => item._id === beatId);
   };
-  
+
   // Check if a beat is in the cart
   const isInCart = (beatId) => {
     return cartItems.some(item => item._id === beatId);
@@ -368,14 +386,13 @@ const BeatExplorePage = () => {
         <div className={styles.filterToggle} onClick={() => setShowFilters(!showFilters)}>
           <FaFilter /> Filters <FaChevronDown />
         </div>
-        
+
         <div className={`${styles.filtersContainer} ${showFilters ? styles.showFilters : ''}`}>
-          
 
           {/* Genre filter */}
           <div className={styles.filterGroup}>
             <h3 className={styles.filterLabel}>Genre</h3>
-            <select 
+            <select
               className={styles.genreSelect}
               value={selectedGenre}
               onChange={(e) => handleGenreSelect(e.target.value)}
@@ -400,34 +417,27 @@ const BeatExplorePage = () => {
             />
           </div>
         </div>
-        
-        {/* Results count */}
-        {/* <div className={styles.resultsCount}>
-          {filteredBeats.length} beats found
-        </div> */}
 
         {/* View mode toggle */}
         <div className={styles.filterGroup}>
-            <h3 className={styles.filterLabel}>View Mode</h3>
-            <div className={styles.viewToggle}>
-              <button 
-                className={`${styles.viewButton} ${displayMode === 'grid' ? styles.active : ''}`}
-                onClick={() => setDisplayMode('grid')}
-              >
-                <FaThLarge />
-              </button>
-              <button 
-                className={`${styles.viewButton} ${displayMode === 'list' ? styles.active : ''}`}
-                onClick={() => setDisplayMode('list')}
-              >
-                <FaListUl />
-              </button>
-            </div>
+          <h3 className={styles.filterLabel}>View Mode</h3>
+          <div className={styles.viewToggle}>
+            <button
+              className={`${styles.viewButton} ${displayMode === 'grid' ? styles.active : ''}`}
+              onClick={() => setDisplayMode('grid')}
+            >
+              <FaThLarge />
+            </button>
+            <button
+              className={`${styles.viewButton} ${displayMode === 'list' ? styles.active : ''}`}
+              onClick={() => setDisplayMode('list')}
+            >
+              <FaListUl />
+            </button>
           </div>
-
+        </div>
       </div>
-        
-        
+
       {/* Error message */}
       {errorMessage && <div className={styles.errorMessage}>{errorMessage}</div>}
 
@@ -437,14 +447,14 @@ const BeatExplorePage = () => {
           {displayedBeats.length > 0 ? (
             displayedBeats.map((beat) => {
               // Check if this beat is currently playing using the audio context
-              const isThisPlaying = 
-                isPlaying && 
-                currentTrack && 
+              const isThisPlaying =
+                isPlaying &&
+                currentTrack &&
                 (currentTrack._id === beat._id || currentTrack.id === beat.id);
-                
+
               return (
-                <div 
-                  key={beat._id} 
+                <div
+                  key={beat._id}
                   className={styles.beatCard}
                   onClick={() => handleBeatClick(beat)}
                 >
@@ -453,10 +463,10 @@ const BeatExplorePage = () => {
                       src={beat.coverImage || "/default-cover.jpg"}
                       alt={beat.title}
                       className={styles.beatImage}
-                      onError={(e) => {e.target.src = "/default-cover.jpg"}}
+                      onError={(e) => { e.target.src = "/default-cover.jpg" }}
                     />
                     <div className={styles.beatImageOverlay}>
-                      <button 
+                      <button
                         className={styles.playButton}
                         onClick={(e) => handlePlayPreview(e, beat)}
                       >
@@ -470,7 +480,7 @@ const BeatExplorePage = () => {
                       </button>
                     </div>
                   </div>
-                  
+
                   <div className={styles.beatInfo}>
                     <h3 className={styles.beatTitle}>{beat.title}</h3>
                     <div className={styles.producerName}>
@@ -482,17 +492,17 @@ const BeatExplorePage = () => {
                       <span className={styles.beatGenre}>{beat.genre}</span>
                     </div>
                   </div>
-                  
+
                   <div className={styles.beatActions}>
-                    <button 
+                    <button
                       className={`${styles.cartButton} ${isInCart(beat._id) ? styles.inCart : ''}`}
                       onClick={(e) => handleAddToCart(e, beat)}
                       disabled={isInCart(beat._id)}
                     >
                       <FaCartPlus /> {isInCart(beat._id) ? 'In Cart' : 'Add to Cart'}
                     </button>
-                    
-                    <button 
+
+                    <button
                       className={`${styles.wishlistButton} ${isInWishlist(beat._id) ? styles.inWishlist : ''}`}
                       onClick={(e) => toggleWishlist(e, beat)}
                     >
@@ -506,7 +516,7 @@ const BeatExplorePage = () => {
             <div className={styles.noBeats}>
               <FaInfoCircle className={styles.noBeatsIcon} />
               <p>No beats match your search criteria</p>
-              <button 
+              <button
                 className={styles.resetButton}
                 onClick={() => {
                   setKeywords("");
@@ -525,14 +535,14 @@ const BeatExplorePage = () => {
           {displayedBeats.length > 0 ? (
             displayedBeats.map((beat) => {
               // Check if this beat is currently playing using the audio context
-              const isThisPlaying = 
-                isPlaying && 
-                currentTrack && 
+              const isThisPlaying =
+                isPlaying &&
+                currentTrack &&
                 (currentTrack._id === beat._id || currentTrack.id === beat.id);
-                
+
               return (
-                <div 
-                  key={beat._id} 
+                <div
+                  key={beat._id}
                   className={styles.beatRow}
                   onClick={() => handleBeatClick(beat)}
                 >
@@ -541,9 +551,9 @@ const BeatExplorePage = () => {
                       src={beat.coverImage || "/default-cover.jpg"}
                       alt={beat.title}
                       className={styles.beatRowImage}
-                      onError={(e) => {e.target.src = "/default-cover.jpg"}}
+                      onError={(e) => { e.target.src = "/default-cover.jpg" }}
                     />
-                    <button 
+                    <button
                       className={styles.rowPlayButton}
                       onClick={(e) => handlePlayPreview(e, beat)}
                     >
@@ -556,7 +566,7 @@ const BeatExplorePage = () => {
                       )}
                     </button>
                   </div>
-                  
+
                   <div className={styles.beatRowInfo}>
                     <h3 className={styles.beatRowTitle}>{beat.title}</h3>
                     <div className={styles.beatRowProducer}>
@@ -564,21 +574,21 @@ const BeatExplorePage = () => {
                       {beat.producer?.verified && <span className={styles.verifiedBadge}>✓</span>}
                     </div>
                   </div>
-                  
+
                   <div className={styles.beatRowGenre}>{beat.genre}</div>
-                  
+
                   <div className={styles.beatRowPrice}>${beat.price?.toFixed(2) || "0.00"}</div>
-                  
+
                   <div className={styles.beatRowActions}>
-                    <button 
+                    <button
                       className={`${styles.rowCartButton} ${isInCart(beat._id) ? styles.inCart : ''}`}
                       onClick={(e) => handleAddToCart(e, beat)}
                       disabled={isInCart(beat._id)}
                     >
                       <FaCartPlus />
                     </button>
-                    
-                    <button 
+
+                    <button
                       className={`${styles.rowWishlistButton} ${isInWishlist(beat._id) ? styles.inWishlist : ''}`}
                       onClick={(e) => toggleWishlist(e, beat)}
                     >
@@ -592,7 +602,7 @@ const BeatExplorePage = () => {
             <div className={styles.noBeats}>
               <FaInfoCircle className={styles.noBeatsIcon} />
               <p>No beats match your search criteria</p>
-              <button 
+              <button
                 className={styles.resetButton}
                 onClick={() => {
                   setKeywords("");
@@ -617,7 +627,7 @@ const BeatExplorePage = () => {
           >
             <FaChevronLeft />
           </button>
-          
+
           <div className={styles.pageNumbers}>
             {Array.from({ length: Math.min(5, pageCount) }, (_, i) => {
               // Logic to display 5 page numbers centered around current page
@@ -629,7 +639,7 @@ const BeatExplorePage = () => {
               } else {
                 pageNum = currentPage - 2 + i;
               }
-              
+
               // Only render if page number is valid
               if (pageNum >= 0 && pageNum < pageCount) {
                 return (
@@ -645,7 +655,7 @@ const BeatExplorePage = () => {
               return null;
             })}
           </div>
-          
+
           <button
             className={styles.paginationButton}
             onClick={() => handlePageChange(Math.min(pageCount - 1, currentPage + 1))}
@@ -655,20 +665,32 @@ const BeatExplorePage = () => {
           </button>
         </div>
       )}
-      
+
       {/* Single Beat Modal */}
       {selectedBeat && (
-        <SingleBeatModal 
+        <SingleBeatModal
           beat={selectedBeat}
           isOpen={!!selectedBeat}
           onClose={handleCloseModal}
-          onAddToCart={(beat) => handleAddToCart({ stopPropagation: () => {} }, beat)}
-          onToggleWishlist={(beat) => toggleWishlist({ stopPropagation: () => {} }, beat)}
+          onAddToCart={(beat) => handleAddToCart({ stopPropagation: () => { } }, beat)}
+          onToggleWishlist={(beat) => toggleWishlist({ stopPropagation: () => { } }, beat)}
           isInCart={isInCart(selectedBeat._id)}
           isInWishlist={isInWishlist(selectedBeat._id)}
           isPlaying={currentTrack?._id === selectedBeat._id && isPlaying}
           onPlayPause={(e) => handlePlayPreview(e, selectedBeat)}
           isLoading={audioLoading && currentTrack?._id === selectedBeat._id}
+        />
+      )}
+
+      {/* License Selection Modal */}
+      {showLicenseModal && selectedBeatForLicense && (
+        <LicenseSelectionModal
+          beat={selectedBeatForLicense}
+          onClose={() => {
+            setShowLicenseModal(false);
+            setSelectedBeatForLicense(null);
+          }}
+          onSelectLicense={handleLicenseSelect}
         />
       )}
     </div>

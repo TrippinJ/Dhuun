@@ -18,8 +18,9 @@ import {
   FaUserEdit
 } from "react-icons/fa";
 import UploadBeat from "../Components/UploadBeat";
+import PurchasedBeats from "../Components/PurchasedBeats";
 
-const Dashboard = () => {
+const Dashboard = ({ activePage: initialPage }) => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [beats, setBeats] = useState([]);
@@ -30,9 +31,10 @@ const Dashboard = () => {
   const [showConfirmDelete, setShowConfirmDelete] = useState(null);
   const [error, setError] = useState(null);
   const [audioLoading, setAudioLoading] = useState(false);
-  const [activePage, setActivePage] = useState("dashboard");
+  const [activePage, setActivePage] = useState(initialPage || "dashboard");
   const [userAvatar, setUserAvatar] = useState(null);
   const [userFullName, setUserFullName] = useState("User");
+  
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -288,7 +290,12 @@ const Dashboard = () => {
     if (error) {
       return <div className={styles.error}>{error}</div>;
     }
-     
+    
+
+    if (activePage === "purchases") {
+      return <PurchasedBeats />;
+    }
+  
     // Return different content based on user role
     if (user?.role === "seller") {
       return (

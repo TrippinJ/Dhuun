@@ -14,8 +14,8 @@ import BeatExplorePage from "./pages/BeatExplorePage";
 import Dashboard from "./pages/Dashboard";
 import ChooseRole from "./pages/ChooseRole";
 import SubscriptionPage from "./pages/Subscription";
-import PrivateRoute from "./Components/PrivateRoute"; 
-import CreatorCommunity from "./pages/CreatorCommunity"; 
+import PrivateRoute from "./Components/PrivateRoute";
+import CreatorCommunity from "./pages/CreatorCommunity";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
@@ -30,102 +30,109 @@ import GlobalAudioPlayer from "./Components/GlobalAudioPlayer";
 function App() {
   return (
     <AudioProvider>
-    <div className="App">
-      <BrowserRouter>
-        <Routes>
-          {/* Landing Page */}
-          <Route
-            path="/"
-            element={
-              <>
-                <Navbar />
-                <Home />
-                <About />
-                <Work />
-                <Testimonial />
-                <Contact />
-                <Footer />
-              </>
-            }
-          />
+      <div className="App">
+        <BrowserRouter>
+          <Routes>
+            {/* Landing Page */}
+            <Route
+              path="/"
+              element={
+                <>
+                  <Navbar />
+                  <Home />
+                  <About />
+                  <Work />
+                  <Testimonial />
+                  <Contact />
+                  <Footer />
+                </>
+              }
+            />
 
-          {/* Authentication Routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/chooserole" element={<ChooseRole />} />
+            {/* Authentication Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/chooserole" element={<ChooseRole />} />
 
-          {/* Protected Routes */}
-          <Route
-            path="/dashboard"
-            element={
-              <PrivateRoute>
-                <Dashboard />
-              </PrivateRoute>
-            }
-          />
+            {/* Protected Routes */}
+            <Route
+              path="/dashboard"
+              element={
+                <PrivateRoute>
+                  <Dashboard />
+                </PrivateRoute>
+              }
+            />
 
-          <Route
-            path="/edit-profile"
-            element={
-              <PrivateRoute>
-                <EditProfile />
-              </PrivateRoute>
-            }
-          />
+            <Route
+              path="/edit-profile"
+              element={
+                <PrivateRoute>
+                  <EditProfile />
+                </PrivateRoute>
+              }
+            />
 
-          <Route
-            path="/subscription"
-            element={
-              <PrivateRoute>
-                <SubscriptionPage />
-              </PrivateRoute>
-            }
-          />
+            <Route
+              path="/subscription"
+              element={
+                <PrivateRoute>
+                  <SubscriptionPage />
+                </PrivateRoute>
+              }
+            />
 
-          <Route
-            path="/edit-beat/:beatId"
-            element={
-              <PrivateRoute>
-                <EditBeat />
-              </PrivateRoute>
-            }
-          />
+            <Route
+              path="/edit-beat/:beatId"
+              element={
+                <PrivateRoute>
+                  <EditBeat />
+                </PrivateRoute>
+              }
+            />
 
-          <Route
-            path="/admin"
-            element={
-              <PrivateRoute>
-                <AdminDashboard />
-              </PrivateRoute>
-            }
-          />
+            <Route
+              path="/admin"
+              element={
+                <PrivateRoute>
+                  <AdminDashboard />
+                </PrivateRoute>
+              }
+            />
 
-          {/* Public Music Routes */}
-          <Route path="/BeatExplorePage" element={<BeatExplorePage />} />
-          <Route path="/creator-community" element={<CreatorCommunity />} />
-          <Route path="/favorites" element={<Favorites />} />
-          {/* Cart and Checkout Routes */}
-          <Route path="/cart" element={<Cart />} />
-          <Route
-            path="/checkout"
-            element={
+            <Route path="/dashboard/purchased" element={
               <PrivateRoute>
-                <Checkout />
+                <Dashboard activePage="purchases" />
               </PrivateRoute>
-            }
-          />
-          <Route
-            path="/checkout-success"
-            element={
-              <PrivateRoute>
-                <CheckoutSuccess />
-              </PrivateRoute>
-            }
-          />
-        </Routes>
-        <GlobalAudioPlayer />
-      </BrowserRouter>
-    </div>
+            } />
+
+            {/* Public Music Routes */}
+            <Route path="/BeatExplorePage" element={<BeatExplorePage />} />
+            <Route path="/creator-community" element={<CreatorCommunity />} />
+            <Route path="/favorites" element={<Favorites />} />
+            
+            {/* Cart and Checkout Routes */}
+            <Route path="/cart" element={<Cart />} />
+            <Route
+              path="/checkout"
+              element={
+                <PrivateRoute>
+                  <Checkout />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/checkout-success"
+              element={
+                <PrivateRoute>
+                  <CheckoutSuccess />
+                </PrivateRoute>
+              }
+            />
+          </Routes>
+          <GlobalAudioPlayer />
+        </BrowserRouter>
+      </div>
     </AudioProvider>
   );
 }

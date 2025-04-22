@@ -12,21 +12,21 @@ const CheckoutSuccess = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState(null);
-  
+
   // Confetti effect state
   const [showConfetti, setShowConfetti] = useState(false);
-  
+
   useEffect(() => {
     const processPayment = async () => {
       try {
         setLoading(true);
-        
+
         // Get URL parameters - this is what Khalti sends back
         const params = new URLSearchParams(location.search);
         const pidx = params.get("pidx");
         const status = params.get("status");
         const transaction_id = params.get("transaction_id") || params.get("txnId");
-        
+
         // If no pidx found, check if we have a state from react-router
         if (!pidx && location.state?.orderId) {
           // This is for direct navigation after an order was created
@@ -36,11 +36,11 @@ const CheckoutSuccess = () => {
             if (!token) {
               throw new Error("Authentication required");
             }
-            
+
             const response = await API.get(`/api/orders/${location.state.orderId}`, {
               headers: { Authorization: `Bearer ${token}` }
             });
-            
+
             setOrderDetails(response.data);
             setPaymentStatus("Completed");
             setShowConfetti(true);
@@ -53,27 +53,27 @@ const CheckoutSuccess = () => {
             return;
           }
         }
-        
+
         // No pidx and no orderId, redirect to home
         if (!pidx) {
           console.error("No payment ID (pidx) found in URL");
           navigate("/");
           return;
         }
-        
+
         console.log("Got Khalti callback:", { pidx, status, transaction_id });
-        
+
         // Check status first
         if (status === "Completed") {
           // Get the pending order data from localStorage
           const pendingOrderData = JSON.parse(localStorage.getItem("pendingOrder") || "null");
-          
+
           if (!pendingOrderData) {
             setError("Order information not found");
             setLoading(false);
             return;
           }
-          
+
           // Verify payment with our backend
           const token = localStorage.getItem("token");
           if (!token) {
@@ -81,13 +81,13 @@ const CheckoutSuccess = () => {
             setLoading(false);
             return;
           }
-          
+
           // First, verify the payment status
-          const verifyResponse = await API.post("/api/payments/verify", 
+          const verifyResponse = await API.post("/api/payments/verify",
             { pidx },
-            { headers: { Authorization: `Bearer ${token}` }}
+            { headers: { Authorization: `Bearer ${token}` } }
           );
-          
+
           if (verifyResponse.data.success && verifyResponse.data.status === "Completed") {
             // Now create the actual order
             const orderData = {
@@ -98,17 +98,17 @@ const CheckoutSuccess = () => {
               paymentId: transaction_id,
               paymentPidx: pidx
             };
-            
+
             const orderResponse = await API.post("/api/orders", orderData, {
               headers: { Authorization: `Bearer ${token}` }
             });
-            
+
             console.log("Order created:", orderResponse.data);
-            
+
             // Clear cart and pending order
             localStorage.setItem("cart", "[]");
             localStorage.removeItem("pendingOrder");
-            
+
             // Set success state
             setOrderDetails({
               ...orderResponse.data,
@@ -131,7 +131,7 @@ const CheckoutSuccess = () => {
           setPaymentStatus("Failed");
           setError("Payment was not completed. Please try again.");
         }
-        
+
         setLoading(false);
       } catch (error) {
         console.error("Error processing payment:", error);
@@ -140,9 +140,9 @@ const CheckoutSuccess = () => {
         setLoading(false);
       }
     };
-    
+
     processPayment();
-    
+
     // Hide confetti after 5 seconds if shown
     if (showConfetti) {
       const timer = setTimeout(() => {
@@ -176,15 +176,15 @@ const CheckoutSuccess = () => {
   return (
     <div className={styles.successContainer}>
       <NavbarBeatExplore />
-      
+
       {/* Confetti effect */}
       {showConfetti && (
         <div className={styles.confetti}>
           {[...Array(50)].map((_, index) => (
-            <div 
-              key={index} 
-              className={styles.confettiPiece} 
-              style={{ 
+            <div
+              key={index}
+              className={styles.confettiPiece}
+              style={{
                 left: `${Math.random() * 100}%`,
                 animationDelay: `${Math.random() * 5}s`,
                 backgroundColor: `hsl(${Math.random() * 360}, 100%, 50%)`
@@ -193,7 +193,7 @@ const CheckoutSuccess = () => {
           ))}
         </div>
       )}
-      
+
       <div className={styles.successContent}>
         <div className={styles.successCard}>
           {paymentStatus === "Completed" ? (
@@ -215,7 +215,7 @@ const CheckoutSuccess = () => {
               <p>We couldn't complete your payment</p>
             </>
           )}
-          
+
           <div className={styles.orderDetails}>
             <div className={styles.detailsRow}>
               <span>Date:</span>
@@ -228,42 +228,48 @@ const CheckoutSuccess = () => {
             <div className={styles.detailsRow}>
               <span>Payment Status:</span>
               <span className={
-                paymentStatus === "Completed" ? styles.statusSuccess : 
-                paymentStatus === "Pending" ? styles.statusPending : 
-                styles.statusFailed
+                paymentStatus === "Completed" ? styles.statusSuccess :
+                  paymentStatus === "Pending" ? styles.statusPending :
+                    styles.statusFailed
               }>
                 {paymentStatus}
               </span>
             </div>
           </div>
-          
+
           {paymentStatus === "Completed" && cartItems.length > 0 && (
             <div className={styles.purchasedItems}>
               <h2>Your Purchased Beats</h2>
               <div className={styles.itemsList}>
                 {cartItems.map((item, index) => (
                   <div key={index} className={styles.purchasedItem}>
-                    <img 
-                      src={item.coverImage || "/default-cover.jpg"} 
-                      alt={item.title} 
-                      className={styles.itemImage} 
+                    <img
+                      src={item.coverImage || "/default-cover.jpg"}
+                      alt={item.title}
+                      className={styles.itemImage}
                     />
                     <div className={styles.itemDetails}>
                       <h3>{item.title}</h3>
-                      <p>Basic License</p>
-                      <p className={styles.itemPrice}>${item.price.toFixed(2)}</p>
+                      <p>{item.licenseName || item.selectedLicense || 'Basic License'}</p>
+                      <p className={styles.itemPrice}>
+                        ${(item.licensePrice || item.price).toFixed(2)}
+                      </p>
                     </div>
                   </div>
                 ))}
               </div>
-              
+
               <div className={styles.totalAmount}>
                 <span>Total:</span>
-                <span>${cartItems.reduce((sum, item) => sum + item.price, 0).toFixed(2)}</span>
+                <span>
+                  ${cartItems.reduce((sum, item) =>
+                    sum + (item.licensePrice || item.price), 0
+                  ).toFixed(2)}
+                </span>
               </div>
             </div>
           )}
-          
+
           {paymentStatus === "Completed" ? (
             <p className={styles.successMessage}>
               Your payment has been processed successfully. You can now download your beats
@@ -279,7 +285,7 @@ const CheckoutSuccess = () => {
               We couldn't complete your payment. Please try again or use a different payment method.
             </p>
           )}
-          
+
           {paymentStatus === "Completed" && (
             <div className={styles.nextSteps}>
               <div className={styles.stepItem}>
@@ -290,17 +296,17 @@ const CheckoutSuccess = () => {
               </div>
             </div>
           )}
-          
+
           <div className={styles.actionButtons}>
             {paymentStatus === "Completed" ? (
               <>
-                <button 
+                <button
                   className={`${styles.actionButton} ${styles.downloadButton}`}
-                  onClick={() => navigate("/dashboard")}
+                  onClick={() => navigate("/dashboard/purchased")}
                 >
                   <FaDownload /> Download My Beats
                 </button>
-                <button 
+                <button
                   className={styles.actionButton}
                   onClick={() => navigate("/BeatExplorePage")}
                 >
@@ -309,13 +315,13 @@ const CheckoutSuccess = () => {
               </>
             ) : (
               <>
-                <button 
+                <button
                   className={`${styles.actionButton} ${styles.retryButton}`}
                   onClick={() => navigate("/cart")}
                 >
                   Return to Cart
                 </button>
-                <button 
+                <button
                   className={styles.actionButton}
                   onClick={() => navigate("/BeatExplorePage")}
                 >
@@ -323,15 +329,15 @@ const CheckoutSuccess = () => {
                 </button>
               </>
             )}
-            
-            <button 
+
+            <button
               className={styles.actionButton}
               onClick={() => navigate("/")}
             >
               <FaHome /> Return to Home
             </button>
           </div>
-          
+
           <p className={styles.helpText}>
             Need help with your purchase? Contact our support team at
             <a href="mailto:support@dhuun.com"> support@dhuun.com</a>
