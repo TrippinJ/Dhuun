@@ -7,6 +7,7 @@ import { body, validationResult } from 'express-validator';
 import User from '../models/user.js';
 import crypto from 'crypto';
 import { sendOTPEmail } from '../utils/emailService.js';
+import { sendWelcomeEmail } from '../utils/emailService.js';
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret_here";
@@ -60,6 +61,7 @@ router.post(
 
       // Send OTP email
       const emailResult = await sendOTPEmail(email, otp, name);
+      console.log("OTP Email result:", emailResult);
 
       if (!emailResult.success) {
         console.error("Failed to send OTP email:", emailResult.error);
@@ -79,7 +81,8 @@ router.post(
           email: user.email,
           role: user.role,
           isVerified: false
-        }
+        },
+        verificationRequired: true
       });
     } catch (error) {
       console.error("Registration error:", error);
@@ -380,6 +383,11 @@ router.post("/verify-otp", async (req, res) => {
       return res.status(400).json({ message: "OTP has expired. Please request a new one." });
     }
 
+
+    // Check if OTP has expired
+    if (user.otpExpires < new Date()) {
+      return res.status(400).json({ message: "OTP has expired. Please request a new one." });
+    }
     // Verify OTP
     if (user.verificationOTP !== otp) {
       return res.status(400).json({ message: "Invalid OTP. Please try again." });
@@ -390,6 +398,11 @@ router.post("/verify-otp", async (req, res) => {
     user.verificationOTP = undefined;
     user.otpExpires = undefined;
     await user.save();
+
+    // Send welcome email
+    
+    await sendWelcomeEmail(user.email, user.name);
+
 
     // Generate new token with updated verification status
     const payload = { user: { id: user.id } };

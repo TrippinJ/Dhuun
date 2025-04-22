@@ -70,6 +70,66 @@ export const sendOTPEmail = async (email, otp, name = 'User') => {
 };
 
 /**
+ * Send welcome email after successful registration
+ * @param {string} email - Recipient email
+ * @param {string} name - User's name
+ * @returns {Promise} - Email sending result
+ */
+export const sendWelcomeEmail = async (email, name = 'User') => {
+  try {
+    const mailOptions = {
+      from: `"Dhuun Music" <${process.env.EMAIL_FROM}>`,
+      to: email,
+      subject: 'Welcome to Dhuun Music - Your Beat Marketplace',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h1 style="color: #7B2CBF;">Welcome to Dhuun!</h1>
+          </div>
+          <div style="margin-bottom: 20px;">
+            <p>Hi ${name},</p>
+            <p>Thank you for joining Dhuun - your ultimate platform for buying and selling beats!</p>
+            
+            <p>Here are a few things you can do on Dhuun:</p>
+            <ul style="padding-left: 20px; line-height: 1.5;">
+              <li><strong>Explore Beats</strong> - Browse through our collection of high-quality beats</li>
+              <li><strong>Follow Producers</strong> - Stay updated with your favorite producers</li>
+              <li><strong>Create a Profile</strong> - Complete your profile to showcase your work</li>
+              ${role === 'seller' ? '<li><strong>Upload Your Beats</strong> - Start selling your creations to artists worldwide</li>' : ''}
+            </ul>
+            
+            <p style="margin-top: 20px;">If you have any questions or need assistance, feel free to reach out to our support team.</p>
+            
+            <div style="text-align: center; margin-top: 30px;">
+              <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/BeatExplorePage" 
+                style="background-color: #7B2CBF; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                Start Exploring
+              </a>
+            </div>
+          </div>
+          
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #666; font-size: 12px; text-align: center;">
+            <p>© ${new Date().getFullYear()} Dhuun. All rights reserved.</p>
+            <p>
+              <a href="#" style="color: #7B2CBF; text-decoration: none; margin: 0 10px;">Instagram</a> | 
+              <a href="#" style="color: #7B2CBF; text-decoration: none; margin: 0 10px;">Twitter</a> | 
+              <a href="#" style="color: #7B2CBF; text-decoration: none; margin: 0 10px;">YouTube</a>
+            </p>
+          </div>
+        </div>
+      `
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`✉️ Welcome email sent to ${email}: ${info.messageId}`);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('Error sending welcome email:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
  * Send order confirmation email
  * @param {Object} orderDetails - Order information
  * @returns {Promise} - Email sending result

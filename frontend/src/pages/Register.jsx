@@ -69,12 +69,26 @@ const Register = () => {
       });
 
       console.log("✅ Registration successful:", response.data);
-      alert(response.data.message || "Registered successfully!");
-      // Redirect users based on role
-      if (formData.role === "seller") {
-        navigate("/dashboard");
+      
+      if (response.data.verificationRequired) {
+        // Save email to use in verification page
+        localStorage.setItem("pendingVerificationEmail", formData.email);
+        
+        // Show success message before redirecting
+        alert("Registration successful! Please verify your email with the code we sent you.");
+        
+        // Redirect to verification page
+        navigate("/verify-otp", { state: { email: formData.email } });
       } else {
-        navigate("/dashboard");
+        // Fallback for cases where verification might be disabled
+        alert(response.data.message || "Registered successfully!");
+        
+        // Redirect users based on role
+        if (formData.role === "seller") {
+          navigate("/dashboard");
+        } else {
+          navigate("/dashboard");
+        }
       }
     } catch (error) {
       console.error("❌ Registration Error:", error.response?.data || error.message);

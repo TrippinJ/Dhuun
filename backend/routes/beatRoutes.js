@@ -248,6 +248,14 @@ router.post('/', authenticateUser, upload.fields([
       imageFile.path,
       `dhuun/images/${req.user.id}`
     );
+    let licenseTypes = [];
+    if (req.body.licenseTypes) {
+      try {
+        licenseTypes = JSON.parse(req.body.licenseTypes);
+      } catch (error) {
+        console.error('Error parsing license types:', error);
+      }
+    }
     
     // Create a new beat with Cloudinary URLs and public IDs
     const newBeat = new Beat({
@@ -258,7 +266,7 @@ router.post('/', authenticateUser, upload.fields([
       key: req.body.key || null,
       tags: tags,
       price: parseFloat(req.body.price),
-      licenseType: req.body.licenseType,
+      licenseType: licenseType,
       description: req.body.description || '',
       // Store Cloudinary URLs
       audioFile: audioResult.secure_url,

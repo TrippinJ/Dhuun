@@ -25,7 +25,9 @@ import Favorites from "./Components/Favourites";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import { AudioProvider } from "./context/AudioContext";
 import GlobalAudioPlayer from "./Components/GlobalAudioPlayer";
-
+import VerifyOTP from "./pages/VerifyOTP";
+import { LicenseProvider, useLicense } from './context/LicenseContext';
+import LicenseSelectionModal from './Components/LicenseSelectionModal';
 
 function App() {
   return (
@@ -53,6 +55,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/chooserole" element={<ChooseRole />} />
+            <Route path="/verify-otp" element={<VerifyOTP />} />
 
             {/* Protected Routes */}
             <Route

@@ -24,9 +24,14 @@ const BeatSchema = new mongoose.Schema({
     min: 0
   },
   licenseType: {
-    type: String,
-    required: true,
-    trim: true
+    type: [{
+      type: { type: String, required: true },
+      name: { type: String, required: true },
+      price: { type: Number, required: true },
+      selected: { type: Boolean, default: true }
+    }],
+    default: []
+    
   },
   description: { 
     type: String,
