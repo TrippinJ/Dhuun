@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { FaPlay, FaPause, FaShoppingCart, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import styles from '../css/FeaturedBeatsCarousel.module.css';
+import { useLicense } from '../context/LicenseContext';
 
 const FeaturedBeatsCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -8,6 +9,7 @@ const FeaturedBeatsCarousel = () => {
   const [currentPlayingId, setCurrentPlayingId] = useState(null);
   const [audioLoading, setAudioLoading] = useState(false);
   const audioRef = useRef(new Audio());
+  const { openLicenseModal } = useLicense();
   
   // Sample featured beats data
   const featuredBeats = [
@@ -145,37 +147,52 @@ const FeaturedBeatsCarousel = () => {
   
   // Handle buy now click
   const handleBuyNow = (beatId) => {
-    // Get the beat from the array
     const beat = featuredBeats.find(b => b.id === beatId);
     if (!beat) return;
     
-    // Get existing cart or initialize empty array
-    let cart = [];
-    try {
-      cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    } catch (error) {
-      console.error("Error parsing cart:", error);
-      cart = [];
-    }
-    
-    // Check if beat is already in cart
-    const beatInCart = cart.some(item => item.id === beatId);
-    
-    if (beatInCart) {
-      alert(`"${beat.title}" is already in your cart`);
+    // Check if user is logged in
+    const isLoggedIn = localStorage.getItem('token');
+    if (!isLoggedIn) {
+      alert("Please log in to purchase");
+      navigate("/login");
       return;
     }
-    
-    // Add beat to cart
-    cart.push(beat);
-    
-    // Save updated cart
-    localStorage.setItem('cart', JSON.stringify(cart));
-    
-    // Show feedback to user
-    alert(`${beat.title} added to cart!`);
+
+    openLicenseModal(beat, (beatWithLicense) => {
+      try {
+        // Get existing cart
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        
+        // Check if beat is already in cart with the same license
+        const beatInCart = cart.some(item => 
+          item._id === beatWithLicense._id && 
+          item.selectedLicense === beatWithLicense.selectedLicense
+        );
+        
+        if (beatInCart) {
+          alert(`"${beatWithLicense.title}" with ${beatWithLicense.licenseName} is already in your cart`);
+          return;
+        }
+        
+        // Add beat to cart
+        cart.push(beatWithLicense);
+        
+        // Save updated cart
+        localStorage.setItem('cart', JSON.stringify(cart));
+        
+        // Show feedback to user
+        alert(`${beatWithLicense.title} with ${beatWithLicense.licenseName} added to cart!`);
+        
+        // Optionally navigate to cart
+        if (confirm("View your cart now?")) {
+          navigate("/cart");
+        }
+      } catch (error) {
+        console.error("Error adding to cart:", error);
+        alert("Error adding to cart. Please try again.");
+      }
+    });
   };
-  
   return (
     <div className={styles.carouselContainer}>
       <h2 className={styles.carouselTitle}>Featured Beats</h2>

@@ -58,6 +58,12 @@ export const initiatePayment = async ({ userId, amount, purchaseOrderName, retur
     const amountInPaisa = Math.round(parseFloat(amount) * 100);
     const orderId = userId || `order-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
+    const customer = customerInfo || {
+      name: "Customer",
+      email: "customer@example.com",
+      phone: "9800000001"  
+    };
+
     const payload = {
       return_url: returnUrl || "http://localhost:3000/checkout-success",
       website_url: websiteUrl || "http://localhost:3000/",
@@ -65,9 +71,9 @@ export const initiatePayment = async ({ userId, amount, purchaseOrderName, retur
       purchase_order_id: orderId,
       purchase_order_name: purchaseOrderName || "Product Purchase",
       customer_info: {
-        name: "Customer",
-        email: "customer@example.com",
-        phone: "9800000001"  // Use a valid test phone number in sandbox
+        name: customer.name,
+        email: customer.email,
+        phone: customer.phone  
       }
     };
 

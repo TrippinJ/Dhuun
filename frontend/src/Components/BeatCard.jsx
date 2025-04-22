@@ -1,11 +1,15 @@
 // src/Components/BeatCard.jsx
 import React from "react";
 import { FaPlay, FaPause, FaHeart, FaShoppingCart } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 import { useAudio } from "../context/AudioContext";
+import { useLicense } from "../context/LicenseContext";
 import styles from "../css/BeatCard.module.css";
 
-const BeatCard = ({ beat, onAddToCart, onToggleWishlist, isInWishlist }) => {
+const BeatCard = ({ beat, onToggleWishlist, isInWishlist }) => {
   const { currentTrack, isPlaying, playTrack } = useAudio();
+  const { openLicenseModal } = useLicense();
+  const navigate = useNavigate();
   
   // Check if this beat is currently playing
   const isThisPlaying = 
@@ -15,14 +19,48 @@ const BeatCard = ({ beat, onAddToCart, onToggleWishlist, isInWishlist }) => {
   
   // Handle play button click
   const handlePlayClick = (e) => {
-    e.stopPropagation(); // Prevent card click event if needed
+    e.stopPropagation();
     playTrack(beat);
   };
   
   // Add to cart handler
   const handleAddToCart = (e) => {
     e.stopPropagation();
-    if (onAddToCart) onAddToCart(beat);
+    
+    // Check if user is logged in
+    const isLoggedIn = localStorage.getItem('token');
+    if (!isLoggedIn) {
+      alert("Please log in to add items to cart");
+      navigate("/login");
+      return;
+    }
+
+    // Open license modal with callback
+    openLicenseModal(beat, (beatWithLicense) => {
+      try {
+        // Get existing cart
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        
+        // Check if already in cart with same license
+        const isInCart = cart.some(item => 
+          item._id === beatWithLicense._id &&
+          item.selectedLicense === beatWithLicense.selectedLicense
+        );
+
+        if (isInCart) {
+          alert(`"${beatWithLicense.title}" with ${beatWithLicense.licenseName} is already in your cart`);
+          return;
+        }
+        
+        // Add to cart
+        cart.push(beatWithLicense);
+        localStorage.setItem('cart', JSON.stringify(cart));
+        alert(`${beatWithLicense.title} with ${beatWithLicense.licenseName} added to cart!`);
+      } catch (error) {
+        console.error("Error adding to cart:", error);
+        alert("Error adding to cart. Please try again.");
+      }
+    });
   };
   
   // Toggle wishlist handler

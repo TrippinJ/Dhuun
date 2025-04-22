@@ -1,5 +1,6 @@
 // src/context/LicenseContext.jsx
 import React, { createContext, useState, useContext } from 'react';
+import LicenseSelectionModal from '../Components/LicenseSelectionModal';
 
 const LicenseContext = createContext();
 
@@ -30,14 +31,18 @@ export const LicenseProvider = ({ children }) => {
   return (
     <LicenseContext.Provider
       value={{
-        showLicenseModal,
-        selectedBeatForLicense,
         openLicenseModal,
         closeLicenseModal,
-        handleLicenseSelect
       }}
     >
       {children}
+      {showLicenseModal && selectedBeatForLicense && (
+        <LicenseSelectionModal
+          beat={selectedBeatForLicense}
+          onClose={closeLicenseModal}
+          onSelectLicense={handleLicenseSelect}
+        />
+      )}
     </LicenseContext.Provider>
   );
 };

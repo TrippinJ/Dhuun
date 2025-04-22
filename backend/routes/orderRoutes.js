@@ -1,6 +1,7 @@
 import express from 'express';
 import Order from '../models/order.js';
 import Beat from '../models/beat.js';
+import User from '../models/user.js';
 import { authenticateUser } from '../routes/auth.js';
 import { verifyPayment } from '../utils/khaltiPayment.js';
 import { sendOrderConfirmation, sendThankYouEmail } from '../utils/emailService.js';
@@ -10,8 +11,8 @@ const router = express.Router();
 // Protect all order routes
 router.use(authenticateUser);
 
-    // Create a new order
-router.post('/', async (req, res) => {
+// Create a new order
+router.post('/', authenticateUser, async (req, res) => {
   try {
     const { items, totalAmount, customerEmail, paymentMethod, paymentId, paymentPidx } = req.body;
 
@@ -22,10 +23,15 @@ router.post('/', async (req, res) => {
     // Verify Khalti payment if payment method is Khalti
     if (paymentMethod === 'khalti' && paymentId) {
       try {
+        // Add error handling here
+        if (!paymentPidx) {
+          return res.status(400).json({ message: 'Payment verification failed: Missing payment ID' });
+        }
+
         await verifyPayment(paymentPidx);
       } catch (paymentError) {
         console.error('Payment verification error:', paymentError);
-        return res.status(400).json({ message: 'Payment verification failed' });
+        return res.status(400).json({ message: 'Payment verification failed: ' + paymentError.message });
       }
     }
 
@@ -45,13 +51,18 @@ router.post('/', async (req, res) => {
       paymentStatus: 'Completed'
     });
 
-    // Save the order
-    await order.save();
+    // Save the order with proper error handling
+    try {
+      await order.save();
+    } catch (saveError) {
+      console.error('Error saving order:', saveError);
+      return res.status(500).json({ message: 'Failed to save order: ' + saveError.message });
+    }
 
 
     // Fetch user info for the email
     const user = await User.findById(req.user.id);
-    
+
     // Send order confirmation email
     try {
       // First populate the beat details for the email
@@ -59,7 +70,7 @@ router.post('/', async (req, res) => {
         path: 'items.beat',
         select: 'title producer'
       });
-      
+
       // Send confirmation email
       await sendOrderConfirmation({
         customerEmail: customerEmail || user.email,
@@ -68,7 +79,7 @@ router.post('/', async (req, res) => {
         totalAmount,
         userName: user.name
       });
-      
+
       // Schedule thank you email to be sent after a delay (1 hour)
       setTimeout(async () => {
         try {
@@ -82,11 +93,11 @@ router.post('/', async (req, res) => {
           // Don't fail the order if thank you email fails
         }
       }, 60 * 60 * 1000); // 1 hour delay
-      
+
     } catch (emailError) {
       console.error('Error sending order confirmation email:', emailError);
     }
-      
+
     // Process each item in the order
     for (const item of items) {
       // Increment purchases count

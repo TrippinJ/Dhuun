@@ -26,116 +26,117 @@ import AdminDashboard from "./pages/Admin/AdminDashboard";
 import { AudioProvider } from "./context/AudioContext";
 import GlobalAudioPlayer from "./Components/GlobalAudioPlayer";
 import VerifyOTP from "./pages/VerifyOTP";
-import { LicenseProvider, useLicense } from './context/LicenseContext';
-import LicenseSelectionModal from './Components/LicenseSelectionModal';
+import { LicenseProvider } from './context/LicenseContext';
 
 function App() {
   return (
     <AudioProvider>
-      <div className="App">
-        <BrowserRouter>
-          <Routes>
-            {/* Landing Page */}
-            <Route
-              path="/"
-              element={
-                <>
-                  <Navbar />
-                  <Home />
-                  <About />
-                  <Work />
-                  <Testimonial />
-                  <Contact />
-                  <Footer />
-                </>
-              }
-            />
+      <LicenseProvider>
+        <div className="App">
+          <BrowserRouter>
+            <Routes>
+              {/* Landing Page */}
+              <Route
+                path="/"
+                element={
+                  <>
+                    <Navbar />
+                    <Home />
+                    <About />
+                    <Work />
+                    <Testimonial />
+                    <Contact />
+                    <Footer />
+                  </>
+                }
+              />
 
-            {/* Authentication Routes */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/chooserole" element={<ChooseRole />} />
-            <Route path="/verify-otp" element={<VerifyOTP />} />
+              {/* Authentication Routes */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/chooserole" element={<ChooseRole />} />
+              <Route path="/verify-otp" element={<VerifyOTP />} />
 
-            {/* Protected Routes */}
-            <Route
-              path="/dashboard"
-              element={
+              {/* Protected Routes */}
+              <Route
+                path="/dashboard"
+                element={
+                  <PrivateRoute>
+                    <Dashboard />
+                  </PrivateRoute>
+                }
+              />
+
+              <Route
+                path="/edit-profile"
+                element={
+                  <PrivateRoute>
+                    <EditProfile />
+                  </PrivateRoute>
+                }
+              />
+
+              <Route
+                path="/subscription"
+                element={
+                  <PrivateRoute>
+                    <SubscriptionPage />
+                  </PrivateRoute>
+                }
+              />
+
+              <Route
+                path="/edit-beat/:beatId"
+                element={
+                  <PrivateRoute>
+                    <EditBeat />
+                  </PrivateRoute>
+                }
+              />
+
+              <Route
+                path="/admin"
+                element={
+                  <PrivateRoute>
+                    <AdminDashboard />
+                  </PrivateRoute>
+                }
+              />
+
+              <Route path="/dashboard/purchased" element={
                 <PrivateRoute>
-                  <Dashboard />
+                  <Dashboard activePage="purchases" />
                 </PrivateRoute>
-              }
-            />
+              } />
 
-            <Route
-              path="/edit-profile"
-              element={
-                <PrivateRoute>
-                  <EditProfile />
-                </PrivateRoute>
-              }
-            />
-
-            <Route
-              path="/subscription"
-              element={
-                <PrivateRoute>
-                  <SubscriptionPage />
-                </PrivateRoute>
-              }
-            />
-
-            <Route
-              path="/edit-beat/:beatId"
-              element={
-                <PrivateRoute>
-                  <EditBeat />
-                </PrivateRoute>
-              }
-            />
-
-            <Route
-              path="/admin"
-              element={
-                <PrivateRoute>
-                  <AdminDashboard />
-                </PrivateRoute>
-              }
-            />
-
-            <Route path="/dashboard/purchased" element={
-              <PrivateRoute>
-                <Dashboard activePage="purchases" />
-              </PrivateRoute>
-            } />
-
-            {/* Public Music Routes */}
-            <Route path="/BeatExplorePage" element={<BeatExplorePage />} />
-            <Route path="/creator-community" element={<CreatorCommunity />} />
-            <Route path="/favorites" element={<Favorites />} />
-            
-            {/* Cart and Checkout Routes */}
-            <Route path="/cart" element={<Cart />} />
-            <Route
-              path="/checkout"
-              element={
-                <PrivateRoute>
-                  <Checkout />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/checkout-success"
-              element={
-                <PrivateRoute>
-                  <CheckoutSuccess />
-                </PrivateRoute>
-              }
-            />
-          </Routes>
-          <GlobalAudioPlayer />
-        </BrowserRouter>
-      </div>
+              {/* Public Music Routes */}
+              <Route path="/BeatExplorePage" element={<BeatExplorePage />} />
+              <Route path="/creator-community" element={<CreatorCommunity />} />
+              <Route path="/favorites" element={<Favorites />} />
+              
+              {/* Cart and Checkout Routes */}
+              <Route path="/cart" element={<Cart />} />
+              <Route
+                path="/checkout"
+                element={
+                  <PrivateRoute>
+                    <Checkout />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/checkout-success"
+                element={
+                  <PrivateRoute>
+                    <CheckoutSuccess />
+                  </PrivateRoute>
+                }
+              />
+            </Routes>
+            <GlobalAudioPlayer />
+          </BrowserRouter>
+        </div>
+      </LicenseProvider>
     </AudioProvider>
   );
 }

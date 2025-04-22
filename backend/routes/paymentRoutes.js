@@ -1,6 +1,7 @@
 import express from 'express';
 import { authenticateUser } from '../routes/auth.js'; // Adjust path as needed
 import { initiatePayment, verifyPayment } from '../utils/khaltiPayment.js';
+import user from '../models/user.js';
 
 // Define router
 const router = express.Router();
@@ -21,6 +22,13 @@ router.post('/initiate', authenticateUser, async (req, res) => {
     // Get user info for the payment
     const userId = req.user.id;
     
+    // Create customer info object
+    const customerInfo = {
+      name: user.name || "Customer",
+      email: user.email || req.body.customerEmail,
+      phone: user.phonenumber || "9800000001" // Fallback for testing
+    };
+
     // Create a friendly name for the order
     const purchaseOrderName = `Beats Purchase (${items.length} items)`;
     
@@ -32,11 +40,12 @@ router.post('/initiate', authenticateUser, async (req, res) => {
     
     // Initiate payment with Khalti
     const paymentData = await initiatePayment({
-      userId,
+      userId: user.id,
       amount,
-      purchaseOrderName,
-      returnUrl: paymentReturnUrl,
-      websiteUrl
+      purchaseOrderName: `Beats Purchase (${items.length} items)`,
+      returnUrl: returnUrl || `${process.env.FRONTEND_URL || 'http://localhost:3000'}/checkout-success`,
+      websiteUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+      customerInfo  // Pass the customer info here
     });
     
     // Return the payment URL and pidx to the frontend

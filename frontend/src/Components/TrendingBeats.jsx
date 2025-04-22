@@ -6,6 +6,7 @@ import styles from '../css/TrendingBeats.module.css';
 import API from '../api/api';
 import { useAudio } from '../context/AudioContext';
 import { useNavigate } from 'react-router-dom';
+import { useLicense } from '../context/LicenseContext';
 
 const TrendingBeats = () => {
   const [trendingBeats, setTrendingBeats] = useState([]);
@@ -13,7 +14,8 @@ const TrendingBeats = () => {
   const [error, setError] = useState(null);
   const [audioLoading, setAudioLoading] = useState(false);
   const navigate = useNavigate();
-  
+  const { openLicenseModal } = useLicense();
+
   // Use the audio context
   const { playTrack, currentTrack, isPlaying } = useAudio();
   
@@ -132,33 +134,39 @@ const TrendingBeats = () => {
 
   // Handle add to cart
   const handleAddToCart = (beat) => {
-    console.log(`Add beat ${beat._id} to cart`);
-    
-    // Get existing cart or initialize empty array
-    let cart = [];
-    try {
-      cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    } catch (error) {
-      console.error("Error parsing cart:", error);
-      cart = [];
-    }
-    
-    // Check if beat is already in cart
-    const beatInCart = cart.some(item => item._id === beat._id);
-    
-    if (beatInCart) {
-      alert(`"${beat.title}" is already in your cart`);
+    // Check if user is logged in
+    const isLoggedIn = localStorage.getItem('token');
+    if (!isLoggedIn) {
+      alert("Please log in to add items to cart");
+      navigate("/login");
       return;
     }
     
-    // Add beat to cart
-    cart.push(beat);
-    
-    // Save updated cart
-    localStorage.setItem('cart', JSON.stringify(cart));
-    
-    // Show feedback to user
-    alert(`${beat.title} added to cart!`);
+    openLicenseModal(beat, (beatWithLicense) => {
+      try {
+        // Get existing cart
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        
+        // Check if beat is already in cart with same license
+        const beatInCart = cart.some(item => 
+          item._id === beatWithLicense._id && 
+          item.selectedLicense === beatWithLicense.selectedLicense
+        );
+        
+        if (beatInCart) {
+          alert(`"${beatWithLicense.title}" with ${beatWithLicense.licenseName} is already in your cart`);
+          return;
+        }
+        
+        // Add beat to cart
+        cart.push(beatWithLicense);
+        localStorage.setItem('cart', JSON.stringify(cart));
+        alert(`${beatWithLicense.title} with ${beatWithLicense.licenseName} added to cart!`);
+      } catch (error) {
+        console.error("Error adding to cart:", error);
+        alert("Error adding to cart. Please try again.");
+      }
+    });
   };
 
   // Handle favorite

@@ -15,7 +15,7 @@ const OrderSchema = new mongoose.Schema({
     license: {
       type: String,
       required: true,
-      enum: ['Basic', 'Premium', 'Exclusive']
+      enum: ['basic', 'premium', 'exclusive', 'Basic', 'Premium', 'Exclusive']
     },
     price: {
       type: Number,

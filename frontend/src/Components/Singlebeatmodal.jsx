@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLicense } from '../context/LicenseContext';
 import styles from '../css/SingleBeatModal.module.css';
 import { 
   FaPlay, 
@@ -16,6 +17,7 @@ import {
   FaMinus,
   FaCheck
 } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 
 const SingleBeatModal = ({ 
   beat,
@@ -34,6 +36,8 @@ const SingleBeatModal = ({
   const [selectedLicense, setSelectedLicense] = useState('basic');
   const [audioContext, setAudioContext] = useState(null);
   const [audioSource, setAudioSource] = useState(null);
+  const navigate = useNavigate();
+  const { openLicenseModal } = useLicense();
   
   // Initialize audio context for transposition
   useEffect(() => {
@@ -75,19 +79,48 @@ const SingleBeatModal = ({
     console.log(`Transposed to ${semitones} semitones`);
   };
   
-  // Select license and add to cart
+  // Handle license selection
   const handleSelectLicense = (licenseType) => {
     setSelectedLicense(licenseType);
     
-    // Create a beat object with the selected license
-    const beatWithLicense = {
-      ...beat,
-      licenseType: licenseType,
-      price: licenseInfo[licenseType].price
-    };
+    // Check if user is logged in
+    const isLoggedIn = localStorage.getItem('token');
+    if (!isLoggedIn) {
+      alert("Please log in to add items to cart");
+      navigate("/login");
+      return;
+    }
+
+    // Get license details
+    const license = licenseInfo[licenseType];
     
-    // Add to cart using the passed function
-    onAddToCart(beatWithLicense);
+    // Use context to handle license selection
+    openLicenseModal(beat, (beatWithLicense) => {
+      try {
+        // Get existing cart
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        
+        // Check if already in cart with same license
+        const isInCart = cart.some(item => 
+          item._id === beatWithLicense._id &&
+          item.selectedLicense === beatWithLicense.selectedLicense
+        );
+
+        if (isInCart) {
+          alert(`"${beatWithLicense.title}" with ${beatWithLicense.licenseName} is already in your cart`);
+          return;
+        }
+        
+        // Add to cart
+        cart.push(beatWithLicense);
+        localStorage.setItem('cart', JSON.stringify(cart));
+        alert(`${beatWithLicense.title} with ${beatWithLicense.licenseName} added to cart!`);
+        onClose(); // Close the single beat modal after adding to cart
+      } catch (error) {
+        console.error("Error adding to cart:", error);
+        alert("Error adding to cart. Please try again.");
+      }
+    });
   };
   
   // Format date
@@ -128,6 +161,43 @@ const SingleBeatModal = ({
         'Beat removed from store'
       ]
     }
+  };
+  
+  // Handle add to cart with global license modal
+  const handleAddToCartWithLicense = () => {
+    // Check if user is logged in
+    const isLoggedIn = localStorage.getItem('token');
+    if (!isLoggedIn) {
+      alert("Please log in to add items to cart");
+      navigate("/login");
+      return;
+    }
+
+    openLicenseModal(beat, (beatWithLicense) => {
+      try {
+        // Check if already in cart
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const isInCart = cart.some(item => 
+          item._id === beatWithLicense._id &&
+          item.selectedLicense === beatWithLicense.selectedLicense
+        );
+
+        if (isInCart) {
+          alert(`"${beatWithLicense.title}" with ${beatWithLicense.licenseName} is already in your cart`);
+          return;
+        }
+
+        // Add to cart
+        cart.push(beatWithLicense);
+        localStorage.setItem('cart', JSON.stringify(cart));
+        
+        alert(`${beatWithLicense.title} with ${beatWithLicense.licenseName} added to cart!`);
+        onClose(); // Close the single beat modal
+      } catch (error) {
+        console.error("Error adding to cart:", error);
+        alert("Error adding to cart. Please try again.");
+      }
+    });
   };
   
   return (
@@ -186,7 +256,7 @@ const SingleBeatModal = ({
             <div className={styles.actionButtons}>
               <button 
                 className={`${styles.cartButton} ${isInCart ? styles.inCart : ''}`}
-                onClick={() => onAddToCart(beat)}
+                onClick={handleAddToCartWithLicense}
                 disabled={isInCart}
               >
                 <FaCartPlus /> {isInCart ? 'In Cart' : 'Add to Cart'}
@@ -264,7 +334,7 @@ const SingleBeatModal = ({
           </div>
         </div>
         
-        {/* License selection */}
+        {/* License info section - just for display */}
         <div className={styles.licenseSection}>
           <h3 className={styles.licenseHeader}>
             Available Licenses
@@ -279,14 +349,6 @@ const SingleBeatModal = ({
           <div className={styles.licenseOptions}>
             {Object.entries(licenseInfo).map(([key, license]) => (
               <div key={key} className={`${styles.licenseOption} ${selectedLicense === key ? styles.selectedLicense : ''}`}>
-                {/* License select button at the top */}
-                <button 
-                  className={`${styles.licenseButton} ${selectedLicense === key ? styles.selectedButton : ''}`}
-                  onClick={() => handleSelectLicense(key)}
-                >
-                  {selectedLicense === key ? <><FaCheck /> Selected</> : 'Select'}
-                </button>
-                
                 <div className={styles.licenseTop}>
                   <h4 className={styles.licenseName}>{license.name}</h4>
                   <span className={styles.licensePrice}>${license.price.toFixed(2)}</span>

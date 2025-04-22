@@ -266,7 +266,7 @@ router.post('/', authenticateUser, upload.fields([
       key: req.body.key || null,
       tags: tags,
       price: parseFloat(req.body.price),
-      licenseType: licenseType,
+      licenseType: licenseTypes,
       description: req.body.description || '',
       // Store Cloudinary URLs
       audioFile: audioResult.secure_url,
