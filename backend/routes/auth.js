@@ -8,6 +8,7 @@ import User from '../models/user.js';
 import crypto from 'crypto';
 import { sendOTPEmail } from '../utils/emailService.js';
 import { sendWelcomeEmail } from '../utils/emailService.js';
+import { deleteFromCloudinary } from '../utils/cloudinaryConfig.js';
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret_here";
@@ -266,7 +267,7 @@ router.get("/test", (req, res) => {
 
 
 
-// In backend/routes/auth.js - Google Login route
+// Google Login route
 router.post("/google-login", async (req, res) => {
   try {
     console.log("Google login request received:", req.body);
@@ -400,7 +401,7 @@ router.post("/verify-otp", async (req, res) => {
     await user.save();
 
     // Send welcome email
-    
+
     await sendWelcomeEmail(user.email, user.name);
 
 
@@ -470,5 +471,95 @@ router.post("/resend-otp", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+// Account deletion route
+router.post("/delete-account", authenticateUser, async (req, res) => {
+  try {
+    const { password } = req.body;
 
+    // Verify that the password is correct
+    if (!password) {
+      return res.status(400).json({ message: "Password is required for account deletion" });
+    }
+
+    // Get user from database
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Compare the provided password with the stored hash
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Incorrect password" });
+    }
+
+    // If user is a seller, handle their content
+    if (user.role === "seller") {
+      // Get all beats uploaded by this user
+      const userBeats = await Beat.find({ producer: user._id });
+
+      // Delete all the beat files from Cloudinary
+      for (const beat of userBeats) {
+        try {
+          if (beat.audioPublicId) {
+            // Delete audio file (use 'video' resource type for audio files in Cloudinary)
+            await deleteFromCloudinary(beat.audioPublicId, 'video');
+          }
+
+          if (beat.imagePublicId) {
+            // Delete image file
+            await deleteFromCloudinary(beat.imagePublicId, 'image');
+          }
+        } catch (deleteError) {
+          console.error(`Error deleting files for beat ${beat._id}:`, deleteError);
+          // Continue with other deletions even if one fails
+        }
+      }
+
+      // Delete all beats from database
+      await Beat.deleteMany({ producer: user._id });
+    }
+
+    // Delete user's profile picture if they have one
+    if (user.avatarPublicId) {
+      try {
+        await deleteFromCloudinary(user.avatarPublicId, 'image');
+      } catch (avatarError) {
+        console.error("Error deleting avatar:", avatarError);
+      }
+    }
+
+    // Delete profile document if it exists
+    await Profile.findOneAndDelete({ user: user._id });
+
+    // Delete any orders related to the user
+    await Order.deleteMany({ user: user._id });
+
+    // Finally, delete the user account
+    await User.findByIdAndDelete(user._id);
+
+    res.json({ message: "Account deleted successfully" });
+  } catch (error) {
+    console.error("Account deletion error:", error);
+    res.status(500).json({ message: "Server error during account deletion" });
+  }
+});
+
+    // In backend/routes/auth.js
+router.delete("/delete-account", authenticateUser, async (req, res) => {
+  try {
+    // Get the user ID from the authenticated request
+    const userId = req.user.id;
+    
+    // Delete the user from the database
+    await User.findByIdAndDelete(userId);
+    
+    // You might also want to delete related data like profiles, beats, etc.
+    
+    res.json({ message: "Account deleted successfully" });
+  } catch (error) {
+    console.error("Account deletion error:", error);
+    res.status(500).json({ message: "Failed to delete account" });
+  }
+});
 export { router, authenticateUser };

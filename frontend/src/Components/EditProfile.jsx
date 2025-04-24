@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios"; // Make sure to import axios
+import axios from "axios";
 import API from "../api/api";
 import styles from "../css/EditProfile.module.css";
-import { FaSave, FaUserCircle, FaUpload } from "react-icons/fa";
+import { FaSave, FaUserCircle, FaUpload, FaTrash, FaExclamationTriangle } from "react-icons/fa";
 import NavbarBeatExplore from '../Components/NavbarBeatExplore';
 
 const EditProfile = () => {
@@ -16,16 +16,12 @@ const EditProfile = () => {
     email: "",
     phonenumber: "",
     bio: "",
-    socialLinks: {
-      instagram: "",
-      twitter: "",
-      soundcloud: "",
-      youtube: ""
-    },
   });
   const [avatar, setAvatar] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // Fetch user profile data when component mounts
   useEffect(() => {
@@ -51,12 +47,6 @@ const EditProfile = () => {
           email: response.data.email || "",
           phonenumber: response.data.phonenumber || "",
           bio: response.data.bio || "",
-          socialLinks: {
-            instagram: response.data.socialLinks?.instagram || "",
-            twitter: response.data.socialLinks?.twitter || "",
-            soundcloud: response.data.socialLinks?.soundcloud || "",
-            youtube: response.data.socialLinks?.youtube || ""
-          },
         });
 
         // If user has an avatar, set the preview
@@ -86,23 +76,11 @@ const EditProfile = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     
-    // Handle nested social links
-    if (name.startsWith("social.")) {
-      const socialNetwork = name.split(".")[1];
-      setUserProfile({
-        ...userProfile,
-        socialLinks: {
-          ...userProfile.socialLinks,
-          [socialNetwork]: value
-        }
-      });
-    } else {
-      // Handle regular fields
-      setUserProfile({
-        ...userProfile,
-        [name]: value,
-      });
-    }
+    // Handle regular fields
+    setUserProfile({
+      ...userProfile,
+      [name]: value,
+    });
   };
 
   // Handle avatar file selection
@@ -156,11 +134,6 @@ const EditProfile = () => {
       formData.append("phonenumber", userProfile.phonenumber);
       formData.append("bio", userProfile.bio);
       
-      // Add social links
-      Object.entries(userProfile.socialLinks).forEach(([key, value]) => {
-        formData.append(`socialLinks[${key}]`, value);
-      });
-      
       // Add avatar if a new one was selected
       if (avatar) {
         // Explicitly add as File object with filename
@@ -199,9 +172,6 @@ const EditProfile = () => {
         userData.username = userProfile.username;
         userData.avatar = response.data.user.avatar; // <-- This is crucial for the dashboard!
         localStorage.setItem("user", JSON.stringify(userData));
-        
-        // Update any global state if you have one (for example, if using Context API)
-        // userContext.updateUser({ ...userData });
       }
       
     } catch (error) {
@@ -212,186 +182,222 @@ const EditProfile = () => {
     }
   };
 
+  // Open delete confirmation modal
+  const openDeleteModal = () => {
+    setShowDeleteModal(true);
+  };
+
+  // Close delete confirmation modal
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false);
+  };
+
+  // Handle account deletion
+  const handleDeleteAccount = async () => {
+    try {
+      setDeleteLoading(true);
+      
+      const token = localStorage.getItem("token");
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+      
+      // Call the delete account endpoint
+      const apiBaseUrl = import.meta.env.VITE_APP_BACKEND_URL || "http://localhost:8080";
+      await axios.delete(
+        `${apiBaseUrl}/api/auth/delete-account`, 
+        {
+          headers: { 
+            Authorization: `Bearer ${token}`
+          },
+        }
+      );
+
+      // Show success message
+      alert("Your account has been successfully deleted.");
+      
+      // Clear local storage
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      
+      // Redirect to homepage
+      navigate("/");
+      
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      setError(error.response?.data?.message || "Failed to delete account. Please try again.");
+      setDeleteLoading(false);
+      closeDeleteModal();
+    }
+  };
+
   if (loading && !userProfile.name) {
     return <div className={styles.loadingContainer}>Loading profile...</div>;
   }
   
   return (
-    
-    <div className={styles.profileContainer}>
-      <h2 className={styles.profileHeading}>Edit Profile</h2>
-      
-      {error && <div className={styles.errorMessage}>{error}</div>}
-      {successMessage && <div className={styles.successMessage}>{successMessage}</div>}
-      
-      <form onSubmit={handleSubmit} className={styles.profileForm}>
-        <div className={styles.avatarSection}>
-          <div className={styles.avatarContainer}>
-            {avatarPreview ? (
-              <img 
-                src={avatarPreview} 
-                alt="Profile" 
-                className={styles.avatarImage} 
+    <>
+      <NavbarBeatExplore />
+      <div className={styles.profileContainer}>
+        <h2 className={styles.profileHeading}>Edit Profile</h2>
+        
+        {error && <div className={styles.errorMessage}>{error}</div>}
+        {successMessage && <div className={styles.successMessage}>{successMessage}</div>}
+        
+        <form onSubmit={handleSubmit} className={styles.profileForm}>
+          <div className={styles.avatarSection}>
+            <div className={styles.avatarContainer}>
+              {avatarPreview ? (
+                <img 
+                  src={avatarPreview} 
+                  alt="Profile" 
+                  className={styles.avatarImage} 
+                />
+              ) : (
+                <FaUserCircle className={styles.avatarPlaceholder} />
+              )}
+              
+              <label htmlFor="avatar" className={styles.avatarUploadButton}>
+                <FaUpload /> Change Photo
+              </label>
+              <input
+                type="file"
+                id="avatar"
+                accept="image/*"
+                onChange={handleAvatarChange}
+                className={styles.fileInput}
               />
-            ) : (
-              <FaUserCircle className={styles.avatarPlaceholder} />
-            )}
+            </div>
+            <p className={styles.avatarHelp}>Upload a profile picture (max 2MB)</p>
+          </div>
+          
+          <div className={styles.formGrid}>
+            <div className={styles.formGroup}>
+              <label htmlFor="name">Full Name</label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                value={userProfile.name}
+                onChange={handleInputChange}
+                placeholder="Your full name"
+                required
+              />
+            </div>
             
-            <label htmlFor="avatar" className={styles.avatarUploadButton}>
-              <FaUpload /> Change Photo
-            </label>
-            <input
-              type="file"
-              id="avatar"
-              accept="image/*"
-              onChange={handleAvatarChange}
-              className={styles.fileInput}
-            />
-          </div>
-          <p className={styles.avatarHelp}>Upload a profile picture (max 2MB)</p>
-        </div>
-        
-        {/* Rest of the form remains the same */}
-        <div className={styles.formGrid}>
-          <div className={styles.formGroup}>
-            <label htmlFor="name">Full Name</label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={userProfile.name}
-              onChange={handleInputChange}
-              placeholder="Your full name"
-              required
-            />
-          </div>
-          
-          <div className={styles.formGroup}>
-            <label htmlFor="username">Username</label>
-            <input
-              type="text"
-              id="username"
-              name="username"
-              value={userProfile.username}
-              onChange={handleInputChange}
-              placeholder="Your username"
-              required
-            />
+            <div className={styles.formGroup}>
+              <label htmlFor="username">Username</label>
+              <input
+                type="text"
+                id="username"
+                name="username"
+                value={userProfile.username}
+                onChange={handleInputChange}
+                placeholder="Your username"
+                required
+              />
+            </div>
+            
+            <div className={styles.formGroup}>
+              <label htmlFor="email">Email</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={userProfile.email}
+                onChange={handleInputChange}
+                placeholder="Your email"
+                disabled // Email should not be editable
+              />
+              <p className={styles.fieldHelp}>Email cannot be changed</p>
+            </div>
+            
+            <div className={styles.formGroup}>
+              <label htmlFor="phonenumber">Phone Number</label>
+              <input
+                type="text"
+                id="phonenumber"
+                name="phonenumber"
+                value={userProfile.phonenumber}
+                onChange={handleInputChange}
+                placeholder="Your phone number"
+              />
+            </div>
           </div>
           
           <div className={styles.formGroup}>
-            <label htmlFor="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={userProfile.email}
+            <label htmlFor="bio">Bio</label>
+            <textarea
+              id="bio"
+              name="bio"
+              value={userProfile.bio}
               onChange={handleInputChange}
-              placeholder="Your email"
-              disabled // Email should not be editable
-            />
-            <p className={styles.fieldHelp}>Email cannot be changed</p>
+              placeholder="Tell us a bit about yourself"
+              rows="4"
+            ></textarea>
           </div>
           
-          <div className={styles.formGroup}>
-            <label htmlFor="phonenumber">Phone Number</label>
-            <input
-              type="text"
-              id="phonenumber"
-              name="phonenumber"
-              value={userProfile.phonenumber}
-              onChange={handleInputChange}
-              placeholder="Your phone number"
-            />
+          <div className={styles.formActions}>
+            <button 
+              type="submit" 
+              className={styles.saveButton}
+              disabled={loading}
+            >
+              {loading ? "Saving..." : (
+                <>
+                  <FaSave /> Save Changes
+                </>
+              )}
+            </button>
+            
+            {/* Delete Account Button */}
+            <button 
+              type="button" 
+              className={styles.deleteButton}
+              onClick={openDeleteModal}
+              disabled={loading}
+            >
+              <FaTrash /> Delete Account
+            </button>
           </div>
-        </div>
-        
-        <div className={styles.formGroup}>
-          <label htmlFor="bio">Bio</label>
-          <textarea
-            id="bio"
-            name="bio"
-            value={userProfile.bio}
-            onChange={handleInputChange}
-            placeholder="Tell us a bit about yourself"
-            rows="4"
-          ></textarea>
-        </div>
-        
-        <h3 className={styles.sectionHeading}>Social Media Links</h3>
-        <div className={styles.formGrid}>
-          <div className={styles.formGroup}>
-            <label htmlFor="instagram">
-              <span className={styles.socialIcon}>📸</span> Instagram
-            </label>
-            <input
-              type="text"
-              id="instagram"
-              name="social.instagram"
-              value={userProfile.socialLinks.instagram}
-              onChange={handleInputChange}
-              placeholder="Your Instagram handle"
-            />
-          </div>
-          
-          <div className={styles.formGroup}>
-            <label htmlFor="twitter">
-              <span className={styles.socialIcon}>🐦</span> Twitter
-            </label>
-            <input
-              type="text"
-              id="twitter"
-              name="social.twitter"
-              value={userProfile.socialLinks.twitter}
-              onChange={handleInputChange}
-              placeholder="Your Twitter handle"
-            />
-          </div>
-          
-          <div className={styles.formGroup}>
-            <label htmlFor="soundcloud">
-              <span className={styles.socialIcon}>🎵</span> SoundCloud
-            </label>
-            <input
-              type="text"
-              id="soundcloud"
-              name="social.soundcloud"
-              value={userProfile.socialLinks.soundcloud}
-              onChange={handleInputChange}
-              placeholder="Your SoundCloud profile"
-            />
-          </div>
-          
-          <div className={styles.formGroup}>
-            <label htmlFor="youtube">
-              <span className={styles.socialIcon}>📺</span> YouTube
-            </label>
-            <input
-              type="text"
-              id="youtube"
-              name="social.youtube"
-              value={userProfile.socialLinks.youtube}
-              onChange={handleInputChange}
-              placeholder="Your YouTube channel"
-            />
+        </form>
+      </div>
+
+      {/* Delete Account Confirmation Modal */}
+      {showDeleteModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalHeader}>
+              <FaExclamationTriangle className={styles.warningIcon} />
+              <h3>Delete Your Account?</h3>
+            </div>
+            
+            <div className={styles.modalBody}>
+              <p>Are you sure you want to delete your account? This action cannot be undone.</p>
+              <p>All your data, including your profile, uploads, and purchase history will be permanently removed.</p>
+            </div>
+            
+            <div className={styles.modalFooter}>
+              <button 
+                className={styles.cancelButton}
+                onClick={closeDeleteModal}
+                disabled={deleteLoading}
+              >
+                Cancel
+              </button>
+              <button 
+                className={styles.confirmDeleteButton}
+                onClick={handleDeleteAccount}
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? "Deleting..." : "Yes, Delete My Account"}
+              </button>
+            </div>
           </div>
         </div>
-        
-        <div className={styles.formActions}>
-          <button 
-            type="submit" 
-            className={styles.saveButton}
-            disabled={loading}
-          >
-            {loading ? "Saving..." : (
-              <>
-                <FaSave /> Save Changes
-              </>
-            )}
-          </button>
-        </div>
-      </form>
-    </div>
+      )}
+    </>
   );
 };
 
