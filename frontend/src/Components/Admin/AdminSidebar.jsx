@@ -35,7 +35,7 @@ const AdminSidebar = ({ activeSection, setActiveSection }) => {
     <div className={styles.sidebar}>
       <div className={styles.logoContainer}>
         <img src={Logo} alt="Dhuun Logo" onClick={() => navigate("/")} />
-        <h3>Admin Panel</h3>
+        {/* <h3>Admin Panel</h3> */}
       </div>
 
       <nav className={styles.navigation}>

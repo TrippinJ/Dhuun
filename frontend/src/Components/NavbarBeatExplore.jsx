@@ -117,12 +117,52 @@ const NavbarBeatExplore = () => {
     navigate("/login");
   };
 
+
+  const [userRole, setUserRole] = useState(null);
+
+// Update the useEffect where you check if user is logged in
+useEffect(() => {
+  const token = localStorage.getItem("token");
+  const user = localStorage.getItem("user");
+  
+  if (token) {
+    setIsLoggedIn(true);
+    
+    // Try to get user name, avatar and role from localStorage
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        setUserName(userData.fullname || userData.name || "User");
+        setUserRole(userData.role || "buyer"); // Set default role as buyer
+        if (userData.avatar) {
+          setUserAvatar(userData.avatar);
+        }
+      } catch (error) {
+        console.error("Error parsing user data", error);
+      }
+    }
+  } else {
+    setIsLoggedIn(false);
+  }
+}, []);
+
+// Updated function to handle dashboard navigation based on role
+const navigateToDashboard = () => {
+  if (userRole === "admin") {
+    navigate("/admin/dashboard");
+  } else if (userRole === "seller") {
+    navigate("/dashboard");
+  } else {
+    // For buyers or unspecified roles
+    navigate("/dashboard/purchases");
+  }
+};
   // User menu items
   const userMenuItems = [
     {
       text: "Dashboard",
       icon: <FaCog className={styles.dropdownIcon} />,
-      onClick: () => navigate("/dashboard")
+      onClick:navigateToDashboard
     },
     {
       text: "Upgrade Plan",

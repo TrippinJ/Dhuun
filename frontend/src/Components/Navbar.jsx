@@ -50,7 +50,7 @@ const Navbar = () => {
   useEffect(() => {
     const token = localStorage.getItem("token");
     const user = localStorage.getItem("user");
-    
+
     if (token && user) {
       setIsLoggedIn(true);
       try {
@@ -75,15 +75,15 @@ const Navbar = () => {
         setCartCount(0);
       }
     };
-    
+
     updateCartCount();
-    
+
     // Add event listener for storage changes
     window.addEventListener("storage", updateCartCount);
-    
+
     // Set an interval to check periodically
     const interval = setInterval(updateCartCount, 2000);
-    
+
     return () => {
       window.removeEventListener("storage", updateCartCount);
       clearInterval(interval);
@@ -101,12 +101,12 @@ const Navbar = () => {
         setWishlistCount(0);
       }
     };
-    
+
     updateWishlistCount();
-    
+
     // Add event listener for storage changes
     window.addEventListener("storage", updateWishlistCount);
-    
+
     return () => {
       window.removeEventListener("storage", updateWishlistCount);
     };
@@ -132,20 +132,59 @@ const Navbar = () => {
     navigate("/");
   };
 
+  const [userRole, setUserRole] = useState(null);
+
+  // Update the useEffect where you check if user is logged in
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const user = localStorage.getItem("user");
+
+    if (token) {
+      setIsLoggedIn(true);
+
+      // Try to get user name, avatar and role from localStorage
+      if (user) {
+        try {
+          const userData = JSON.parse(user);
+          setUserName(userData.fullname || userData.name || "User");
+          setUserRole(userData.role || "buyer"); // Set default role as buyer
+          if (userData.avatar) {
+            setUserAvatar(userData.avatar);
+          }
+        } catch (error) {
+          console.error("Error parsing user data", error);
+        }
+      }
+    } else {
+      setIsLoggedIn(false);
+    }
+  }, []);
+
+  // Updated function to handle dashboard navigation based on role
+  const navigateToDashboard = () => {
+    if (userRole === "admin") {
+      navigate("/admin/dashboard");
+    } else if (userRole === "seller") {
+      navigate("/dashboard");
+    } else {
+      // For buyers or unspecified roles
+      navigate("/dashboard/purchases");
+    }
+  };
   // Menu items - used for both navbar and sidebar
   const menuItems = [
-    { 
-      text: "Buy Beats", 
+    {
+      text: "Buy Beats",
       route: "/BeatExplorePage",
       icon: <StoreIcon />
     },
-    { 
-      text: "Sell Beats", 
+    {
+      text: "Sell Beats",
       route: "/login?role=seller",
       icon: <SellIcon />
     },
-    { 
-      text: "Creator Community", 
+    {
+      text: "Creator Community",
       route: "/creator-community",
       icon: <PeopleIcon />
     }
@@ -156,7 +195,7 @@ const Navbar = () => {
     {
       text: "Dashboard",
       icon: <FaCog />,
-      route: "/dashboard"
+      route: navigateToDashboard
     },
     {
       text: "Upgrade Plan",
@@ -173,7 +212,7 @@ const Navbar = () => {
       icon: <DownloadIcon />,
       route: "/dashboard"
     },
-    
+
     {
       text: "Logout",
       icon: <FaSignOutAlt />,
@@ -185,9 +224,9 @@ const Navbar = () => {
     <nav className="navbar">
       {/* Logo */}
       <div className="nav-logo-container">
-        <img 
-          src={Logo} 
-          alt="Dhuun Logo" 
+        <img
+          src={Logo}
+          alt="Dhuun Logo"
           onClick={() => navigate("/")}
           style={{ cursor: "pointer", width: "100px", height: "auto" }}
         />
@@ -196,7 +235,7 @@ const Navbar = () => {
       {/* Desktop Links */}
       <div className="navbar-links-container">
         {menuItems.map((item, index) => (
-          <a 
+          <a
             key={index}
             href="#"
             onClick={(e) => {
@@ -211,7 +250,7 @@ const Navbar = () => {
         {isLoggedIn ? (
           <>
             {/* Wishlist Icon */}
-            <a 
+            <a
               href="#"
               onClick={(e) => {
                 e.preventDefault();
@@ -225,7 +264,7 @@ const Navbar = () => {
             </a>
 
             {/* Cart Icon */}
-            <a 
+            <a
               href="#"
               onClick={(e) => {
                 e.preventDefault();
@@ -240,14 +279,14 @@ const Navbar = () => {
 
             {/* User Profile Dropdown */}
             <div className="profile-dropdown" ref={dropdownRef}>
-              <div 
+              <div
                 className="profile-trigger"
                 onClick={() => setShowDropdown(!showDropdown)}
               >
                 {userInfo?.avatar ? (
-                  <img 
-                    src={userInfo.avatar} 
-                    alt={userInfo.name || "User"} 
+                  <img
+                    src={userInfo.avatar}
+                    alt={userInfo.name || "User"}
                     className="avatar-img"
                   />
                 ) : (
@@ -259,8 +298,8 @@ const Navbar = () => {
               {showDropdown && (
                 <div className="dropdown-menu">
                   {userMenuItems.map((item, index) => (
-                    <div 
-                      key={index} 
+                    <div
+                      key={index}
                       className="dropdown-item"
                       onClick={(e) => {
                         e.preventDefault();
@@ -282,7 +321,7 @@ const Navbar = () => {
           </>
         ) : (
           <>
-            <a 
+            <a
               href="#"
               onClick={(e) => {
                 e.preventDefault();
@@ -334,8 +373,8 @@ const Navbar = () => {
                 <StyledListItemIcon>
                   <HomeIcon />
                 </StyledListItemIcon>
-                <ListItemText 
-                  primary="Home" 
+                <ListItemText
+                  primary="Home"
                   primaryTypographyProps={{
                     style: {
                       fontWeight: 500,
@@ -346,7 +385,7 @@ const Navbar = () => {
                 />
               </StyledListItemButton>
             </ListItem>
-            
+
             {/* All regular menu items */}
             {menuItems.map((item, index) => (
               <ListItem key={index} disablePadding>
@@ -359,8 +398,8 @@ const Navbar = () => {
                   <StyledListItemIcon>
                     {item.icon}
                   </StyledListItemIcon>
-                  <ListItemText 
-                    primary={item.text} 
+                  <ListItemText
+                    primary={item.text}
                     primaryTypographyProps={{
                       style: {
                         fontWeight: 500,
@@ -384,8 +423,8 @@ const Navbar = () => {
                 <StyledListItemIcon>
                   <FavoriteIcon />
                 </StyledListItemIcon>
-                <ListItemText 
-                  primary="Wishlist" 
+                <ListItemText
+                  primary="Wishlist"
                   primaryTypographyProps={{
                     style: {
                       fontWeight: 500,
@@ -408,8 +447,8 @@ const Navbar = () => {
                 <StyledListItemIcon>
                   <ShoppingCartRoundedIcon />
                 </StyledListItemIcon>
-                <ListItemText 
-                  primary="Cart" 
+                <ListItemText
+                  primary="Cart"
                   primaryTypographyProps={{
                     style: {
                       fontWeight: 500,
@@ -420,7 +459,7 @@ const Navbar = () => {
                 />
               </StyledListItemButton>
             </ListItem>
-            
+
             {/* Conditionally add user menu items if logged in */}
             {isLoggedIn ? (
               userMenuItems.map((item, index) => (
@@ -438,8 +477,8 @@ const Navbar = () => {
                     <StyledListItemIcon>
                       {item.icon}
                     </StyledListItemIcon>
-                    <ListItemText 
-                      primary={item.text} 
+                    <ListItemText
+                      primary={item.text}
                       primaryTypographyProps={{
                         style: {
                           fontWeight: 500,
@@ -462,8 +501,8 @@ const Navbar = () => {
                   <StyledListItemIcon>
                     <LoginIcon />
                   </StyledListItemIcon>
-                  <ListItemText 
-                    primary="Login" 
+                  <ListItemText
+                    primary="Login"
                     primaryTypographyProps={{
                       style: {
                         fontWeight: 500,
@@ -475,7 +514,7 @@ const Navbar = () => {
                 </StyledListItemButton>
               </ListItem>
             )}
-            
+
             {/* Add "Start Your Journey" button if not logged in */}
             {!isLoggedIn && (
               <ListItem disablePadding>
@@ -494,8 +533,8 @@ const Navbar = () => {
                   <StyledListItemIcon>
                     <RocketLaunchIcon />
                   </StyledListItemIcon>
-                  <ListItemText 
-                    primary="Start Your Journey" 
+                  <ListItemText
+                    primary="Start Your Journey"
                     primaryTypographyProps={{
                       style: {
                         fontWeight: 600,
