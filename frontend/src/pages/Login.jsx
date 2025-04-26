@@ -104,9 +104,14 @@ const handleGoogleLogin = useGoogleLogin({
       const userRole = backendResponse.data.user.role?.toLowerCase() || "buyer";
       console.log("Existing user with role:", userRole);
 
-      if (userRole === "seller") {
+      if (userRole === "admin") {
+        console.log("Redirecting to Admin Dashboard");
+        navigate("/admin/dashboard");
+      } else if (userRole === "seller") {
+        console.log("Redirecting to Dashboard");
         navigate("/Dashboard");
       } else {
+        console.log("Redirecting to BeatExplorePage");
         navigate("/BeatExplorePage");
       }
     } catch (error) {
