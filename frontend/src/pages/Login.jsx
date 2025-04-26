@@ -43,7 +43,10 @@ const Login = () => {
       const userRole = response.data.user.role?.toLowerCase() || "buyer";
       console.log("Redirecting based on role:", userRole);
 
-      if (userRole === "seller") {
+      if (userRole === "admin") {
+        console.log("Redirecting to Admin Dashboard");
+        navigate("/admin/dashboard");
+      } else if (userRole === "seller") {
         console.log("Redirecting to Dashboard");
         navigate("/Dashboard");
       } else {

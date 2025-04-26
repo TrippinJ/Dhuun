@@ -1,10 +1,11 @@
-// frontend/src/Components/Admin/AdminBeats.jsx
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FaSearch, FaEdit, FaTrash, FaStar, FaRegStar, FaPlay, FaPause } from 'react-icons/fa';
 import API from '../../api/api';
-// import styles from '../../css/Admin/AdminBeats.module.css';
+import styles from '../../css/Admin/AdminBeats.module.css';
 
 const AdminBeats = () => {
+  const navigate = useNavigate();
   const [beats, setBeats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -30,9 +31,24 @@ const AdminBeats = () => {
   const fetchBeats = async () => {
     try {
       setLoading(true);
-      const response = await API.get(`/api/admin/beats?page=${currentPage}&genre=${genreFilter}`);
-      setBeats(response.data.beats);
-      setTotalPages(response.data.totalPages);
+      
+      // Build the request URL with filters
+      let endpoint = `/api/admin/beats?page=${currentPage}`;
+      
+      // Add genre filter if not 'all'
+      if (genreFilter !== 'all') {
+        endpoint += `&genre=${genreFilter}`;
+      }
+      
+      const response = await API.get(endpoint);
+      
+      if (response.data && response.data.beats) {
+        setBeats(response.data.beats);
+        setTotalPages(response.data.totalPages || 1);
+      } else {
+        throw new Error('Invalid response format');
+      }
+      
       setLoading(false);
     } catch (error) {
       console.error('Error fetching beats:', error);
@@ -41,9 +57,24 @@ const AdminBeats = () => {
     }
   };
 
-  const handleSearch = (e) => {
+  const handleSearch = async (e) => {
     e.preventDefault();
-    fetchBeats();
+    
+    try {
+      setLoading(true);
+      const response = await API.get(`/api/admin/beats/search?q=${searchTerm}`);
+      
+      if (response.data && response.data.beats) {
+        setBeats(response.data.beats);
+        setTotalPages(response.data.totalPages || 1);
+      }
+      
+      setLoading(false);
+    } catch (error) {
+      console.error('Error searching beats:', error);
+      setError('Failed to search beats');
+      setLoading(false);
+    }
   };
 
   const handleFilterChange = (e) => {
@@ -76,30 +107,39 @@ const AdminBeats = () => {
 
   const handleToggleFeatured = async (beatId, isFeatured) => {
     try {
-      await API.patch(`/api/admin/beats/${beatId}`, {
+      const response = await API.patch(`/api/admin/beats/${beatId}`, {
         isFeatured: !isFeatured
       });
+      
       // Update the beat in the current state
-      setBeats(beats.map(beat => 
-        beat._id === beatId ? {...beat, isFeatured: !beat.isFeatured} : beat
-      ));
+      if (response.data && response.data.success) {
+        setBeats(beats.map(beat => 
+          beat._id === beatId ? {...beat, isFeatured: !isFeatured} : beat
+        ));
+      }
     } catch (error) {
       console.error('Error toggling featured status:', error);
+      alert('Failed to update featured status. Please try again.');
     }
   };
 
   const handleDeleteBeat = async (beatId) => {
     if (window.confirm('Are you sure you want to delete this beat? This action cannot be undone.')) {
       try {
-        await API.delete(`/api/admin/beats/${beatId}`);
-        // Remove the beat from the current state
-        setBeats(beats.filter(beat => beat._id !== beatId));
+        const response = await API.delete(`/api/admin/beats/${beatId}`);
+        
+        if (response.data && response.data.success) {
+          // Remove the beat from the current state
+          setBeats(beats.filter(beat => beat._id !== beatId));
+        }
       } catch (error) {
         console.error('Error deleting beat:', error);
+        alert('Failed to delete beat. Please try again.');
       }
     }
   };
 
+  // Filter beats based on search term (client-side filtering as backup)
   const filteredBeats = searchTerm 
     ? beats.filter(beat => 
         beat.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -167,7 +207,12 @@ const AdminBeats = () => {
               <div className={styles.beatCell}>
                 <div className={styles.beatInfo}>
                   <div className={styles.beatImageContainer}>
-                    <img src={beat.coverImage} alt={beat.title} className={styles.beatImage} />
+                    <img 
+                      src={beat.coverImage} 
+                      alt={beat.title} 
+                      className={styles.beatImage}
+                      onError={(e) => {e.target.src = "/default-cover.jpg"}}
+                    />
                     <button 
                       className={styles.playButton}
                       onClick={() => handlePlayPreview(beat._id, beat.audioFile)}

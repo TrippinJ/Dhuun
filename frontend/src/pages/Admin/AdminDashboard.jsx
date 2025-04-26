@@ -1,8 +1,8 @@
-// frontend/src/pages/Admin/AdminDashboard.jsx
+// In frontend/src/pages/Admin/AdminDashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminSidebar from '../../Components/Admin/AdminSidebar';
-// import AdminHeader from '../../Components/Admin/AdminHeader';
+import AdminOverview from '../../Components/Admin/AdminOverview';
 import AdminUsers from '../../Components/Admin/AdminUsers';
 import AdminBeats from '../../Components/Admin/AdminBeats';
 import AdminSales from '../../Components/Admin/AdminSales';
@@ -68,7 +68,7 @@ const AdminDashboard = () => {
       case 'settings':
         return <AdminSettings />;
       default:
-        return <AdminAnalytics />;
+        return <AdminOverview />;
     }
   };
 
@@ -87,7 +87,12 @@ const AdminDashboard = () => {
         setActiveSection={setActiveSection} 
       />
       <div className={styles.mainContent}>
-        <AdminHeader user={user} />
+        <div className={styles.header}>
+          <h1>Admin Dashboard</h1>
+          <div className={styles.userInfo}>
+            <span>{user?.name}</span>
+          </div>
+        </div>
         <div className={styles.contentArea}>
           {renderContent()}
         </div>

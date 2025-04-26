@@ -19,14 +19,14 @@ const UserSchema = new mongoose.Schema({
   bio: { type: String, default: "" }, // User biography/description
 
   // Social media links
-  socialLinks: {
-    instagram: { type: String, default: "" },
-    twitter: { type: String, default: "" },
-    soundcloud: { type: String, default: "" },
-    youtube: { type: String, default: "" }
-  },
+  // socialLinks: {
+  //   instagram: { type: String, default: "" },
+  //   twitter: { type: String, default: "" },
+  //   soundcloud: { type: String, default: "" },
+  //   youtube: { type: String, default: "" }
+  // },
 
-  role: { type: String, required: true, default: 'buyer', enum: ["buyer", "seller"] },
+  role: { type: String, required: true, default: 'buyer', enum: ["buyer", "seller", "admin"] },
 
   // ✅ Subscription Details
   subscription: {

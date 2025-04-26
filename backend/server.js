@@ -17,6 +17,7 @@ import paymentRoutes from './routes/paymentRoutes.js';
 import { router as authRoutes } from './routes/auth.js';
 import beatRoutes from './routes/beatRoutes.js';
 import subscriptionRoutes from './routes/subscription.js';
+import adminRoutes from './routes/adminRoutes.js';
 
 // Get __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -83,7 +84,7 @@ app.get("/test", (req, res) => {
   });
 });
 
-// Register API Routes - THIS WAS MISSING
+// API Routes 
 app.use("/api/auth", authRoutes);
 app.use("/api/subscription", subscriptionRoutes);
 app.use('/api/beats', beatRoutes);
@@ -91,6 +92,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/producers', producerRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

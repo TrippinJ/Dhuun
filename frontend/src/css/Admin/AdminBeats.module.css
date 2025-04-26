@@ -1,0 +1,317 @@
+.beatsContainer {
+    padding: 20px;
+  }
+  
+  .beatsHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .beatsHeader h2 {
+    margin: 0;
+    font-size: 24px;
+    color: #333;
+  }
+  
+  .beatsControls {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .searchForm {
+    display: flex;
+    flex: 1;
+    max-width: 400px;
+  }
+  
+  .searchInput {
+    flex: 1;
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-right: none;
+    border-radius: 4px 0 0 4px;
+    font-size: 14px;
+  }
+  
+  .searchButton {
+    background-color: #7B2CBF;
+    color: white;
+    border: none;
+    border-radius: 0 4px 4px 0;
+    padding: 0 15px;
+    cursor: pointer;
+  }
+  
+  .filterSelect {
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    background-color: white;
+    min-width: 150px;
+  }
+  
+  .beatsTable {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+  }
+  
+  .tableHeader {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
+    padding: 15px;
+    background-color: #f5f5f7;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .tableRow {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
+    padding: 15px;
+    border-bottom: 1px solid #f1f1f1;
+    transition: background-color 0.3s;
+  }
+  
+  .tableRow:hover {
+    background-color: #f9f9f9;
+  }
+  
+  .tableRow:last-child {
+    border-bottom: none;
+  }
+  
+  .beatCell, .producerCell, .genreCell, .priceCell, .statsCell, .actionsCell {
+    display: flex;
+    align-items: center;
+  }
+  
+  .beatInfo {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  
+  .beatImageContainer {
+    position: relative;
+    width: 50px;
+    height: 50px;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  
+  .beatImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .playButton {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.6);
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  
+  .beatImageContainer:hover .playButton {
+    opacity: 1;
+  }
+  
+  .beatDetails {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .beatTitle {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 3px;
+  }
+  
+  .beatDate {
+    font-size: 12px;
+    color: #999;
+  }
+  
+  .genreTag {
+    background-color: #f1f1f1;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+  
+  .stat {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 5px;
+  }
+  
+  .statLabel {
+    font-size: 12px;
+    color: #999;
+  }
+  
+  .statValue {
+    font-weight: 600;
+    color: #333;
+  }
+  
+  .actionsCell {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+  
+  .actionButton {
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    background-color: #f1f1f1;
+    border: none;
+    color: #555;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .actionButton:hover {
+    background-color: #e0e0e0;
+  }
+  
+  .deleteButton:hover {
+    background-color: #fee2e2;
+    color: #b91c1c;
+  }
+  
+  .featuredStar {
+    color: #f59e0b;
+  }
+  
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    gap: 15px;
+  }
+  
+  .pageButton {
+    padding: 8px 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: white;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .pageButton:hover {
+    background-color: #f1f1f1;
+  }
+  
+  .pageButton:disabled {
+    color: #999;
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+  }
+  
+  .pageInfo {
+    font-size: 14px;
+    color: #555;
+  }
+  
+  .noBeats {
+    padding: 50px 20px;
+    text-align: center;
+    color: #666;
+  }
+  
+  .loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 300px;
+    font-size: 18px;
+    color: #7B2CBF;
+  }
+  
+  .loading:before {
+    content: "";
+    width: 24px;
+    height: 24px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #7B2CBF;
+    border-radius: 50%;
+    margin-right: 10px;
+    animation: spin 1s linear infinite;
+  }
+  
+  .error {
+    padding: 20px;
+    background-color: #FEE2E2;
+    color: #B91C1C;
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  @media (max-width: 992px) {
+    .tableHeader, .tableRow {
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+    }
+    
+    .statsCell {
+      display: none;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .tableHeader, .tableRow {
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+    }
+    
+    .genreCell {
+      display: none;
+    }
+    
+    .beatsControls {
+      flex-direction: column;
+    }
+    
+    .searchForm {
+      max-width: 100%;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .tableHeader, .tableRow {
+      grid-template-columns: 2fr 1fr 1fr;
+    }
+    
+    .priceCell {
+      display: none;
+    }
+  }

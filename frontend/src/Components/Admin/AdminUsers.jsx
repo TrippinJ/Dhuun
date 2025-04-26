@@ -1,8 +1,7 @@
-// frontend/src/Components/Admin/AdminUsers.jsx
 import React, { useState, useEffect } from 'react';
 import { FaEdit, FaBan, FaUserShield, FaSearch, FaUserPlus } from 'react-icons/fa';
 import API from '../../api/api';
-// import styles from '../../css/Admin/AdminUsers.module.css';
+import styles from '../../css/Admin/AdminUsers.module.css';
 
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);
@@ -22,9 +21,24 @@ const AdminUsers = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await API.get(`/api/admin/users?page=${currentPage}&filter=${filter}`);
-      setUsers(response.data.users);
-      setTotalPages(response.data.totalPages);
+      
+      // Create the API request
+      let endpoint = `/api/admin/users?page=${currentPage}`;
+      
+      // Add filter if not 'all'
+      if (filter !== 'all') {
+        endpoint += `&filter=${filter}`;
+      }
+      
+      const response = await API.get(endpoint);
+      
+      if (response.data && response.data.users) {
+        setUsers(response.data.users);
+        setTotalPages(response.data.totalPages || 1);
+      } else {
+        throw new Error('Invalid response format');
+      }
+      
       setLoading(false);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -33,9 +47,24 @@ const AdminUsers = () => {
     }
   };
 
-  const handleSearch = (e) => {
+  const handleSearch = async (e) => {
     e.preventDefault();
-    fetchUsers();
+    
+    try {
+      setLoading(true);
+      const response = await API.get(`/api/admin/users/search?q=${searchTerm}`);
+      
+      if (response.data && response.data.users) {
+        setUsers(response.data.users);
+        setTotalPages(response.data.totalPages || 1);
+      }
+      
+      setLoading(false);
+    } catch (error) {
+      console.error('Error searching users:', error);
+      setError('Failed to search users');
+      setLoading(false);
+    }
   };
 
   const handleFilterChange = (e) => {
@@ -45,32 +74,49 @@ const AdminUsers = () => {
 
   const handleEdit = (user) => {
     setSelectedUser(user);
-    // Open edit modal
+    // In a complete implementation, this would open a modal
+    // For now, just log the action
+    console.log('Edit user:', user);
   };
 
   const handleToggleBan = async (userId, isBanned) => {
     try {
-      await API.patch(`/api/admin/users/${userId}`, {
+      const response = await API.patch(`/api/admin/users/${userId}`, {
         isBanned: !isBanned
       });
-      fetchUsers();
+      
+      // Update the user in the list
+      if (response.data && response.data.success) {
+        setUsers(users.map(user => 
+          user._id === userId ? {...user, isBanned: !isBanned} : user
+        ));
+      }
     } catch (error) {
       console.error('Error banning/unbanning user:', error);
+      alert(`Failed to ${isBanned ? 'unban' : 'ban'} user. Please try again.`);
     }
   };
 
   const handleMakeAdmin = async (userId) => {
     try {
-      await API.patch(`/api/admin/users/${userId}`, {
+      const response = await API.patch(`/api/admin/users/${userId}`, {
         role: 'admin'
       });
-      fetchUsers();
+      
+      // Update the user in the list
+      if (response.data && response.data.success) {
+        setUsers(users.map(user => 
+          user._id === userId ? {...user, role: 'admin'} : user
+        ));
+      }
     } catch (error) {
       console.error('Error making user admin:', error);
+      alert('Failed to make user an admin. Please try again.');
     }
   };
 
-  const filteredUsers = searchTerm 
+  // Filter users based on search term (client-side filtering as backup)
+  const filteredUsers = searchTerm && filter === 'all' 
     ? users.filter(user => 
         user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -226,9 +272,6 @@ const AdminUsers = () => {
           Next
         </button>
       </div>
-
-      {/* Add User Modal would go here */}
-      {/* Edit User Modal would go here */}
     </div>
   );
 };
