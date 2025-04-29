@@ -27,6 +27,8 @@ import { AudioProvider } from "./context/AudioContext";
 import GlobalAudioPlayer from "./Components/GlobalAudioPlayer";
 import VerifyOTP from "./pages/VerifyOTP";
 import { LicenseProvider } from './context/LicenseContext';
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 function App() {
   return (
@@ -56,6 +58,8 @@ function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/chooserole" element={<ChooseRole />} />
               <Route path="/verify-otp" element={<VerifyOTP />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
 
               {/* Protected Routes */}
               <Route
@@ -113,7 +117,7 @@ function App() {
               <Route path="/BeatExplorePage" element={<BeatExplorePage />} />
               <Route path="/creator-community" element={<CreatorCommunity />} />
               <Route path="/favorites" element={<Favorites />} />
-              
+
               {/* Cart and Checkout Routes */}
               <Route path="/cart" element={<Cart />} />
               <Route

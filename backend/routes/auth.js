@@ -562,4 +562,97 @@ router.delete("/delete-account", authenticateUser, async (req, res) => {
     res.status(500).json({ message: "Failed to delete account" });
   }
 });
+
+// Add these routes to your auth.js file
+
+// Forgot Password Route
+router.post("/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    // Find user by email
+    const user = await User.findOne({ email });
+    if (!user) {
+      // For security reasons, don't reveal that the user doesn't exist
+      return res.status(200).json({ 
+        message: "If a user with that email exists, a password reset token has been sent." 
+      });
+    }
+
+    // Generate a reset token
+    const resetToken = crypto.randomBytes(20).toString('hex');
+    const resetTokenExpiry = Date.now() + 3600000; // 1 hour from now
+
+    // Save the reset token and expiry to the user
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = resetTokenExpiry;
+    await user.save();
+
+    // For development: Log or return the token
+    console.log(`Password Reset Token for ${email}: ${resetToken}`);
+    
+    // In development, we'll return the token in the response
+    // In production, you'd send an email instead
+    if (process.env.NODE_ENV === 'production') {
+      // TODO: Send actual email with reset link
+      return res.status(200).json({ 
+        message: "Password reset email sent successfully!" 
+      });
+    } else {
+      // For development only - return the token in the response
+      return res.status(200).json({
+        message: "Password reset token generated. In production, an email would be sent.",
+        devToken: resetToken,
+        // For local testing, include a link you could click
+        resetLink: `http://localhost:3000/reset-password?token=${resetToken}`
+      });
+    }
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Reset Password Route
+router.post("/reset-password", async (req, res) => {
+  try {
+    const { token, password } = req.body;
+
+    if (!token || !password) {
+      return res.status(400).json({ message: "Token and password are required" });
+    }
+
+    // Find user with the provided token that hasn't expired
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ 
+        message: "Password reset token is invalid or has expired" 
+      });
+    }
+
+    // Hash the new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Update the user's password and clear reset token fields
+    user.password = hashedPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    res.status(200).json({ message: "Password has been reset successfully" });
+  } catch (error) {
+    console.error("Reset password error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export { router, authenticateUser };

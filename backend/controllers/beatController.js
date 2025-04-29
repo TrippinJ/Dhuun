@@ -584,3 +584,4 @@ export const toggleFeaturedStatus = async (req, res) => {
     });
   }
 };
+

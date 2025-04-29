@@ -199,17 +199,22 @@ export const getBeats = async (req, res) => {
 export const updateBeat = async (req, res) => {
   try {
     const { id } = req.params;
-    const { isFeatured } = req.body;
+    const { isFeatured, isPublished } = req.body;
     
     // Make sure we have something to update
-    if (isFeatured === undefined) {
+    if (isFeatured === undefined && isPublished === undefined) {
       return res.status(400).json({ message: 'No update parameters provided' });
     }
     
+    // Build update object
+    const update = {};
+    if (isFeatured !== undefined) update.isFeatured = isFeatured;
+    if (isPublished !== undefined) update.isPublished = isPublished;
+
     // Update the beat
     const updatedBeat = await Beat.findByIdAndUpdate(
       id,
-      { isFeatured },
+      update,
       { new: true }
     ).populate('producer', 'name username');
     
@@ -498,3 +503,30 @@ export const updateSettings = async (req, res) => {
       res.status(500).json({ message: 'Failed to update settings' });
     }
   };
+
+  // Toggle featured status for a beat
+export const toggleFeaturedStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Find the beat
+    const beat = await Beat.findById(id);
+    
+    if (!beat) {
+      return res.status(404).json({ message: 'Beat not found' });
+    }
+    
+    // Toggle featured status
+    beat.isFeatured = !beat.isFeatured;
+    await beat.save();
+    
+    res.json({
+      success: true,
+      message: `Beat ${beat.isFeatured ? 'featured' : 'unfeatured'} successfully`,
+      isFeatured: beat.isFeatured
+    });
+  } catch (error) {
+    console.error('Error toggling featured status:', error);
+    res.status(500).json({ message: 'Failed to update featured status' });
+  }
+};

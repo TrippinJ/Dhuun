@@ -107,7 +107,7 @@ const AdminBeats = () => {
 
   const handleToggleFeatured = async (beatId, isFeatured) => {
     try {
-      const response = await API.patch(`/api/admin/beats/${beatId}`, {
+      const response = await API.patch(`/api/admin/beats/${beatId}/featured`, {
         isFeatured: !isFeatured
       });
       
@@ -116,6 +116,7 @@ const AdminBeats = () => {
         setBeats(beats.map(beat => 
           beat._id === beatId ? {...beat, isFeatured: !isFeatured} : beat
         ));
+        alert(`Beat ${!isFeatured ? 'added to' : 'removed from'} featured beats`);
       }
     } catch (error) {
       console.error('Error toggling featured status:', error);

@@ -172,7 +172,7 @@ router.get('/producer/beats', authenticateUser, async (req, res) => {
     res.status(500).json({ message: 'Server error while fetching beats' });
   }
 });
-
+router.get('/featured', beatController.getFeaturedBeats);
 // Get a single beat by ID (public route) - This must come AFTER specific routes like /trending
 router.get('/:id', async (req, res) => {
   try {

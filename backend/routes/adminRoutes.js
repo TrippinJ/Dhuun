@@ -36,4 +36,6 @@ router.get('/orders', adminController.getOrders);
 router.get('/settings', adminController.getSettings);
 router.put('/settings', adminController.updateSettings);
 
+router.patch('/beats/:id/featured', adminController.toggleFeaturedStatus);
+
 export default router;

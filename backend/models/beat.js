@@ -89,6 +89,10 @@ const BeatSchema = new mongoose.Schema({
     ref: 'Order',
     default: null
   },
+  isFeatured: {
+    type: Boolean,
+    default: false  
+  },
   // Track purchases
   purchases: {
     type: Number,

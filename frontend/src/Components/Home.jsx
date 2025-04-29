@@ -15,6 +15,7 @@ const Home = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioLoading, setAudioLoading] = useState(false);
   const audioRef = useRef(new Audio());
+  
 
   // Fetch featured beats for hero carousel
   useEffect(() => {

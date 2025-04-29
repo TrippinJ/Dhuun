@@ -45,6 +45,9 @@ const UserSchema = new mongoose.Schema({
     downloads: { type: Number, default: 0 }
   },
 
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Date },
+
   // Track when the profile was last updated
   lastUpdated: { type: Date, default: Date.now }
 }, { timestamps: true });
