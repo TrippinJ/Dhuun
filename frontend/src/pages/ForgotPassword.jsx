@@ -7,8 +7,7 @@ const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
-  const [resetToken, setResetToken] = useState(null); // Make sure this is declared
-  const [resetLink, setResetLink] = useState("");
+  const [resetToken, setResetToken] = useState(null);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -28,7 +27,6 @@ const ForgotPassword = () => {
       // In development mode, we'll get back the token directly
       if (response.data.devToken) {
         setResetToken(response.data.devToken);
-        setResetLink(response.data.resetLink || "");
       }
       
       setMessage({ 
@@ -53,15 +51,15 @@ const ForgotPassword = () => {
       </button>
       <div className={`${styles.formBox} ${styles.login}`}>
         <h2>Forgot Password</h2>
-        <p className={styles.forgotPasswordInfo}>
+        {/* <p className={styles.forgotPasswordInfo}>
           Enter your email address and we'll send you instructions to reset your password.
-        </p>
+        </p> */}
         
-        {message.text && (
-          <div className={message.type === "error" ? styles.errorMessage : styles.successMessage}>
-            {message.text}
-          </div>
-        )}
+        {/* {message.text && (
+        //   <div className={message.type === "error" ? styles.errorMessage : styles.successMessage}>
+        //     {message.text}
+        //   </div>
+        )} */}
         
         <form onSubmit={handleSubmit}>
           <div className={styles.inputBox}>
@@ -100,16 +98,14 @@ const ForgotPassword = () => {
         {resetToken && (
           <div className={styles.devNotice}>
             <h3>Development Mode</h3>
-            <p>In production, an email would be sent to the user.</p>
-            <p>For testing, use this token to reset your password:</p>
-            <code>{resetToken}</code>
             
-            {resetLink && (
-              <div>
-                <p>Or click this link:</p>
-                <a href={resetLink} className={styles.resetLink}>Reset Password Link</a>
-              </div>
-            )}
+            <button 
+              className={styles.btn}
+              onClick={() => window.open(`/reset-password?token=${resetToken}`, '_blank')}
+              style={{marginTop: '10px'}}
+            >
+              Open Reset Password Page
+            </button>
           </div>
         )}
       </div>
