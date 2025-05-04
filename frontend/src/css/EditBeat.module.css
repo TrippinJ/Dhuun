@@ -440,20 +440,7 @@
   margin-top: 1.5rem;
 }
 
-.cancelButton {
-  padding: 0.75rem 1.5rem;
-  background-color: #f0f0f0;
-  border: none;
-  border-radius: 4px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  flex: 1;
-}
 
-.cancelButton:hover {
-  background-color: #e0e0e0;
-}
 
 .confirmDeleteButton {
   padding: 0.75rem 1.5rem;
@@ -465,6 +452,30 @@
   cursor: pointer;
   transition: background-color 0.2s;
   flex: 1;
+}
+
+.cancelButton {
+  background-color: #3a3a3a;
+  color: #f0f0f0;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+}
+
+.cancelButton:hover {
+  background-color: #444;
+}
+
+.cancelButton:active {
+  background-color: #505050;
 }
 
 .confirmDeleteButton:hover {
@@ -504,9 +515,5 @@
     flex-direction: column;
   }
 
-  .cancelButton,
-  .saveButton {
-    width: 100%;
-    justify-content: center;
-  }
+  
 }

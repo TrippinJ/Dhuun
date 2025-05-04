@@ -107,16 +107,23 @@ const AdminBeats = () => {
 
   const handleToggleFeatured = async (beatId, isFeatured) => {
     try {
-      const response = await API.patch(`/api/admin/beats/${beatId}/featured`, {
-        isFeatured: !isFeatured
-      });
+      console.log(`Toggling featured status for beat ${beatId}. Currently featured: ${isFeatured}`);
       
-      // Update the beat in the current state
+      // Make the API call to toggle featured status
+      const response = await API.patch(`/api/admin/beats/${beatId}/featured`);
+      
+      console.log("API response:", response.data);
+      
       if (response.data && response.data.success) {
+        // Update the beat in the current state
         setBeats(beats.map(beat => 
           beat._id === beatId ? {...beat, isFeatured: !isFeatured} : beat
         ));
+        
+        // Show success message
         alert(`Beat ${!isFeatured ? 'added to' : 'removed from'} featured beats`);
+      } else {
+        throw new Error("API returned unsuccessful response");
       }
     } catch (error) {
       console.error('Error toggling featured status:', error);

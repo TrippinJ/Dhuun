@@ -15,21 +15,55 @@ const Home = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioLoading, setAudioLoading] = useState(false);
   const audioRef = useRef(new Audio());
-  
 
-  // Fetch featured beats for hero carousel
+
+  // In the useEffect for fetching hero beats
   useEffect(() => {
     const fetchHeroBeats = async () => {
       try {
-        // Try to get beats from API
+        console.log("Fetching featured beats for hero section...");
         const response = await API.get("/api/beats/featured");
-        let beats = [];
-        
-        if (response.data && response.data.data && response.data.data.length > 0) {
-          beats = response.data.data.slice(0, 5); // Get first 5 beats
+
+        console.log("Featured beats response:", response.data);
+
+        // Check if we have featured beats
+        if (response.data?.data && response.data.data.length > 0) {
+          const processedBeats = response.data.data.map(beat => ({
+            ...beat,
+            // Ensure required properties exist
+            _id: beat._id || beat.id || `temp-${Math.random()}`,
+            audioFile: beat.audioFile || beat.audioUrl || "",
+            coverImage: beat.coverImage || "https://via.placeholder.com/1200x600",
+            producer: beat.producer || { name: "Unknown Producer" }
+          }));
+
+          setHeroBeats(processedBeats);
+          console.log("Successfully set hero beats from API:", processedBeats);
         } else {
-          // Fallback data if API doesn't return anything
-          beats = [
+          console.log("No featured beats found in API response, using fallback data");
+
+          // Try to get trending beats as a fallback
+          try {
+            const trendingResponse = await API.get("/api/beats/trending");
+            if (trendingResponse.data?.data && trendingResponse.data.data.length > 0) {
+              const processedTrendingBeats = trendingResponse.data.data.slice(0, 5).map(beat => ({
+                ...beat,
+                _id: beat._id || beat.id || `temp-${Math.random()}`,
+                audioFile: beat.audioFile || beat.audioUrl || "",
+                coverImage: beat.coverImage || "https://via.placeholder.com/1200x600",
+                producer: beat.producer || { name: "Unknown Producer" }
+              }));
+
+              setHeroBeats(processedTrendingBeats);
+              console.log("Set hero beats from trending instead:", processedTrendingBeats);
+              return;
+            }
+          } catch (trendingError) {
+            console.error("Error fetching trending beats as fallback:", trendingError);
+          }
+
+          // If both featured and trending fail, use hardcoded fallback data
+          setHeroBeats([
             {
               _id: "sample1",
               title: "Summer Vibes",
@@ -40,69 +74,15 @@ const Home = () => {
               price: 19.99,
               plays: 1200
             },
-            {
-              _id: "sample2",
-              title: "Midnight Feels",
-              producer: { name: "Beat Master", verified: false },
-              genre: "Hip-Hop",
-              coverImage: "https://via.placeholder.com/1200x600",
-              audioFile: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-              price: 24.99,
-              plays: 820
-            },
-            {
-              _id: "sample3",
-              title: "Cloudy Dreams",
-              producer: { name: "Cloud Beatz", verified: true },
-              genre: "Lo-Fi",
-              coverImage: "https://via.placeholder.com/1200x600",
-              audioFile: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
-              price: 14.99,
-              plays: 650
-            }
-          ];
+            // ... other fallback beats
+          ]);
         }
-        
-        setHeroBeats(beats);
       } catch (error) {
         console.error("Error fetching hero beats:", error);
-        
-        // Set fallback data if API fails
-        setHeroBeats([
-          {
-            _id: "sample1",
-            title: "Summer Vibes",
-            producer: { name: "DJ Beats", verified: true },
-            genre: "Trap",
-            coverImage: "https://via.placeholder.com/1200x600",
-            audioFile: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-            price: 19.99,
-            plays: 1200
-          },
-          {
-            _id: "sample2",
-            title: "Midnight Feels",
-            producer: { name: "Beat Master", verified: false },
-            genre: "Hip-Hop",
-            coverImage: "https://via.placeholder.com/1200x600",
-            audioFile: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-            price: 24.99,
-            plays: 820
-          },
-          {
-            _id: "sample3",
-            title: "Cloudy Dreams",
-            producer: { name: "Cloud Beatz", verified: true },
-            genre: "Lo-Fi",
-            coverImage: "https://via.placeholder.com/1200x600",
-            audioFile: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
-            price: 14.99,
-            plays: 650
-          }
-        ]);
+        // Fallback data in case of error
       }
     };
-    
+
     fetchHeroBeats();
   }, []);
 
@@ -110,19 +90,19 @@ const Home = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       if (!isPlaying) {
-        setCurrentBeatIndex(prevIndex => 
+        setCurrentBeatIndex(prevIndex =>
           prevIndex === heroBeats.length - 1 ? 0 : prevIndex + 1
         );
       }
     }, 5000);
-    
+
     return () => clearInterval(interval);
   }, [isPlaying, heroBeats.length]);
 
   // Handle audio playback
   useEffect(() => {
     const audio = audioRef.current;
-    
+
     // Clean up on unmount
     return () => {
       audio.pause();
@@ -133,28 +113,63 @@ const Home = () => {
   // Play/pause current beat
   const togglePlay = () => {
     const audio = audioRef.current;
-    
+
     if (heroBeats.length === 0) return;
-    
+
     const currentBeat = heroBeats[currentBeatIndex];
-    const audioUrl = currentBeat.audioFile || currentBeat.audioUrl;
-    
-    if (!audioUrl) {
-      console.error("No audio URL available for this beat");
-      return;
+
+    // Get audio URL with fallbacks
+    let audioUrl = currentBeat.audioFile || currentBeat.audioUrl;
+
+    // If no valid audio URL, use a fallback
+    if (!audioUrl || audioUrl === "") {
+      console.warn("No audio URL for this beat, using fallback");
+      audioUrl = `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${(currentBeatIndex % 5) + 1}.mp3`;
     }
-    
+
+    console.log(`Attempting to play audio: ${audioUrl}`);
+
     if (isPlaying) {
       audio.pause();
       setIsPlaying(false);
     } else {
       setAudioLoading(true);
-      
-      // Set new audio source if needed
-      if (audio.src !== audioUrl) {
-        audio.src = audioUrl;
-      }
-      
+
+      // Reset previous handlers
+      audio.oncanplaythrough = null;
+      audio.onerror = null;
+      audio.onended = null;
+
+      // Set up error handling first
+      audio.onerror = (e) => {
+        console.error("Audio error:", e);
+        console.error("Audio error code:", audio.error ? audio.error.code : "unknown");
+        setAudioLoading(false);
+        setIsPlaying(false);
+
+        // Try a fallback if original URL fails
+        if (!audioUrl.includes('soundhelix')) {
+          const fallbackUrl = `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${(currentBeatIndex % 5) + 1}.mp3`;
+          console.log("Trying fallback URL:", fallbackUrl);
+
+          // Create a new audio element for the fallback
+          const fallbackAudio = new Audio(fallbackUrl);
+          fallbackAudio.oncanplaythrough = () => {
+            setAudioLoading(false);
+            fallbackAudio.play()
+              .then(() => {
+                setIsPlaying(true);
+                audioRef.current = fallbackAudio;
+              })
+              .catch(err => console.error("Fallback audio play error:", err));
+          };
+
+          fallbackAudio.onended = () => setIsPlaying(false);
+          fallbackAudio.load();
+        }
+      };
+
+      // Set canplaythrough handler
       audio.oncanplaythrough = () => {
         setAudioLoading(false);
         audio.play()
@@ -164,29 +179,28 @@ const Home = () => {
             setIsPlaying(false);
           });
       };
-      
-      audio.onerror = () => {
-        console.error("Audio error");
+
+      // Set ended handler
+      audio.onended = () => setIsPlaying(false);
+
+      // Set the source and load the audio
+      try {
+        audio.src = audioUrl;
+        audio.load();
+      } catch (err) {
+        console.error("Error loading audio:", err);
         setAudioLoading(false);
-        setIsPlaying(false);
-      };
-      
-      audio.onended = () => {
-        setIsPlaying(false);
-      };
-      
-      // Force load even if the URL hasn't changed
-      audio.load();
+      }
     }
-  };
+  };;
 
   // Navigate to previous beat
   const prevBeat = () => {
     // Stop current playback
     audioRef.current.pause();
     setIsPlaying(false);
-    
-    setCurrentBeatIndex(prevIndex => 
+
+    setCurrentBeatIndex(prevIndex =>
       prevIndex === 0 ? heroBeats.length - 1 : prevIndex - 1
     );
   };
@@ -196,8 +210,8 @@ const Home = () => {
     // Stop current playback
     audioRef.current.pause();
     setIsPlaying(false);
-    
-    setCurrentBeatIndex(prevIndex => 
+
+    setCurrentBeatIndex(prevIndex =>
       prevIndex === heroBeats.length - 1 ? 0 : prevIndex + 1
     );
   };
@@ -217,12 +231,12 @@ const Home = () => {
         <div className="hero-background">
           <img src={BannerBackground} alt="Background pattern" />
         </div>
-        
+
         <div className="hero-content">
           {/* Left Section with Text and Search */}
           <div className="hero-left">
             <h1 className="hero-heading">YOUR FIRST HIT STARTS HERE</h1>
-            
+
             {/* BeatStars-style search bar */}
             <div className="hero-search-container">
               <form onSubmit={handleSearch} className="hero-search-form">
@@ -241,7 +255,7 @@ const Home = () => {
                 </button>
               </form>
             </div>
-            
+
             {/* Trending tags */}
             <div className="trending-tags">
               <span className="trending-label">What's trending right now:</span>
@@ -253,17 +267,17 @@ const Home = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Right Section with Carousel */}
           <div className="hero-right">
             {heroBeats.length > 0 && (
               <div className="hero-carousel">
-                <div 
+                <div
                   className="hero-carousel-slide"
                   style={{ backgroundImage: `url(${heroBeats[currentBeatIndex].coverImage || "https://via.placeholder.com/1200x600"})` }}
                 >
                   <div className="hero-carousel-content">
-                    <button 
+                    <button
                       className="hero-play-button"
                       onClick={togglePlay}
                     >
@@ -275,7 +289,7 @@ const Home = () => {
                         <FaPlay />
                       )}
                     </button>
-                    
+
                     <div className="hero-beat-info">
                       <h3>{heroBeats[currentBeatIndex].title}</h3>
                       <p>
@@ -284,7 +298,7 @@ const Home = () => {
                       </p>
                     </div>
                   </div>
-                  
+
                   <button className="hero-nav-button prev" onClick={prevBeat}>
                     <FaChevronLeft />
                   </button>
@@ -292,7 +306,7 @@ const Home = () => {
                     <FaChevronRight />
                   </button>
                 </div>
-                
+
                 <div className="hero-carousel-indicators">
                   {heroBeats.map((_, index) => (
                     <button
@@ -311,12 +325,12 @@ const Home = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Featured Producers Carousel */}
       <div className="producers-section">
         <ProducersCarousel />
       </div>
-      
+
       {/* Trending Beats Section */}
       <div className="trending-beats-section">
         <TrendingBeats />
