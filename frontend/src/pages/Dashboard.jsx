@@ -481,7 +481,7 @@ const Dashboard = ({ activePage: initialPage }) => {
             </li>
 
             {user?.role === "seller" ? (
-              <li className={activePage === "wallet " ? styles.active : ""} onClick={() => setActivePage("wallet")}>
+              <li className={activePage === "wallet" ? styles.active : ""} onClick={() => setActivePage("wallet")}>
                 <FaWallet /> Wallet
               </li>
             ) : (

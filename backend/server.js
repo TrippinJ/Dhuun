@@ -18,6 +18,7 @@ import { router as authRoutes } from './routes/auth.js';
 import beatRoutes from './routes/beatRoutes.js';
 import subscriptionRoutes from './routes/subscription.js';
 import adminRoutes from './routes/adminRoutes.js';
+import walletRoutes from './routes/walletRoutes.js';
 
 // Get __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -93,6 +94,7 @@ app.use('/api/producers', producerRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/wallet', walletRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

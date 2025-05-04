@@ -29,6 +29,7 @@ import VerifyOTP from "./pages/VerifyOTP";
 import { LicenseProvider } from './context/LicenseContext';
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import Transactions from "./pages/Transactions";
 
 function App() {
   return (
