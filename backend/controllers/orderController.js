@@ -125,8 +125,8 @@ export const getOrderById = async (req, res) => {
   }
 };
 
-// Verify a Khalti payment
-export const verifyPayment = async (req, res) => {
+// Verify a Khalti payment - RENAMED to avoid conflict
+export const verifyPaymentOrder = async (req, res) => {
   try {
     const { pidx } = req.body;
 

@@ -18,6 +18,6 @@ router.get('/', orderController.getUserOrders);
 router.get('/:id', orderController.getOrderById);
 
 // Verify a Khalti payment
-router.post('/verify-payment', orderController.verifyPayment);
+router.post('/verify-payment', orderController.verifyPaymentOrder);
 
 export default router;
