@@ -12,135 +12,129 @@ const CheckoutSuccess = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState(null);
+  const [verifyingPayment, setVerifyingPayment] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   // Confetti effect state
   const [showConfetti, setShowConfetti] = useState(false);
 
+  // Get cart items for display
+  const [cartItems, setCartItems] = useState([]);
+
+  useEffect(() => {
+    const items = JSON.parse(localStorage.getItem("cart") || "[]");
+    setCartItems(items);
+  }, []);
+
   useEffect(() => {
     const processPayment = async () => {
       try {
+        // Get URL parameters from Khalti redirect
+        const params = new URLSearchParams(window.location.search);
+        const returnedPidx = params.get("pidx");
+        const status = params.get("status");
+
+        // Only proceed if we have a pidx in the URL (returned from Khalti)
+        if (!returnedPidx) return;
+
+        setVerifyingPayment(true);
         setLoading(true);
 
-        // Get URL parameters - this is what Khalti sends back
-        const params = new URLSearchParams(location.search);
-        const pidx = params.get("pidx");
-        const status = params.get("status");
-        const transaction_id = params.get("transaction_id") || params.get("txnId");
+        // Get stored values from localStorage
+        const storedPidx = localStorage.getItem("pidx");
+        const pendingOrderData = JSON.parse(localStorage.getItem("pendingOrder") || "null");
 
-        // If no pidx found, check if we have a state from react-router
-        if (!pidx && location.state?.orderId) {
-          // This is for direct navigation after an order was created
-          try {
-            // Fetch order details directly
-            const token = localStorage.getItem("token");
-            if (!token) {
-              throw new Error("Authentication required");
-            }
+        console.log("Payment return detected:", {
+          returnedPidx,
+          status,
+          storedPidx,
+          pendingOrderData
+        });
 
-            const response = await API.get(`/api/orders/${location.state.orderId}`, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-
-            setOrderDetails(response.data);
-            setPaymentStatus("Completed");
-            setShowConfetti(true);
-            setLoading(false);
-            return;
-          } catch (orderError) {
-            console.error("Error fetching order:", orderError);
-            setError("Unable to load order details");
-            setLoading(false);
-            return;
-          }
-        }
-
-        // No pidx and no orderId, redirect to home
-        if (!pidx) {
-          console.error("No payment ID (pidx) found in URL");
-          navigate("/");
+        // Basic validation
+        if (returnedPidx !== storedPidx || !pendingOrderData) {
+          setError("Invalid payment session. Please try again.");
+          setVerifyingPayment(false);
+          setLoading(false);
           return;
         }
 
-        console.log("Got Khalti callback:", { pidx, status, transaction_id });
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setError("Authentication required. Please log in again.");
+          setTimeout(() => navigate("/login"), 2000);
+          return;
+        }
 
-        // Check status first
-        if (status === "Completed") {
-          // Get the pending order data from localStorage
-          const pendingOrderData = JSON.parse(localStorage.getItem("pendingOrder") || "null");
+        // Step 1: Verify payment with backend
+        const verifyResponse = await API.post(
+          "/api/orders/verify-payment",
+          { pidx: returnedPidx },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
 
-          if (!pendingOrderData) {
-            setError("Order information not found");
-            setLoading(false);
-            return;
-          }
+        console.log("Payment verification response:", verifyResponse.data);
 
-          // Verify payment with our backend
-          const token = localStorage.getItem("token");
-          if (!token) {
-            setError("Authentication required");
-            setLoading(false);
-            return;
-          }
+        if (verifyResponse.data.success) {
+          // Step 2: Create order if payment verification was successful
+          const orderData = {
+            items: pendingOrderData.items,
+            totalAmount: pendingOrderData.totalAmount,
+            paymentMethod: "khalti",
+            paymentId: verifyResponse.data.transaction_id,
+            paymentPidx: returnedPidx
+          };
 
-          // First, verify the payment status
-          const verifyResponse = await API.post("/api/payments/verify",
-            { pidx },
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
+          try {
+            const orderResponse = await API.post(
+              "/api/orders",
+              orderData,
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
 
-          if (verifyResponse.data.success && verifyResponse.data.status === "Completed") {
-            // Now create the actual order
-            const orderData = {
-              items: pendingOrderData.items,
-              totalAmount: pendingOrderData.totalAmount,
-              customerEmail: pendingOrderData.customerEmail,
-              paymentMethod: "khalti",
-              paymentId: transaction_id,
-              paymentPidx: pidx
-            };
-
-            const orderResponse = await API.post("/api/orders", orderData, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-
-            console.log("Order created:", orderResponse.data);
-
-            // Clear cart and pending order
-            localStorage.setItem("cart", "[]");
-            localStorage.removeItem("pendingOrder");
+            console.log("Order created successfully:", orderResponse.data);
 
             // Set success state
             setOrderDetails({
-              ...orderResponse.data,
-              items: pendingOrderData.items.map(item => ({
-                ...item,
-                beat: cartItems.find(cartItem => cartItem._id === item.beatId) || {}
-              }))
+              orderId: orderResponse.data.orderId,
+              items: pendingOrderData.items,
+              totalAmount: pendingOrderData.totalAmount
             });
+
+            setSuccessMessage("Your order has been processed successfully!");
             setPaymentStatus("Completed");
+
+            // Show confetti for a good experience
             setShowConfetti(true);
-          } else {
-            setError("Payment verification failed. Please contact support.");
-            setPaymentStatus("Failed");
+
+            // Clear cart and pending order data
+            localStorage.setItem("cart", "[]");
+            localStorage.removeItem("pendingOrder");
+            localStorage.removeItem("pidx");
+          } catch (orderError) {
+            console.error("Error creating order:", orderError);
+            setError("Payment was successful, but we couldn't create your order. Please contact support.");
+            setPaymentStatus("Completed");
           }
-        } else if (status === "Pending") {
-          setPaymentStatus("Pending");
-          setError("Your payment is pending. We'll update you once it's completed.");
         } else {
-          // Payment failed or was cancelled
+          // Payment verification failed
+          setError("Payment verification failed. Please try again or contact support.");
           setPaymentStatus("Failed");
-          setError("Payment was not completed. Please try again.");
         }
 
-        setLoading(false);
+        // Clean up URL parameters
+        window.history.replaceState({}, document.title, "/checkout-success");
       } catch (error) {
-        console.error("Error processing payment:", error);
+        console.error("Error processing payment return:", error);
         setError("Failed to process payment. Please contact support.");
         setPaymentStatus("Error");
+      } finally {
+        setVerifyingPayment(false);
         setLoading(false);
       }
     };
 
+    // Execute payment return handler
     processPayment();
 
     // Hide confetti after 5 seconds if shown
@@ -150,14 +144,7 @@ const CheckoutSuccess = () => {
       }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [location, navigate]);
-
-  // Get cart items for display (if needed)
-  const [cartItems, setCartItems] = useState([]);
-  useEffect(() => {
-    const items = JSON.parse(localStorage.getItem("cart") || "[]");
-    setCartItems(items);
-  }, []);
+  }, [location, navigate, showConfetti]);
 
   if (loading) {
     return (
@@ -338,6 +325,28 @@ const CheckoutSuccess = () => {
             </button>
           </div>
 
+          {/* Add recovery options for failed payments */}
+          {paymentStatus === "Failed" && (
+            <div className={styles.recoveryOptions}>
+              <h3>Payment Failed</h3>
+              <p>We couldn't complete your payment. You can:</p>
+              <div className={styles.recoveryButtons}>
+                <button
+                  className={styles.retryButton}
+                  onClick={() => navigate("/cart")}
+                >
+                  Return to Cart
+                </button>
+                <button
+                  className={styles.supportButton}
+                  onClick={() => window.location.href = "mailto:support@dhuun.com"}
+                >
+                  Contact Support
+                </button>
+              </div>
+            </div>
+          )}
+          
           <p className={styles.helpText}>
             Need help with your purchase? Contact our support team at
             <a href="mailto:support@dhuun.com"> support@dhuun.com</a>

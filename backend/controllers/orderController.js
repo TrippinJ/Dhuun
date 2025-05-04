@@ -71,9 +71,10 @@ export const createOrder = async (req, res) => {
         totalAmount,
         userName: req.user.name
       });
+      console.log(`Order confirmation email sent to ${req.user.email}`);
     } catch (emailError) {
       console.error('Error sending order confirmation email:', emailError);
-      // Continue even if email fails
+      // Continue with order creation even if email fails
     }
 
     res.status(201).json({
@@ -125,7 +126,7 @@ export const getOrderById = async (req, res) => {
   }
 };
 
-// Verify a Khalti payment - RENAMED to avoid conflict
+// Verify a Khalti payment
 export const verifyPaymentOrder = async (req, res) => {
   try {
     const { pidx } = req.body;
@@ -137,11 +138,21 @@ export const verifyPaymentOrder = async (req, res) => {
     // Verify the payment status
     const verificationResult = await verifyPayment(pidx);
     
-    res.json({
-      success: true,
+    // Check if payment status is completed
+    if (verificationResult.status === "Completed") {
+      return res.json({
+        success: true,
+        status: verificationResult.status,
+        transaction_id: verificationResult.transaction_id,
+        amount: verificationResult.total_amount / 100 // Convert from paisa to actual amount
+      });
+    }
+    
+    // If payment is not completed
+    return res.json({
+      success: false,
       status: verificationResult.status,
-      transaction_id: verificationResult.transaction_id,
-      amount: verificationResult.total_amount / 100 // Convert from paisa to actual amount
+      message: `Payment status is ${verificationResult.status}`
     });
   } catch (error) {
     console.error('Payment verification error:', error);

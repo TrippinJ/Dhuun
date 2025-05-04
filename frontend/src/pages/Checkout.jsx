@@ -71,11 +71,20 @@ const Checkout = () => {
         price: item.licensePrice || item.price
       }));
 
+      // Store detailed cart information for later retrieval
+      localStorage.setItem("pendingOrder", JSON.stringify({
+        items: itemsData,
+        totalAmount: total,
+        customerEmail: email,
+        timestamp: Date.now()
+      }));
+
       // Initiate payment through our backend API
       const response = await API.post("/api/payments/initiate", {
         amount: total,
         items: itemsData,
-        customerEmail: email
+        customerEmail: email,
+        returnUrl: window.location.origin + "/checkout-success"
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -84,12 +93,7 @@ const Checkout = () => {
 
       if (response.data.success && response.data.payment_url) {
         // Store order data in localStorage to retrieve after payment
-        localStorage.setItem("pendingOrder", JSON.stringify({
-          items: itemsData,
-          totalAmount: total,
-          customerEmail: email,
-          pidx: response.data.pidx
-        }));
+        localStorage.setItem("pidx", response.data.pidx);
 
         // Redirect to Khalti payment page
         window.location.href = response.data.payment_url;
@@ -146,10 +150,10 @@ const Checkout = () => {
               ) : (
                 cartItems.map((item) => (
                   <div key={item._id + (item.selectedLicense || 'basic')} className={styles.cartItem}>
-                    <img 
-                      src={item.coverImage} 
-                      alt={item.title} 
-                      className={styles.itemImage} 
+                    <img
+                      src={item.coverImage}
+                      alt={item.title}
+                      className={styles.itemImage}
                     />
                     <div className={styles.itemDetails}>
                       <h3>{item.title}</h3>
