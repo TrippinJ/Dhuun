@@ -1,4 +1,3 @@
-// In frontend/src/Components/SellerWallet.jsx
 import React, { useState, useEffect } from "react";
 import { FaWallet, FaMoneyBillWave, FaExchangeAlt, FaChevronRight } from "react-icons/fa";
 import API from "../api/api";

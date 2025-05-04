@@ -53,7 +53,7 @@ export const verifyPayment = async (pidx) => {
  * @param {Object} options - Payment initialization options
  * @returns {Promise<Object>} - Payment URL and PIDX
  */
-export const initiatePayment = async ({ userId, amount, purchaseOrderName, returnUrl, websiteUrl }) => {
+export const initiatePayment = async ({ userId, amount, purchaseOrderName, returnUrl, websiteUrl, customerInfo }) => {
   try {
     const amountInPaisa = Math.round(parseFloat(amount) * 100);
     const orderId = userId || `order-${Date.now()}-${Math.floor(Math.random() * 1000)}`;

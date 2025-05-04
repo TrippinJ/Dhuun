@@ -26,7 +26,7 @@ const NavbarBeatExplore = () => {
       if (user) {
         try {
           const userData = JSON.parse(user);
-          setUserName(userData.fullname || userData.name || "User");
+          setUserName(userData.username  || userData.name || "User");
           if (userData.avatar) {
             setUserAvatar(userData.avatar);
           }
@@ -132,7 +132,7 @@ const NavbarBeatExplore = () => {
       if (user) {
         try {
           const userData = JSON.parse(user);
-          setUserName(userData.fullname || userData.name || "User");
+          setUserName(userData.username  || userData.name || "User");
           setUserRole(userData.role || "buyer"); // Set default role as buyer
           if (userData.avatar) {
             setUserAvatar(userData.avatar);
