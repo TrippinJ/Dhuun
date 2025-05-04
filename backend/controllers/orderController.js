@@ -48,17 +48,25 @@ export const createOrder = async (req, res) => {
         { $inc: { purchases: 1 } }
       );
 
-      // If exclusive license, mark the beat as exclusively sold
-      if (item.license === 'Exclusive') {
-        await Beat.findByIdAndUpdate(
+      const licenseType = item.license?.toLowerCase() || '';
+
+      // Check if this is an exclusive license (handling different variations)
+      if (licenseType === 'exclusive' || licenseType === 'exclusive license') {
+        console.log(`Processing exclusive license for beat: ${item.beatId}`);
+
+        // Mark the beat as exclusively sold
+        const updatedBeat = await Beat.findByIdAndUpdate(
           item.beatId,
           {
             isExclusiveSold: true,
             exclusiveSoldTo: req.user.id,
             exclusiveSoldDate: new Date(),
             exclusiveOrderId: order._id
-          }
+          },
+          { new: true } // Return the updated document
         );
+
+        console.log(`Beat marked as exclusively sold: ${updatedBeat?._id}, isExclusiveSold: ${updatedBeat?.isExclusiveSold}`);
       }
     }
 
@@ -137,7 +145,7 @@ export const verifyPaymentOrder = async (req, res) => {
 
     // Verify the payment status
     const verificationResult = await verifyPayment(pidx);
-    
+
     // Check if payment status is completed
     if (verificationResult.status === "Completed") {
       return res.json({
@@ -147,7 +155,7 @@ export const verifyPaymentOrder = async (req, res) => {
         amount: verificationResult.total_amount / 100 // Convert from paisa to actual amount
       });
     }
-    
+
     // If payment is not completed
     return res.json({
       success: false,
@@ -156,7 +164,7 @@ export const verifyPaymentOrder = async (req, res) => {
     });
   } catch (error) {
     console.error('Payment verification error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       message: 'Failed to verify payment',
       error: error.message

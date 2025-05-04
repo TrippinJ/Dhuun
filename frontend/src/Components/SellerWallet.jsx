@@ -93,7 +93,7 @@ const SellerWallet = () => {
   
   return (
     <div className={styles.walletContainer}>
-      <h2 className={styles.walletTitle}>Seller Wallet</h2>
+      {/* <h2 className={styles.walletTitle}>Seller Wallet</h2> */}
       
       {error && <div className={styles.errorMessage}>{error}</div>}
       {successMessage && <div className={styles.successMessage}>{successMessage}</div>}

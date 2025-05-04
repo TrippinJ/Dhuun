@@ -1,8 +1,10 @@
+// In frontend/src/pages/Checkout.jsx
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/api";
 import styles from "../css/Checkout.module.css";
-import { FaArrowLeft, FaLock } from "react-icons/fa";
+import { FaArrowLeft, FaLock, FaCreditCard, FaGlobe } from "react-icons/fa";
 import NavbarBeatExplore from '../Components/NavbarBeatExplore';
 
 const Checkout = () => {
@@ -11,9 +13,9 @@ const Checkout = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [total, setTotal] = useState(0);
-  const [email, setEmail] = useState("");
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [processingState, setProcessingState] = useState('idle'); // idle, loading, success, error
+  const [paymentMethod, setPaymentMethod] = useState('khalti'); // 'khalti' or 'stripe'
 
   // Fetch cart items from localStorage
   useEffect(() => {
@@ -34,18 +36,8 @@ const Checkout = () => {
     }
   }, []);
 
-  const handleEmailChange = (e) => {
-    setEmail(e.target.value);
-  };
-
-  // New method that uses the backend to initiate payment
+  // Handle Khalti payment
   const handleKhaltiPayment = async () => {
-    // Basic validation
-    if (!email) {
-      setError("Please enter your email address");
-      return;
-    }
-
     if (cartItems.length === 0) {
       setError("Your cart is empty");
       return;
@@ -71,19 +63,17 @@ const Checkout = () => {
         price: item.licensePrice || item.price
       }));
 
-      // Store detailed cart information for later retrieval
+      // Store cart info in localStorage for later retrieval
       localStorage.setItem("pendingOrder", JSON.stringify({
         items: itemsData,
         totalAmount: total,
-        customerEmail: email,
         timestamp: Date.now()
       }));
 
-      // Initiate payment through our backend API
+      // Initiate payment through backend API
       const response = await API.post("/api/payments/initiate", {
         amount: total,
         items: itemsData,
-        customerEmail: email,
         returnUrl: window.location.origin + "/checkout-success"
       }, {
         headers: { Authorization: `Bearer ${token}` }
@@ -92,7 +82,7 @@ const Checkout = () => {
       console.log("Payment initiation response:", response.data);
 
       if (response.data.success && response.data.payment_url) {
-        // Store order data in localStorage to retrieve after payment
+        // Store payment ID for verification
         localStorage.setItem("pidx", response.data.pidx);
 
         // Redirect to Khalti payment page
@@ -102,9 +92,73 @@ const Checkout = () => {
         setPaymentProcessing(false);
         setProcessingState('error');
       }
-
     } catch (error) {
       console.error("Checkout error:", error);
+      setError(error.response?.data?.message || "Payment failed. Please try again.");
+      setPaymentProcessing(false);
+      setProcessingState('error');
+    }
+  };
+
+  // Handle Stripe payment
+  const handleStripePayment = async () => {
+    if (cartItems.length === 0) {
+      setError("Your cart is empty");
+      return;
+    }
+
+    try {
+      setPaymentProcessing(true);
+      setProcessingState('loading');
+      setError(null);
+
+      // Check if user is logged in
+      const token = localStorage.getItem("token");
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
+      // Prepare the items data
+      const itemsData = cartItems.map(item => ({
+        beatId: item._id,
+        license: item.selectedLicense || "Basic",
+        licenseName: item.licenseName || "Basic License",
+        price: item.licensePrice || item.price
+      }));
+
+      // Store cart info for later use
+      localStorage.setItem("pendingOrder", JSON.stringify({
+        items: itemsData,
+        totalAmount: total,
+        timestamp: Date.now()
+      }));
+
+      // Initiate Stripe payment session
+      const response = await API.post("/api/payments/create-stripe-session", {
+        amount: total,
+        items: itemsData,
+        successUrl: window.location.origin + "/checkout-success",
+        cancelUrl: window.location.origin + "/cart"
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      console.log("Stripe session response:", response.data);
+
+      if (response.data.success && response.data.sessionUrl) {
+        // Store session ID for verification
+        localStorage.setItem("stripeSessionId", response.data.sessionId);
+
+        // Redirect to Stripe checkout
+        window.location.href = response.data.sessionUrl;
+      } else {
+        setError("Failed to initialize payment. Please try again.");
+        setPaymentProcessing(false);
+        setProcessingState('error');
+      }
+    } catch (error) {
+      console.error("Stripe checkout error:", error);
       setError(error.response?.data?.message || "Payment failed. Please try again.");
       setPaymentProcessing(false);
       setProcessingState('error');
@@ -188,35 +242,59 @@ const Checkout = () => {
             </div>
           </div>
 
-          {/* Payment Form Section */}
+          {/* Payment Selection Section */}
           <div className={styles.paymentSection}>
             <h2>Payment Information</h2>
             <div className={styles.securePayment}>
               <FaLock /> Secure Checkout
             </div>
 
-            <div className={styles.paymentForm}>
-              <div className={styles.formGroup}>
-                <label htmlFor="email">Email (for order confirmation)</label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={email}
-                  onChange={handleEmailChange}
-                  placeholder="your.email@example.com"
-                  required
-                />
+            <div className={styles.paymentOptions}>
+              <h3>Select Payment Method</h3>
+              
+              <div className={styles.paymentMethods}>
+                <div 
+                  className={`${styles.paymentMethod} ${paymentMethod === 'khalti' ? styles.selected : ''}`}
+                  onClick={() => setPaymentMethod('khalti')}
+                >
+                  <div className={styles.methodIcon}>🇳🇵</div>
+                  <div className={styles.methodInfo}>
+                    <h4>Khalti</h4>
+                    <p>Pay using Khalti digital wallet (Nepal)</p>
+                  </div>
+                </div>
+                
+                <div 
+                  className={`${styles.paymentMethod} ${paymentMethod === 'stripe' ? styles.selected : ''}`}
+                  onClick={() => setPaymentMethod('stripe')}
+                >
+                  <div className={styles.methodIcon}><FaGlobe /></div>
+                  <div className={styles.methodInfo}>
+                    <h4>Stripe</h4>
+                    <p>Pay with Credit/Debit card (International)</p>
+                  </div>
+                </div>
               </div>
 
-              <button
-                type="button"
-                onClick={handleKhaltiPayment}
-                className={styles.khaltiButton}
-                disabled={cartItems.length === 0 || paymentProcessing}
-              >
-                {paymentProcessing ? "Processing..." : `Pay $${total.toFixed(2)} with Khalti`}
-              </button>
+              {paymentMethod === 'khalti' ? (
+                <button
+                  type="button"
+                  onClick={handleKhaltiPayment}
+                  className={styles.khaltiButton}
+                  disabled={cartItems.length === 0 || paymentProcessing}
+                >
+                  {paymentProcessing ? "Processing..." : `Pay $${total.toFixed(2)} with Khalti`}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleStripePayment}
+                  className={styles.stripeButton}
+                  disabled={cartItems.length === 0 || paymentProcessing}
+                >
+                  {paymentProcessing ? "Processing..." : `Pay $${total.toFixed(2)} with Card`}
+                </button>
+              )}
             </div>
           </div>
         </div>

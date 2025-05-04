@@ -26,7 +26,7 @@ const NavbarBeatExplore = () => {
       if (user) {
         try {
           const userData = JSON.parse(user);
-          setUserName(userData.username  || userData.name || "User");
+          setUserName(userData.username || "User");
           if (userData.avatar) {
             setUserAvatar(userData.avatar);
           }
@@ -132,7 +132,7 @@ const NavbarBeatExplore = () => {
       if (user) {
         try {
           const userData = JSON.parse(user);
-          setUserName(userData.username  || userData.name || "User");
+          setUserName(userData.username || "User");
           setUserRole(userData.role || "buyer"); // Set default role as buyer
           if (userData.avatar) {
             setUserAvatar(userData.avatar);
@@ -154,7 +154,7 @@ const NavbarBeatExplore = () => {
       navigate("/dashboard");
     } else {
       // For buyers or unspecified roles
-      navigate("/dashboard/purchases");
+      navigate("/dashboard");
     }
   };
   // User menu items

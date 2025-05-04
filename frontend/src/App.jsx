@@ -74,15 +74,6 @@ function App() {
               />
 
               <Route
-                path="/edit-profile"
-                element={
-                  <PrivateRoute>
-                    <EditProfile />
-                  </PrivateRoute>
-                }
-              />
-
-              <Route
                 path="/subscription"
                 element={
                   <PrivateRoute>

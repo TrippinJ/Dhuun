@@ -31,7 +31,7 @@ const OrderSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['khalti', 'card', 'other'],
+    enum: ['khalti', 'card', 'stripe', 'other'],
     default: 'khalti'
   },
   paymentId: {

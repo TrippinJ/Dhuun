@@ -4,7 +4,7 @@ import axios from "axios";
 import API from "../api/api";
 import styles from "../css/EditProfile.module.css";
 import { FaSave, FaUserCircle, FaUpload, FaTrash, FaExclamationTriangle } from "react-icons/fa";
-import NavbarBeatExplore from '../Components/NavbarBeatExplore';
+
 
 const EditProfile = () => {
   const navigate = useNavigate();
@@ -238,9 +238,8 @@ const EditProfile = () => {
   
   return (
     <>
-      <NavbarBeatExplore />
       <div className={styles.profileContainer}>
-        <h2 className={styles.profileHeading}>Edit Profile</h2>
+        {/* <h2 className={styles.profileHeading}>Edit Profile</h2> */}
         
         {error && <div className={styles.errorMessage}>{error}</div>}
         {successMessage && <div className={styles.successMessage}>{successMessage}</div>}

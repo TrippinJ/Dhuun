@@ -10,6 +10,7 @@ const PurchasedBeats = () => {
   const [error, setError] = useState(null);
   const [currentlyPlaying, setCurrentlyPlaying] = useState(null);
   const [audioPlayer, setAudioPlayer] = useState(new Audio());
+  const [processedBeats, setProcessedBeats] = useState(new Set());
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -24,7 +25,51 @@ const PurchasedBeats = () => {
           headers: { Authorization: `Bearer ${token}` }
         });
 
-        setOrders(response.data);
+        // Process orders to eliminate duplicate beats
+        const uniqueBeats = new Map();
+        const processedBeatsSet = new Set();
+
+        // First, process all orders to identify unique beats
+        response.data.forEach(order => {
+          order.items.forEach(item => {
+            if (item.beat) {
+              const beatId = item.beat._id;
+
+              // If this beat hasn't been processed yet
+              if (!processedBeatsSet.has(beatId)) {
+                processedBeatsSet.add(beatId);
+
+                // Keep only the highest license level (exclusive > premium > basic)
+                if (!uniqueBeats.has(beatId) ||
+                  getLicenseValue(item.license) > getLicenseValue(uniqueBeats.get(beatId).license)) {
+                  uniqueBeats.set(beatId, { ...item, orderId: order._id });
+                }
+              }
+            }
+          });
+        });
+
+        // Create a new array of orders with unique beats
+        const uniqueOrders = Array.from(uniqueBeats.values()).reduce((acc, item) => {
+          const orderIndex = acc.findIndex(order => order._id === item.orderId);
+
+          if (orderIndex === -1) {
+            // Create a new order
+            acc.push({
+              _id: item.orderId,
+              createdAt: new Date().toISOString(), // This would ideally come from the original order
+              items: [item]
+            });
+          } else {
+            // Add item to existing order
+            acc[orderIndex].items.push(item);
+          }
+
+          return acc;
+        }, []);
+
+        setOrders(uniqueOrders);
+        setProcessedBeats(processedBeatsSet);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching orders:", error);
@@ -43,6 +88,16 @@ const PurchasedBeats = () => {
       }
     };
   }, []);
+
+  // Helper function to determine license value for sorting
+  const getLicenseValue = (license) => {
+    const licenseType = license ? license.toLowerCase() : '';
+
+    if (licenseType.includes('exclusive')) return 3;
+    if (licenseType.includes('premium')) return 2;
+    if (licenseType.includes('basic')) return 1;
+    return 0;
+  };
 
   // Handle play/pause
   const handlePlayPause = (beatId, audioUrl) => {

@@ -26,6 +26,139 @@ const CheckoutSuccess = () => {
     setCartItems(items);
   }, []);
 
+  // Helper functions for processing different payment methods
+  const processKhaltiPayment = async (pidx, token, pendingOrderData) => {
+    try {
+      const storedPidx = localStorage.getItem("pidx");
+      if (pidx !== storedPidx) {
+        setError("Invalid payment session. Please try again.");
+        return;
+      }
+
+      // Step 1: Verify payment with backend
+      const verifyResponse = await API.post(
+        "/api/orders/verify-payment",
+        { pidx: pidx }, // Fixed variable name (was Pidx)
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      console.log("Khalti payment verification response:", verifyResponse.data);
+
+      if (verifyResponse.data.success) {
+        // Step 2: Create order if payment verification was successful
+        const orderData = {
+          items: pendingOrderData.items,
+          totalAmount: pendingOrderData.totalAmount,
+          paymentMethod: "khalti",
+          paymentId: verifyResponse.data.transaction_id,
+          paymentPidx: pidx // Fixed variable name
+        };
+
+        try {
+          const orderResponse = await API.post(
+            "/api/orders",
+            orderData,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+
+          console.log("Order created successfully:", orderResponse.data);
+
+          // Set success state
+          setOrderDetails({
+            orderId: orderResponse.data.orderId,
+            items: pendingOrderData.items,
+            totalAmount: pendingOrderData.totalAmount
+          });
+
+          setSuccessMessage("Your order has been processed successfully!");
+          setPaymentStatus("Completed");
+
+          // Show confetti for a good experience
+          setShowConfetti(true);
+
+          // Clear cart and pending order data
+          localStorage.setItem("cart", "[]");
+          localStorage.removeItem("pendingOrder");
+          localStorage.removeItem("pidx");
+        } catch (orderError) {
+          console.error("Error creating order:", orderError);
+          setError("Payment was successful, but we couldn't create your order. Please contact support.");
+          setPaymentStatus("Completed");
+        }
+      } else {
+        // Payment verification failed
+        setError("Payment verification failed. Please try again or contact support.");
+        setPaymentStatus("Failed");
+      }
+    } catch (error) {
+      console.error("Error processing Khalti payment:", error);
+      throw error;
+    }
+  };
+
+  // Add Stripe payment processing
+  const processStripePayment = async (sessionId, token, pendingOrderData) => {
+    try {
+      // Verify Stripe session
+      const verifyResponse = await API.post(
+        "/api/payments/verify-stripe-session",
+        { sessionId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      console.log("Stripe session verification response:", verifyResponse.data);
+      
+      if (verifyResponse.data.success && verifyResponse.data.status === 'paid') {
+        // Create order
+        const orderData = {
+          items: pendingOrderData.items,
+          totalAmount: pendingOrderData.totalAmount,
+          paymentMethod: "stripe",
+          paymentId: sessionId
+        };
+
+        try {
+          const orderResponse = await API.post(
+            "/api/orders",
+            orderData,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+
+          console.log("Order created successfully:", orderResponse.data);
+
+          // Set success state
+          setOrderDetails({
+            orderId: orderResponse.data.orderId,
+            items: pendingOrderData.items,
+            totalAmount: pendingOrderData.totalAmount
+          });
+
+          setSuccessMessage("Your order has been processed successfully!");
+          setPaymentStatus("Completed");
+
+          // Show confetti for a good experience
+          setShowConfetti(true);
+
+          // Clear cart and pending order data
+          localStorage.setItem("cart", "[]");
+          localStorage.removeItem("pendingOrder");
+          localStorage.removeItem("stripeSessionId");
+        } catch (orderError) {
+          console.error("Error creating order:", orderError);
+          setError("Payment was successful, but we couldn't create your order. Please contact support.");
+          setPaymentStatus("Completed");
+        }
+      } else {
+        // Payment verification failed
+        setError("Payment verification failed. Please try again or contact support.");
+        setPaymentStatus("Failed");
+      }
+    } catch (error) {
+      console.error("Error processing Stripe payment:", error);
+      throw error;
+    }
+  };
+
   useEffect(() => {
     const processPayment = async () => {
       try {
@@ -34,31 +167,16 @@ const CheckoutSuccess = () => {
         const returnedPidx = params.get("pidx");
         const status = params.get("status");
 
-        // Only proceed if we have a pidx in the URL (returned from Khalti)
-        if (!returnedPidx) return;
+        // Check for Stripe return (look for session_id)
+        const stripeSessionId = localStorage.getItem("stripeSessionId");
+        
+        // Only proceed if we have a payment identifier
+        if (!returnedPidx && !stripeSessionId) return;
 
         setVerifyingPayment(true);
         setLoading(true);
 
         // Get stored values from localStorage
-        const storedPidx = localStorage.getItem("pidx");
-        const pendingOrderData = JSON.parse(localStorage.getItem("pendingOrder") || "null");
-
-        console.log("Payment return detected:", {
-          returnedPidx,
-          status,
-          storedPidx,
-          pendingOrderData
-        });
-
-        // Basic validation
-        if (returnedPidx !== storedPidx || !pendingOrderData) {
-          setError("Invalid payment session. Please try again.");
-          setVerifyingPayment(false);
-          setLoading(false);
-          return;
-        }
-
         const token = localStorage.getItem("token");
         if (!token) {
           setError("Authentication required. Please log in again.");
@@ -66,66 +184,27 @@ const CheckoutSuccess = () => {
           return;
         }
 
-        // Step 1: Verify payment with backend
-        const verifyResponse = await API.post(
-          "/api/orders/verify-payment",
-          { pidx: returnedPidx },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        const pendingOrderData = JSON.parse(localStorage.getItem("pendingOrder") || "null");
+        if (!pendingOrderData) {
+          setError("Order information not found. Please try again.");
+          setVerifyingPayment(false);
+          setLoading(false);
+          return;
+        }
 
-        console.log("Payment verification response:", verifyResponse.data);
-
-        if (verifyResponse.data.success) {
-          // Step 2: Create order if payment verification was successful
-          const orderData = {
-            items: pendingOrderData.items,
-            totalAmount: pendingOrderData.totalAmount,
-            paymentMethod: "khalti",
-            paymentId: verifyResponse.data.transaction_id,
-            paymentPidx: returnedPidx
-          };
-
-          try {
-            const orderResponse = await API.post(
-              "/api/orders",
-              orderData,
-              { headers: { Authorization: `Bearer ${token}` } }
-            );
-
-            console.log("Order created successfully:", orderResponse.data);
-
-            // Set success state
-            setOrderDetails({
-              orderId: orderResponse.data.orderId,
-              items: pendingOrderData.items,
-              totalAmount: pendingOrderData.totalAmount
-            });
-
-            setSuccessMessage("Your order has been processed successfully!");
-            setPaymentStatus("Completed");
-
-            // Show confetti for a good experience
-            setShowConfetti(true);
-
-            // Clear cart and pending order data
-            localStorage.setItem("cart", "[]");
-            localStorage.removeItem("pendingOrder");
-            localStorage.removeItem("pidx");
-          } catch (orderError) {
-            console.error("Error creating order:", orderError);
-            setError("Payment was successful, but we couldn't create your order. Please contact support.");
-            setPaymentStatus("Completed");
-          }
-        } else {
-          // Payment verification failed
-          setError("Payment verification failed. Please try again or contact support.");
-          setPaymentStatus("Failed");
+        // Process based on payment method
+        if (returnedPidx) {
+          // Khalti payment processing
+          await processKhaltiPayment(returnedPidx, token, pendingOrderData);
+        } else if (stripeSessionId) {
+          // Stripe payment processing
+          await processStripePayment(stripeSessionId, token, pendingOrderData);
         }
 
         // Clean up URL parameters
         window.history.replaceState({}, document.title, "/checkout-success");
       } catch (error) {
-        console.error("Error processing payment return:", error);
+        console.error("Error processing payment:", error);
         setError("Failed to process payment. Please contact support.");
         setPaymentStatus("Error");
       } finally {
@@ -134,7 +213,7 @@ const CheckoutSuccess = () => {
       }
     };
 
-    // Execute payment return handler
+    // Execute payment processing
     processPayment();
 
     // Hide confetti after 5 seconds if shown
@@ -144,7 +223,7 @@ const CheckoutSuccess = () => {
       }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [location, navigate, showConfetti]);
+  }, [location, navigate, showConfetti]); // Removed processKhaltiPayment and processStripePayment from dependencies
 
   if (loading) {
     return (
@@ -346,7 +425,7 @@ const CheckoutSuccess = () => {
               </div>
             </div>
           )}
-          
+
           <p className={styles.helpText}>
             Need help with your purchase? Contact our support team at
             <a href="mailto:support@dhuun.com"> support@dhuun.com</a>

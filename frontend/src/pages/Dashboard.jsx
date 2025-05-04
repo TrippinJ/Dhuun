@@ -21,6 +21,7 @@ import {
 import UploadBeat from "../Components/UploadBeat";
 import PurchasedBeats from "../Components/PurchasedBeats";
 import SellerWallet from "../Components/SellerWallet";
+import EditProfile from "../Components/EditProfile";
 
 const Dashboard = ({ activePage: initialPage }) => {
   const navigate = useNavigate();
@@ -36,7 +37,7 @@ const Dashboard = ({ activePage: initialPage }) => {
   const [activePage, setActivePage] = useState(initialPage || "dashboard");
   const [userAvatar, setUserAvatar] = useState(null);
   const [userFullName, setUserFullName] = useState("User");
-  
+
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -94,7 +95,7 @@ const Dashboard = ({ activePage: initialPage }) => {
       }
     };
   }, [navigate]);
-  
+
   // Image URL helper function
   const getCloudinaryImageUrl = (imageUrl, fallbackUrl = "/default-cover.jpg") => {
     if (!imageUrl) {
@@ -278,11 +279,6 @@ const Dashboard = ({ activePage: initialPage }) => {
     setShowConfirmDelete(null);
   };
 
-  // Handle navigation to edit profile
-  const handleNavigateToEditProfile = () => {
-    navigate("/edit-profile");
-  };
-
   // Render dashboard content based on user's role
   const renderDashboardContent = () => {
     if (isLoading) {
@@ -292,7 +288,7 @@ const Dashboard = ({ activePage: initialPage }) => {
     if (error) {
       return <div className={styles.error}>{error}</div>;
     }
-    
+
     if (activePage === "wallet") {
       return <SellerWallet />;
     }
@@ -300,13 +296,17 @@ const Dashboard = ({ activePage: initialPage }) => {
     if (activePage === "purchases") {
       return <PurchasedBeats />;
     }
-  
+
+    if (activePage === "profile") {
+      return <EditProfile />;
+    }
+
     // Return different content based on user role
     if (user?.role === "seller") {
       return (
-        
+
         <>
-          
+
           <div className={styles.statsSection}>
             <div className={styles.statCard}>
               <h3>Total Beats</h3>
@@ -457,87 +457,146 @@ const Dashboard = ({ activePage: initialPage }) => {
   // Main render function for the dashboard
   return (
     <>
-    <NavbarBeatExplore />
-    <div className={styles.dashboardContainer}>
-      {/* Sidebar */}
-      <aside className={styles.sidebar}>
-        <div className={styles.profileSection}>
-          <FaUserCircle className={styles.profileIcon} />
-          <h3>{user?.name || "User"}</h3>
-          <span className={styles.role}>{user?.role === "seller" ? "Producer" : "Listener"}</span>
-        </div>
-        <nav>
-          <ul>
-            <li className={activePage === "dashboard" ? styles.active : ""} onClick={() => setActivePage("dashboard")}>
-              <FaChartLine /> Dashboard
-            </li>
-
-            {/* Edit Profile link */}
-            <li
-              className={activePage === "profile" ? styles.active : ""}
-              onClick={handleNavigateToEditProfile}
-            >
-              <FaUserEdit /> Edit Profile
-            </li>
-
-            {user?.role === "seller" ? (
-              <li className={activePage === "wallet" ? styles.active : ""} onClick={() => setActivePage("wallet")}>
-                <FaWallet /> Wallet
-              </li>
+      <NavbarBeatExplore />
+      <div className={styles.dashboardContainer}>
+        {/* Sidebar */}
+        <aside className={styles.sidebar}>
+          <div className={styles.profileSection}>
+            {user?.avatar ? (
+              <img
+                src={user.avatar}
+                alt={user?.username || user?.name || "User"}
+                className={styles.profileIcon}
+                onError={(e) => {
+                  console.error("Profile image failed to load:", e.target.src);
+                  e.target.style.display = 'none';
+                  // Show fallback icon if image fails to load
+                  const fallbackIcon = document.createElement('div');
+                  fallbackIcon.className = styles.profileIconFallback;
+                  fallbackIcon.innerHTML = '<FaUserCircle />';
+                  e.target.parentNode.appendChild(fallbackIcon);
+                }}
+              />
             ) : (
-              <li className={activePage === "purchases" ? styles.active : ""} onClick={() => setActivePage("purchases")}>
-                <FaMusic /> Purchased Beats
-              </li>
+              <FaUserCircle className={styles.profileIcon} />
             )}
+            <h3>{user?.username || user?.name || "User"}</h3>
+            <span className={styles.role}>{user?.role === "seller" ? "Producer" : "Listener"}</span>
+            
+            {user?.role === "seller" && user?.subscription?.plan && (
+              <div 
+                className={styles.subscriptionBadge}
+                onClick={() => navigate("/subscription")}
+              >
+                <span className={styles.planName}>{user.subscription.plan}</span>
+                <span className={styles.planDetails}>
+                  {user.subscription.uploadLimit === Infinity 
+                    ? "Unlimited uploads" 
+                    : `${beats.length}/${user.subscription.uploadLimit} uploads`}
+                </span>
+                
+                {/* Progress bar for upload limit */}
+                {user.subscription.uploadLimit !== Infinity && (
+                  <div className={styles.usageBar}>
+                    <div 
+                      className={styles.usageProgress} 
+                      style={{ 
+                        width: `${Math.min(100, (beats.length / user.subscription.uploadLimit) * 100)}%`,
+                      }}
+                    ></div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          <nav>
+            <ul>
+              <li className={activePage === "dashboard" ? styles.active : ""} onClick={() => setActivePage("dashboard")}>
+                <FaChartLine /> Dashboard
+              </li>
 
-            {/* <li className={activePage === "settings" ? styles.active : ""} onClick={() => setActivePage("settings")}>
+              {/* Edit Profile link */}
+              <li
+                className={activePage === "profile" ? styles.active : ""}
+                onClick={() => setActivePage("profile")}
+              >
+                <FaUserEdit /> Edit Profile
+              </li>
+
+              {user?.role === "seller" ? (
+                <li className={activePage === "wallet" ? styles.active : ""} onClick={() => setActivePage("wallet")}>
+                  <FaWallet /> Wallet
+                </li>
+              ) : (
+                <li className={activePage === "purchases" ? styles.active : ""} onClick={() => setActivePage("purchases")}>
+                  <FaMusic /> Purchased Beats
+                </li>
+              )}
+
+              {/* <li className={activePage === "settings" ? styles.active : ""} onClick={() => setActivePage("settings")}>
               <FaTools /> {user?.role === "seller" ? "Selling Tools" : "Account Settings"}
             </li> */}
 
-            {/* <li onClick={handleLogout}>
+              {/* <li onClick={handleLogout}>
               <FaSignOutAlt /> Logout
             </li> */}
-          </ul>
-        </nav>
-      </aside>
+            </ul>
+          </nav>
+        </aside>
 
-      {/* Main Content */}
-      <main className={styles.mainContent}>
-        {showUploadForm ? (
-          <>
-            <div className={styles.header}>
-              <h2>Upload Beat</h2>
-              <button
-                className={styles.backBtn}
-                onClick={toggleUploadForm}
-              >
-                Back to Dashboard
-              </button>
-            </div>
+        {/* Main Content */}
+        <main className={styles.mainContent}>
+          {showUploadForm ? (
+            <>
+              <div className={styles.header}>
+                <h2>Upload Beat</h2>
+                <button
+                  className={styles.backBtn}
+                  onClick={toggleUploadForm}
+                >
+                  Back to Dashboard
+                </button>
+              </div>
 
-            <UploadBeat onUploadComplete={handleUploadComplete} />
-          </>
-        ) : (
-          <>
-            <div className={styles.header}>
-              <h2>Dashboard</h2>
-              {user?.role === "seller" && (
-                <div className={styles.headerActions}>
-                  <button
-                    className={styles.upgradeBtn}
-                    onClick={handleUpgrade}
-                  >
-                    Upgrade Plan
-                  </button>
-                </div>
-              )}
-            </div>
+              <UploadBeat onUploadComplete={handleUploadComplete} />
+            </>
+          ) : (
+            <>
+              <div className={styles.header}>
+                {activePage === "dashboard" && (
+                  <>
+                    <h2>Dashboard</h2>
+                    {user?.role === "seller" && (
+                      <div className={styles.headerActions}>
+                        <button
+                          className={styles.upgradeBtn}
+                          onClick={handleUpgrade}
+                        >
+                          Upgrade Plan
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
 
-            {renderDashboardContent()}
-          </>
-        )}
-      </main>
-    </div>
+                {activePage === "profile" && (
+                  <h2>Edit Profile</h2>
+                )}
+
+                {activePage === "wallet" && (
+                  <h2>Seller Wallet</h2>
+                )}
+
+                {activePage === "purchases" && (
+                  <h2>Purchased Beats</h2>
+                )}
+              </div>
+
+              {renderDashboardContent()}
+            </>
+          )}
+        </main>
+      </div>
     </>
   );
 };
