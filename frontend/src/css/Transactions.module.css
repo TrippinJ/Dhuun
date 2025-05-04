@@ -1,0 +1,303 @@
+/* In frontend/src/css/Transactions.module.css */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  .header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+  }
+  
+  .backButton {
+    background: none;
+    border: none;
+    color: #555;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    margin-right: 20px;
+  }
+  
+  .backButton svg {
+    margin-right: 5px;
+  }
+  
+  .header h1 {
+    font-size: 24px;
+    margin: 0;
+    color: #333;
+  }
+  
+  .controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .filterControl {
+    display: flex;
+    align-items: center;
+  }
+  
+  .filterControl label {
+    margin-right: 10px;
+    font-size: 14px;
+    color: #555;
+  }
+  
+  .filterControl select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  
+  .exportButton {
+    background-color: #7B2CBF;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 15px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+  }
+  
+  .exportButton svg {
+    margin-right: 5px;
+  }
+  
+  .transactionsTable {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+  }
+  
+  .tableHeader {
+    display: grid;
+    grid-template-columns: 1fr 0.7fr 2fr 0.8fr 0.8fr;
+    background-color: #f8f8f8;
+    padding: 15px;
+    font-weight: 600;
+    color: #333;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .tableRow {
+    display: grid;
+    grid-template-columns: 1fr 0.7fr 2fr 0.8fr 0.8fr;
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    align-items: center;
+  }
+  
+  .tableRow:last-child {
+    border-bottom: none;
+  }
+  
+  .dateColumn, .typeColumn, .descriptionColumn, .statusColumn, .amountColumn {
+    padding: 0 10px;
+  }
+  
+  .typeTag {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    text-transform: capitalize;
+  }
+  
+  .typeTag.sale {
+    background-color: #e3f2fd;
+    color: #1565c0;
+  }
+  
+  .typeTag.withdrawal {
+    background-color: #f3e5f5;
+    color: #7b1fa2;
+  }
+  
+  .typeTag.refund {
+    background-color: #fff3e0;
+    color: #e65100;
+  }
+  
+  .typeTag.adjustment {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+  }
+  
+  .statusTag {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    text-transform: uppercase;
+  }
+  
+  .statusTag.completed {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+  }
+  
+  .statusTag.pending {
+    background-color: #fff8e1;
+    color: #f57c00;
+  }
+  
+  .statusTag.failed {
+    background-color: #ffebee;
+    color: #d32f2f;
+  }
+  
+  .amountColumn {
+    font-weight: 600;
+    text-align: right;
+  }
+  
+  .amountColumn.positive {
+    color: #2e7d32;
+  }
+  
+  .amountColumn.negative {
+    color: #d32f2f;
+  }
+  
+  .noTransactions {
+    text-align: center;
+    padding: 50px 0;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .emptyIcon {
+    font-size: 48px;
+    color: #ddd;
+    margin-bottom: 20px;
+  }
+  
+  .noTransactions h3 {
+    font-size: 18px;
+    color: #333;
+    margin: 0 0 10px;
+  }
+  
+  .noTransactions p {
+    color: #777;
+    margin: 0;
+  }
+  
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 30px;
+  }
+  
+  .pageButton {
+    background-color: #f0f0f0;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 15px;
+    margin: 0 5px;
+    cursor: pointer;
+    color: #333;
+  }
+  
+  .pageButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .pageNumbers {
+    display: flex;
+    margin: 0 10px;
+  }
+  
+  .pageNumber {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    background: none;
+    border: none;
+    margin: 0 3px;
+    cursor: pointer;
+    color: #333;
+  }
+  
+  .activePage {
+    background-color: #7B2CBF;
+    color: white;
+  }
+  
+  .ellipsis {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 3px;
+    color: #777;
+  }
+  
+  .loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 300px;
+    font-size: 18px;
+    color: #777;
+  }
+  
+  .errorMessage {
+    background-color: #ffebee;
+    color: #d32f2f;
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    border-left: 4px solid #d32f2f;
+  }
+  
+  /* Media queries for responsiveness */
+  @media (max-width: 768px) {
+    .tableHeader, .tableRow {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+    
+    .descriptionColumn {
+      grid-column: span 3;
+      margin-top: 10px;
+    }
+    
+    .statusColumn, .amountColumn {
+      margin-top: 10px;
+    }
+    
+    .controls {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+
+      
+    }
+    
+    .header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    
+    .backButton {
+      margin-bottom: 10px;
+    }
+  }

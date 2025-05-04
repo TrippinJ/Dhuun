@@ -60,7 +60,8 @@ function App() {
               <Route path="/verify-otp" element={<VerifyOTP />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
-
+              <Route path="/transactions" element={<Transactions />} />
+              
               {/* Protected Routes */}
               <Route
                 path="/dashboard"

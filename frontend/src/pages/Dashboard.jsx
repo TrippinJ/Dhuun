@@ -15,10 +15,12 @@ import {
   FaEdit,
   FaTrash,
   FaHeadphones,
-  FaUserEdit
+  FaUserEdit,
+  FaWallet
 } from "react-icons/fa";
 import UploadBeat from "../Components/UploadBeat";
 import PurchasedBeats from "../Components/PurchasedBeats";
+import SellerWallet from "../Components/SellerWallet";
 
 const Dashboard = ({ activePage: initialPage }) => {
   const navigate = useNavigate();
@@ -291,6 +293,9 @@ const Dashboard = ({ activePage: initialPage }) => {
       return <div className={styles.error}>{error}</div>;
     }
     
+    if (activePage === "wallet") {
+      return <SellerWallet />;
+    }
 
     if (activePage === "purchases") {
       return <PurchasedBeats />;
@@ -476,8 +481,8 @@ const Dashboard = ({ activePage: initialPage }) => {
             </li>
 
             {user?.role === "seller" ? (
-              <li className={activePage === "beats" ? styles.active : ""} onClick={() => setActivePage("beats")}>
-                <FaMusic /> My Beats
+              <li className={activePage === "wallet " ? styles.active : ""} onClick={() => setActivePage("wallet")}>
+                <FaWallet /> Wallet
               </li>
             ) : (
               <li className={activePage === "purchases" ? styles.active : ""} onClick={() => setActivePage("purchases")}>
