@@ -42,31 +42,65 @@ export const createOrder = async (req, res) => {
 
     // Process each item in the order
     for (const item of items) {
-      // Increment purchases count for the beat
-      await Beat.findByIdAndUpdate(
-        item.beatId,
-        { $inc: { purchases: 1 } }
-      );
+      try {
+        // Get beat details
+        const beat = await Beat.findById(item.beatId);
 
-      const licenseType = item.license?.toLowerCase() || '';
+        if (!beat) {
+          console.error(`Beat not found: ${item.beatId}`);
+          continue;
+        }
 
-      // Check if this is an exclusive license (handling different variations)
-      if (licenseType === 'exclusive' || licenseType === 'exclusive license') {
-        console.log(`Processing exclusive license for beat: ${item.beatId}`);
-
-        // Mark the beat as exclusively sold
-        const updatedBeat = await Beat.findByIdAndUpdate(
+        // Increment purchases count for the beat
+        await Beat.findByIdAndUpdate(
           item.beatId,
-          {
-            isExclusiveSold: true,
-            exclusiveSoldTo: req.user.id,
-            exclusiveSoldDate: new Date(),
-            exclusiveOrderId: order._id
-          },
-          { new: true } // Return the updated document
+          { $inc: { purchases: 1 } }
         );
 
-        console.log(`Beat marked as exclusively sold: ${updatedBeat?._id}, isExclusiveSold: ${updatedBeat?.isExclusiveSold}`);
+        // Process payment to seller
+        if (beat.producer) {
+          // Get seller details and revenue share percentage
+          const seller = await User.findById(beat.producer);
+          const revenueShare = seller?.subscription?.revenueShare || 60; // Default to 60%
+
+          // Calculate seller's amount
+          const sellerAmount = (item.price * revenueShare) / 100;
+
+          // Credit seller's wallet
+          await addTransaction(beat.producer, {
+            type: 'sale',
+            amount: sellerAmount,
+            description: `Sale of "${beat.title}" (${item.license} license)`,
+            orderId: order._id,
+            status: 'completed'
+          });
+
+          console.log(`Credited $${sellerAmount} to seller ${beat.producer} for beat "${beat.title}"`);
+        }
+
+        const licenseType = item.license?.toLowerCase() || '';
+
+        // Check if this is an exclusive license (handling different variations)
+        if (licenseType === 'exclusive' || licenseType === 'exclusive license') {
+          console.log(`Processing exclusive license for beat: ${item.beatId}`);
+
+          // Mark the beat as exclusively sold
+          const updatedBeat = await Beat.findByIdAndUpdate(
+            item.beatId,
+            {
+              isExclusiveSold: true,
+              exclusiveSoldTo: req.user.id,
+              exclusiveSoldDate: new Date(),
+              exclusiveOrderId: order._id
+            },
+            { new: true } // Return the updated document
+          );
+
+          console.log(`Beat marked as exclusively sold: ${updatedBeat?._id}, isExclusiveSold: ${updatedBeat?.isExclusiveSold}`);
+        }
+      } catch (itemError) {
+        console.error(`Error processing order item ${item.beatId}:`, itemError);
+        // Continue with other items even if one fails
       }
     }
 

@@ -1,4 +1,3 @@
-// In backend/controllers/walletController.js
 import Wallet from '../models/wallet.js';
 import User from '../models/user.js';
 
