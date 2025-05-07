@@ -4,6 +4,7 @@ import Beat from '../models/beat.js';
 import User from '../models/user.js';
 import { verifyPayment } from '../utils/khaltiPayment.js';
 import { sendOrderConfirmation } from '../utils/emailService.js';
+import { addTransaction } from './walletController.js';
 
 // Create a new order
 export const createOrder = async (req, res) => {
@@ -100,7 +101,7 @@ export const createOrder = async (req, res) => {
         }
       } catch (itemError) {
         console.error(`Error processing order item ${item.beatId}:`, itemError);
-        // Continue with other items even if one fails
+        
       }
     }
 

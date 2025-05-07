@@ -11,14 +11,32 @@ const SellerWallet = () => {
   const [withdrawMethod, setWithdrawMethod] = useState("bank");
   const [withdrawLoading, setWithdrawLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
-  
+
   // Fetch wallet data
   useEffect(() => {
     const fetchWallet = async () => {
       try {
         setLoading(true);
-        const response = await API.get("/api/wallet");
-        setWallet(response.data.wallet);
+        const token = localStorage.getItem("token");
+
+        if (!token) {
+          setError("Authentication required");
+          setLoading(false);
+          return;
+        }
+
+        const response = await API.get("/api/wallet", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        console.log("Wallet data:", response.data); // For debugging
+
+        if (response.data && response.data.wallet) {
+          setWallet(response.data.wallet);
+        } else {
+          throw new Error("Invalid wallet data format");
+        }
+
         setLoading(false);
       } catch (error) {
         console.error("Error fetching wallet:", error);
@@ -26,45 +44,45 @@ const SellerWallet = () => {
         setLoading(false);
       }
     };
-    
+
     fetchWallet();
   }, []);
-  
+
   // Handle withdraw request
   const handleWithdraw = async (e) => {
     e.preventDefault();
-    
+
     // Validate amount
     const amount = parseFloat(withdrawAmount);
     if (isNaN(amount) || amount <= 0) {
       setError("Please enter a valid withdrawal amount");
       return;
     }
-    
+
     if (amount > wallet.balance) {
       setError(`Insufficient balance. Available: $${wallet.balance.toFixed(2)}`);
       return;
     }
-    
+
     try {
       setWithdrawLoading(true);
       setError(null);
-      
+
       const response = await API.post("/api/wallet/withdraw", {
         amount,
         paymentMethod: withdrawMethod
       });
-      
+
       setSuccessMessage("Withdrawal request submitted successfully");
       setWithdrawAmount("");
-      
+
       // Update wallet balance
       setWallet({
         ...wallet,
         pendingBalance: response.data.pendingBalance,
         availableBalance: response.data.availableBalance
       });
-      
+
       // Clear success message after 5 seconds
       setTimeout(() => {
         setSuccessMessage("");
@@ -76,28 +94,28 @@ const SellerWallet = () => {
       setWithdrawLoading(false);
     }
   };
-  
+
   // Format date
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
-  
+
   if (loading) {
     return <div className={styles.loading}>Loading wallet...</div>;
   }
-  
+
   if (!wallet) {
     return <div className={styles.error}>Wallet information not available</div>;
   }
-  
+
   return (
     <div className={styles.walletContainer}>
       {/* <h2 className={styles.walletTitle}>Seller Wallet</h2> */}
-      
+
       {error && <div className={styles.errorMessage}>{error}</div>}
       {successMessage && <div className={styles.successMessage}>{successMessage}</div>}
-      
+
       <div className={styles.balanceCards}>
         <div className={styles.balanceCard}>
           <div className={styles.balanceIcon}>
@@ -109,7 +127,7 @@ const SellerWallet = () => {
             <div className={styles.balanceNote}>Ready to withdraw</div>
           </div>
         </div>
-        
+
         <div className={styles.balanceCard}>
           <div className={styles.balanceIcon}>
             <FaMoneyBillWave />
@@ -121,7 +139,7 @@ const SellerWallet = () => {
           </div>
         </div>
       </div>
-      
+
       <div className={styles.walletSections}>
         <div className={styles.withdrawSection}>
           <h3>Withdraw Funds</h3>
@@ -138,7 +156,7 @@ const SellerWallet = () => {
                 required
               />
             </div>
-            
+
             <div className={styles.formGroup}>
               <label>Payment Method</label>
               <select
@@ -151,7 +169,7 @@ const SellerWallet = () => {
                 <option value="khalti">Khalti</option>
               </select>
             </div>
-            
+
             <button
               type="submit"
               className={styles.withdrawButton}
@@ -161,18 +179,18 @@ const SellerWallet = () => {
             </button>
           </form>
         </div>
-        
+
         <div className={styles.transactionsSection}>
           <div className={styles.sectionHeader}>
             <h3>Recent Transactions</h3>
-            <button 
+            <button
               className={styles.viewAllButton}
               onClick={() => navigate("/transactions")}
             >
               View All <FaChevronRight />
             </button>
           </div>
-          
+
           {wallet.transactions && wallet.transactions.length > 0 ? (
             <div className={styles.transactionsList}>
               {wallet.transactions.map((transaction, index) => (
