@@ -3,6 +3,7 @@ import User from '../models/user.js';
 import { uploadFileToCloudinary, deleteFile } from '../utils/storageManger.js';
 
 // Submit verification documents
+
 export const submitDocuments = async (req, res) => {
   try {
     // Check if user already has a verification record
@@ -25,46 +26,56 @@ export const submitDocuments = async (req, res) => {
     // Process document uploads
     const uploadedDocs = [];
     
-    if (!req.files || Object.keys(req.files).length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'No files uploaded'
-      });
-    }
-    
-    // Handle each document type
-    for (const [key, files] of Object.entries(req.files)) {
-      if (!files || files.length === 0) continue;
+    // Check if we have files or just updating payment details
+    if (req.files && Object.keys(req.files).length > 0) {
+      // Handle each document type
+      for (const [key, files] of Object.entries(req.files)) {
+        if (!files || files.length === 0) continue;
+        
+        const file = files[0];
+        const documentType = key.replace('Document', ''); // e.g., 'idDocument' -> 'id'
+        
+        // Upload to Cloudinary
+        const result = await uploadFileToCloudinary(
+          file.path,
+          false, // Not audio
+          { folder: `dhuun/verification/${req.user.id}` }
+        );
+        
+        // Add document to the array
+        uploadedDocs.push({
+          type: documentType,
+          fileUrl: result.url,
+          filePublicId: result.publicId,
+          uploadDate: new Date()
+        });
+      }
       
-      const file = files[0];
-      const documentType = key.replace('Document', ''); // e.g., 'idDocument' -> 'id'
-      
-      // Upload to Cloudinary
-      const result = await uploadFileToCloudinary(
-        file.path,
-        false, // Not audio
-        { folder: `dhuun/verification/${req.user.id}` }
+      // Add new documents to the verification record
+      verification.documents = verification.documents.filter(doc => 
+        !uploadedDocs.some(newDoc => newDoc.type === doc.type)
       );
-      
-      // Add document to the array
-      uploadedDocs.push({
-        type: documentType,
-        fileUrl: result.url,
-        filePublicId: result.publicId,
-        uploadDate: new Date()
-      });
+      verification.documents.push(...uploadedDocs);
     }
     
     // Process payment details if provided
     if (req.body.paymentMethod) {
       verification.payoutDetails = {
-        paymentMethod: req.body.paymentMethod,
-        ...req.body
+        paymentMethod: req.body.paymentMethod
       };
+      
+      // Add appropriate fields based on payment method
+      if (req.body.paymentMethod === 'bank') {
+        verification.payoutDetails.bankName = req.body.bankName;
+        verification.payoutDetails.accountNumber = req.body.accountNumber;
+        verification.payoutDetails.accountName = req.body.accountName;
+      } else if (req.body.paymentMethod === 'khalti') {
+        verification.payoutDetails.khaltiId = req.body.khaltiId;
+      } else if (req.body.paymentMethod === 'esewa') {
+        verification.payoutDetails.eSewa = req.body.eSewa;
+      }
     }
     
-    // Add new documents to the verification record
-    verification.documents.push(...uploadedDocs);
     verification.status = 'pending';
     verification.lastUpdated = new Date();
     
@@ -89,7 +100,7 @@ export const submitDocuments = async (req, res) => {
   }
 };
 
-// Get verification status
+// Improve the getVerificationStatus function
 export const getVerificationStatus = async (req, res) => {
   try {
     const verification = await Verification.findOne({ user: req.user.id });
@@ -98,7 +109,9 @@ export const getVerificationStatus = async (req, res) => {
       return res.json({
         success: true,
         status: 'not_submitted',
-        message: 'Verification documents not yet submitted'
+        message: 'Verification documents not yet submitted',
+        documents: [],
+        payoutDetails: null
       });
     }
     
@@ -108,7 +121,9 @@ export const getVerificationStatus = async (req, res) => {
       documents: verification.documents.map(doc => ({
         type: doc.type,
         uploadDate: doc.uploadDate,
-        verifiedDate: doc.verifiedDate
+        verifiedDate: doc.verifiedDate,
+        fileUrl: doc.fileUrl,
+        filePublicId: doc.filePublicId
       })),
       payoutDetails: verification.payoutDetails,
       lastUpdated: verification.lastUpdated

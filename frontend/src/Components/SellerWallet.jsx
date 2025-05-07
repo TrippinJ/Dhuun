@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { FaWallet, FaMoneyBillWave, FaExchangeAlt, FaChevronRight } from "react-icons/fa";
 import API from "../api/api";
 import styles from "../css/SellerWallet.module.css";
 
 const SellerWallet = () => {
+  const navigate = useNavigate();
   const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -101,6 +103,23 @@ const SellerWallet = () => {
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
+  // Filter out duplicate transactions
+  const getUniqueTransactions = (transactions) => {
+    // Create a Map using transaction description and date as composite key
+    // This will automatically remove duplicates with the same description and date
+    const uniqueTransactionsMap = new Map();
+    
+    transactions.forEach(transaction => {
+      const key = `${transaction.description}-${transaction.createdAt}-${transaction.amount}`;
+      if (!uniqueTransactionsMap.has(key)) {
+        uniqueTransactionsMap.set(key, transaction);
+      }
+    });
+    
+    // Convert map values back to array and return
+    return Array.from(uniqueTransactionsMap.values());
+  };
+
   if (loading) {
     return <div className={styles.loading}>Loading wallet...</div>;
   }
@@ -109,10 +128,12 @@ const SellerWallet = () => {
     return <div className={styles.error}>Wallet information not available</div>;
   }
 
+  // Get unique transactions for display
+  const uniqueTransactions = wallet.transactions ? 
+    getUniqueTransactions(wallet.transactions) : [];
+
   return (
     <div className={styles.walletContainer}>
-      {/* <h2 className={styles.walletTitle}>Seller Wallet</h2> */}
-
       {error && <div className={styles.errorMessage}>{error}</div>}
       {successMessage && <div className={styles.successMessage}>{successMessage}</div>}
 
@@ -191,10 +212,10 @@ const SellerWallet = () => {
             </button>
           </div>
 
-          {wallet.transactions && wallet.transactions.length > 0 ? (
+          {uniqueTransactions.length > 0 ? (
             <div className={styles.transactionsList}>
-              {wallet.transactions.map((transaction, index) => (
-                <div key={index} className={styles.transactionItem}>
+              {uniqueTransactions.map((transaction, index) => (
+                <div key={`${transaction.description}-${transaction.createdAt}-${index}`} className={styles.transactionItem}>
                   <div className={styles.transactionIcon}>
                     <FaExchangeAlt />
                   </div>

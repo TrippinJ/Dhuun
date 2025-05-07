@@ -16,12 +16,14 @@ import {
   FaTrash,
   FaHeadphones,
   FaUserEdit,
+  FaIdCard,
   FaWallet
 } from "react-icons/fa";
 import UploadBeat from "../Components/UploadBeat";
 import PurchasedBeats from "../Components/PurchasedBeats";
 import SellerWallet from "../Components/SellerWallet";
 import EditProfile from "../Components/EditProfile";
+import DocumentVerification from '../Components/DocumentVerification';
 
 const Dashboard = ({ activePage: initialPage }) => {
   const navigate = useNavigate();
@@ -301,6 +303,10 @@ const Dashboard = ({ activePage: initialPage }) => {
       return <EditProfile />;
     }
 
+    if (activePage === "verification") {
+      return <DocumentVerification />;
+    }
+
     // Return different content based on user role
     if (user?.role === "seller") {
       return (
@@ -524,9 +530,14 @@ const Dashboard = ({ activePage: initialPage }) => {
               </li>
 
               {user?.role === "seller" ? (
+                <>
                 <li className={activePage === "wallet" ? styles.active : ""} onClick={() => setActivePage("wallet")}>
                   <FaWallet /> Wallet
                 </li>
+                <li className={activePage === "verification" ? styles.active : ""} onClick={() => setActivePage("verification")}>
+                <FaIdCard /> Verify Account
+              </li>
+              </>
               ) : (
                 <li className={activePage === "purchases" ? styles.active : ""} onClick={() => setActivePage("purchases")}>
                   <FaMusic /> Purchased Beats
