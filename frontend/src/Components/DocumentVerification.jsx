@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaIdCard, FaFileUpload, FaCheckCircle, FaTimesCircle, FaSpinner } from "react-icons/fa";
+import { FaIdCard, FaFileUpload, FaCheckCircle, FaTimesCircle, FaSpinner, FaUpload } from "react-icons/fa";
 import API from "../api/api";
 import styles from "../css/DocumentVerification.module.css";
 

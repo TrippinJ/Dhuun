@@ -154,6 +154,7 @@
   padding: 20px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
   border: 1px solid #333333;
+  /* color: #FFFFFF; */
 }
 
 .paymentSection h2 {
@@ -297,8 +298,6 @@
   font-size: 1.2rem;
 }
 
-/* Add these styles to your existing Checkout.module.css */
-
 .paymentOptions {
   margin: 20px 0;
 }
@@ -361,12 +360,10 @@
   font-size: 1.2rem;
 }
 
-/* In frontend/src/css/Checkout.module.css */
-
 .paymentOptions {
   margin-top: 20px;
   padding: 20px;
-  background-color: #f9f9f9;
+  background-color: #2A2A2A;
   border-radius: 8px;
 }
 
@@ -382,17 +379,19 @@
   align-items: center;
   padding: 15px;
   border-radius: 8px;
-  border: 1px solid #ddd;
+  border: 1px solid #7b2cbf;
+  background-color: #2A2A2A;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .paymentMethod:hover {
   border-color: #7b2cbf;
+  background-color: #333333;
 }
 
 .paymentMethod.selected {
-  border-color: #7b2cbf;
+  border-color: #ddd;
   background-color: rgba(123, 44, 191, 0.05);
 }
 
