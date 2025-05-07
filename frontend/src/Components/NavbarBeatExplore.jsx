@@ -146,6 +146,69 @@ const NavbarBeatExplore = () => {
     }
   }, []);
 
+  const refreshUserData = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setIsLoggedIn(false);
+        return;
+      }
+
+      // Get user from localStorage first (for immediate display)
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        try {
+          const userData = JSON.parse(storedUser);
+          setUserName(userData.username || userData.name || "User");
+          setUserRole(userData.role || "buyer");
+          if (userData.avatar) {
+            setUserAvatar(userData.avatar);
+          }
+        } catch (error) {
+          console.error("Error parsing stored user data", error);
+        }
+      }
+
+      // Then fetch fresh data from server
+      const response = await API.get("/api/auth/me", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data) {
+        // Update state with fresh data
+        setUserName(response.data.username || response.data.name || "User");
+        setUserRole(response.data.role || "buyer");
+
+        if (response.data.avatar) {
+          setUserAvatar(response.data.avatar);
+        }
+
+        // Update localStorage with latest data
+        localStorage.setItem("user", JSON.stringify(response.data));
+      }
+    } catch (error) {
+      console.error("Error refreshing user data:", error);
+      // If 401 error, token might be expired
+      if (error.response?.status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        setIsLoggedIn(false);
+      }
+    }
+  };
+
+  // Use this in your existing useEffect
+  useEffect(() => {
+    refreshUserData();
+
+    // Create a window event listener for profile updates
+    window.addEventListener("profileUpdated", refreshUserData);
+
+    return () => {
+      window.removeEventListener("profileUpdated", refreshUserData);
+    };
+  }, []);
+
   // Updated function to handle dashboard navigation based on role
   const navigateToDashboard = () => {
     if (userRole === "admin") {

@@ -1,25 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import { FaUpload, FaCheckCircle, FaTimesCircle, FaSpinner, FaFileAlt, FaIdCard } from 'react-icons/fa';
-import API from '../api/api';
+import React, { useState, useEffect } from "react";
+import { FaIdCard, FaFileUpload, FaCheckCircle, FaTimesCircle, FaSpinner } from "react-icons/fa";
+import API from "../api/api";
+import styles from "../css/DocumentVerification.module.css";
 
 const DocumentVerification = () => {
+  const [verificationStatus, setVerificationStatus] = useState("not_submitted");
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [uploadLoading, setUploadLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState('');
-  const [verificationStatus, setVerificationStatus] = useState('not_submitted');
-  
-  // Payment details for withdrawals
-  const [paymentDetails, setPaymentDetails] = useState({
-    paymentMethod: 'bank',
-    bankName: '',
-    accountNumber: '',
-    accountName: '',
-    khaltiId: '',
-    eSewa: ''
+  const [uploadedFiles, setUploadedFiles] = useState({
+    idDocument: null,
+    addressDocument: null,
+    bankDocument: null
   });
+  const [paymentMethod, setPaymentMethod] = useState("bank");
+  const [paymentDetails, setPaymentDetails] = useState({
+    bankName: "",
+    accountNumber: "",
+    accountName: "",
+    khaltiId: "",
+    paypalEmail: ""
+  });
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
+  // Fetch verification status on component mount
   useEffect(() => {
     fetchVerificationStatus();
   }, []);
@@ -27,413 +32,320 @@ const DocumentVerification = () => {
   const fetchVerificationStatus = async () => {
     try {
       setLoading(true);
-      const response = await API.get('/api/verification/status');
-      console.log("Verification status response:", response.data);
+      const response = await API.get("/api/verification/status");
       
       if (response.data.success) {
         setVerificationStatus(response.data.status);
-        if (response.data.documents) {
-          setDocuments(response.data.documents);
-        }
+        setDocuments(response.data.documents || []);
+        
+        // If payout details exist, populate the form
         if (response.data.payoutDetails) {
-          setPaymentDetails(prev => ({
-            ...prev,
-            ...response.data.payoutDetails
-          }));
+          setPaymentMethod(response.data.payoutDetails.paymentMethod || "bank");
+          setPaymentDetails({
+            bankName: response.data.payoutDetails.bankName || "",
+            accountNumber: response.data.payoutDetails.accountNumber || "",
+            accountName: response.data.payoutDetails.accountName || "",
+            khaltiId: response.data.payoutDetails.khaltiId || "",
+            paypalEmail: response.data.payoutDetails.paypalEmail || ""
+          });
         }
       }
+      
+      setLoading(false);
     } catch (error) {
       console.error("Error fetching verification status:", error);
       setError("Failed to load verification status");
-    } finally {
       setLoading(false);
     }
   };
 
-  const handleFileChange = (e, documentType) => {
-    // This will be triggered when a file is selected
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      handleUpload(file, documentType);
+  const handleFileChange = (e) => {
+    const { name, files } = e.target;
+    if (files && files.length > 0) {
+      setUploadedFiles({
+        ...uploadedFiles,
+        [name]: files[0]
+      });
     }
   };
 
-  const handleUpload = async (file, documentType) => {
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setPaymentDetails({
+      ...paymentDetails,
+      [name]: value
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Validate inputs before submission
+    if (paymentMethod === "bank" && (!paymentDetails.bankName || !paymentDetails.accountNumber)) {
+      setError("Please fill in all required bank details");
+      return;
+    }
+    
+    if (paymentMethod === "khalti" && !paymentDetails.khaltiId) {
+      setError("Please enter your Khalti ID");
+      return;
+    }
+    
+    if (paymentMethod === "paypal" && !paymentDetails.paypalEmail) {
+      setError("Please enter your PayPal email");
+      return;
+    }
+    
     try {
-      setUploadLoading(true);
+      setSubmitLoading(true);
       setError(null);
-      setSuccess('');
       
+      // Create form data for file uploads
       const formData = new FormData();
-      formData.append(`${documentType}Document`, file);
       
-      // Add payment details if they exist
-      if (paymentDetails.paymentMethod) {
-        formData.append('paymentMethod', paymentDetails.paymentMethod);
-        
-        if (paymentDetails.paymentMethod === 'bank') {
-          formData.append('bankName', paymentDetails.bankName);
-          formData.append('accountNumber', paymentDetails.accountNumber);
-          formData.append('accountName', paymentDetails.accountName);
-        } else if (paymentDetails.paymentMethod === 'khalti') {
-          formData.append('khaltiId', paymentDetails.khaltiId);
-        } else if (paymentDetails.paymentMethod === 'esewa') {
-          formData.append('eSewa', paymentDetails.eSewa);
-        }
+      // Add files if selected
+      if (uploadedFiles.idDocument) {
+        formData.append("idDocument", uploadedFiles.idDocument);
       }
       
-      const response = await API.post('/api/verification/submit', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      if (uploadedFiles.addressDocument) {
+        formData.append("addressDocument", uploadedFiles.addressDocument);
+      }
+      
+      if (uploadedFiles.bankDocument) {
+        formData.append("bankDocument", uploadedFiles.bankDocument);
+      }
+      
+      // Add payment details
+      formData.append("paymentMethod", paymentMethod);
+      
+      if (paymentMethod === "bank") {
+        formData.append("bankName", paymentDetails.bankName);
+        formData.append("accountNumber", paymentDetails.accountNumber);
+        formData.append("accountName", paymentDetails.accountName);
+      } else if (paymentMethod === "khalti") {
+        formData.append("khaltiId", paymentDetails.khaltiId);
+      } else if (paymentMethod === "paypal") {
+        formData.append("paypalEmail", paymentDetails.paypalEmail);
+      }
+      
+      // Submit verification documents
+      const response = await API.post("/api/verification/submit", formData);
       
       if (response.data.success) {
-        setSuccess(`${documentType.toUpperCase()} document uploaded successfully`);
-        fetchVerificationStatus(); // Refresh documents
+        setSuccessMessage("Verification documents submitted successfully!");
+        fetchVerificationStatus(); // Refresh status
       }
     } catch (error) {
-      console.error(`Error uploading ${documentType} document:`, error);
-      setError(error.response?.data?.message || `Failed to upload ${documentType} document`);
+      console.error("Error submitting verification:", error);
+      setError(error.response?.data?.message || "Failed to submit verification documents");
     } finally {
-      setUploadLoading(false);
-    }
-  };
-
-  const handlePaymentDetailChange = (e) => {
-    const { name, value } = e.target;
-    setPaymentDetails(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  // Status badge component
-  const StatusBadge = ({ status }) => {
-    switch (status) {
-      case 'approved':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-            <FaCheckCircle className="mr-1" /> Verified
-          </span>
-        );
-      case 'pending':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-            <FaSpinner className="mr-1 animate-spin" /> Under Review
-          </span>
-        );
-      case 'rejected':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-            <FaTimesCircle className="mr-1" /> Rejected
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-            <FaFileAlt className="mr-1" /> Not Submitted
-          </span>
-        );
+      setSubmitLoading(false);
     }
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <FaSpinner className="animate-spin text-purple-600 text-3xl" />
-      </div>
-    );
+    return <div className={styles.loading}>Loading verification status...</div>;
   }
 
-  // Find if specific document types exist
-  const findDocument = (type) => documents.find(doc => doc.type === type);
-  const idDocument = findDocument('id');
-  const addressDocument = findDocument('address');
-
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <div className="mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-800">Document Verification</h2>
-          <StatusBadge status={verificationStatus} />
-        </div>
+    <div className={styles.verificationContainer}>
+      {error && <div className={styles.errorMessage}>{error}</div>}
+      {successMessage && <div className={styles.successMessage}>{successMessage}</div>}
+      
+      <div className={styles.statusCard}>
+        <h2>Verification Status</h2>
         
-        <p className="text-gray-600 mb-4">
-          Verify your account to unlock withdrawals and seller features. 
-          We require official identification documents.
-        </p>
-        
-        {error && (
-          <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
-            <p className="text-red-700">{error}</p>
+        {verificationStatus === "pending" && (
+          <div className={styles.statusPending}>
+            <FaSpinner className={styles.spinnerIcon} />
+            <p>Your verification is pending review</p>
+            <span>We'll notify you once your documents are verified</span>
           </div>
         )}
         
-        {success && (
-          <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-4">
-            <p className="text-green-700">{success}</p>
+        {verificationStatus === "approved" && (
+          <div className={styles.statusApproved}>
+            <FaCheckCircle className={styles.checkIcon} />
+            <p>Your account is verified!</p>
+            <span>You can now request withdrawals</span>
           </div>
         )}
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* ID Document Section */}
-        <div className="border rounded-lg p-4">
-          <div className="flex items-center mb-3">
-            <FaIdCard className="text-gray-600 mr-2" />
-            <h3 className="font-medium">Citizenship ID / Passport</h3>
+        
+        {verificationStatus === "rejected" && (
+          <div className={styles.statusRejected}>
+            <FaTimesCircle className={styles.timesIcon} />
+            <p>Verification rejected</p>
+            <span>Please submit new documents</span>
           </div>
-          
-          {idDocument ? (
-            <div className="mt-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">
-                  Uploaded: {new Date(idDocument.uploadDate).toLocaleDateString()}
-                </span>
-                <StatusBadge status={verificationStatus} />
+        )}
+        
+        {(verificationStatus === "not_submitted" || verificationStatus === "rejected") && (
+          <form onSubmit={handleSubmit} className={styles.verificationForm}>
+            <h3>Submit Verification Documents</h3>
+            
+            <div className={styles.documentSection}>
+              <div className={styles.documentUpload}>
+                <label>
+                  <span>ID Document (Passport/Driver's License)</span>
+                  <div className={styles.uploadBox}>
+                    <FaIdCard className={styles.idIcon} />
+                    <span>{uploadedFiles.idDocument ? uploadedFiles.idDocument.name : "Upload ID"}</span>
+                    <input
+                      type="file"
+                      name="idDocument"
+                      onChange={handleFileChange}
+                      accept="image/*,.pdf"
+                    />
+                  </div>
+                </label>
               </div>
               
-              {idDocument.fileUrl && (
-                <div className="mt-2 border rounded p-2">
-                  <img 
-                    src={idDocument.fileUrl} 
-                    alt="ID Document" 
-                    className="w-full h-auto max-h-40 object-contain"
+              <div className={styles.documentUpload}>
+                <label>
+                  <span>Proof of Address (Utility Bill)</span>
+                  <div className={styles.uploadBox}>
+                    <FaFileUpload className={styles.fileIcon} />
+                    <span>{uploadedFiles.addressDocument ? uploadedFiles.addressDocument.name : "Upload Document"}</span>
+                    <input
+                      type="file"
+                      name="addressDocument"
+                      onChange={handleFileChange}
+                      accept="image/*,.pdf"
+                    />
+                  </div>
+                </label>
+              </div>
+              
+              <div className={styles.documentUpload}>
+                <label>
+                  <span>Bank Statement (Optional)</span>
+                  <div className={styles.uploadBox}>
+                    <FaFileUpload className={styles.fileIcon} />
+                    <span>{uploadedFiles.bankDocument ? uploadedFiles.bankDocument.name : "Upload Document"}</span>
+                    <input
+                      type="file"
+                      name="bankDocument"
+                      onChange={handleFileChange}
+                      accept="image/*,.pdf"
+                    />
+                  </div>
+                </label>
+              </div>
+            </div>
+            
+            <div className={styles.paymentSection}>
+              <h3>Payment Details</h3>
+              
+              <div className={styles.paymentMethod}>
+                <label>Payment Method</label>
+                <select
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                >
+                  <option value="bank">Bank Transfer</option>
+                  <option value="khalti">Khalti</option>
+                  <option value="paypal">PayPal</option>
+                </select>
+              </div>
+              
+              {paymentMethod === "bank" && (
+                <>
+                  <div className={styles.formGroup}>
+                    <label>Bank Name</label>
+                    <input
+                      type="text"
+                      name="bankName"
+                      value={paymentDetails.bankName}
+                      onChange={handleInputChange}
+                      placeholder="Enter bank name"
+                    />
+                  </div>
+                  
+                  <div className={styles.formGroup}>
+                    <label>Account Number</label>
+                    <input
+                      type="text"
+                      name="accountNumber"
+                      value={paymentDetails.accountNumber}
+                      onChange={handleInputChange}
+                      placeholder="Enter account number"
+                    />
+                  </div>
+                  
+                  <div className={styles.formGroup}>
+                    <label>Account Holder Name</label>
+                    <input
+                      type="text"
+                      name="accountName"
+                      value={paymentDetails.accountName}
+                      onChange={handleInputChange}
+                      placeholder="Enter account holder name"
+                    />
+                  </div>
+                </>
+              )}
+              
+              {paymentMethod === "khalti" && (
+                <div className={styles.formGroup}>
+                  <label>Khalti ID</label>
+                  <input
+                    type="text"
+                    name="khaltiId"
+                    value={paymentDetails.khaltiId}
+                    onChange={handleInputChange}
+                    placeholder="Enter Khalti ID"
+                  />
+                </div>
+              )}
+              
+              {paymentMethod === "paypal" && (
+                <div className={styles.formGroup}>
+                  <label>PayPal Email</label>
+                  <input
+                    type="email"
+                    name="paypalEmail"
+                    value={paymentDetails.paypalEmail}
+                    onChange={handleInputChange}
+                    placeholder="Enter PayPal email"
                   />
                 </div>
               )}
             </div>
-          ) : (
-            <div className="mt-2">
-              <label className="block w-full">
-                <span className="sr-only">Upload Citizenship or Passport</span>
-                <div className="relative">
-                  <input 
-                    type="file" 
-                    className="hidden"
-                    onChange={(e) => handleFileChange(e, 'id')}
-                    accept="image/*,.pdf"
-                    disabled={uploadLoading}
-                  />
-                  <button 
-                    onClick={() => document.querySelector('input[type="file"]').click()}
-                    className="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
-                    disabled={uploadLoading}
-                  >
-                    {uploadLoading ? (
-                      <><FaSpinner className="animate-spin inline mr-2" /> Uploading...</>
+            
+            <button
+              type="submit"
+              className={styles.submitButton}
+              disabled={submitLoading}
+            >
+              {submitLoading ? "Submitting..." : "Submit Verification"}
+            </button>
+          </form>
+        )}
+        
+        {/* Show document list if already submitted */}
+        {documents.length > 0 && (
+          <div className={styles.documentList}>
+            <h3>Submitted Documents</h3>
+            <ul>
+              {documents.map((doc, index) => (
+                <li key={index} className={styles.documentItem}>
+                  <div className={styles.documentType}>
+                    {doc.type === "id" && "ID Document"}
+                    {doc.type === "address" && "Proof of Address"}
+                    {doc.type === "bank" && "Bank Statement"}
+                  </div>
+                  <div className={styles.documentStatus}>
+                    {doc.verifiedDate ? (
+                      <span className={styles.verified}>Verified</span>
                     ) : (
-                      <><FaUpload className="inline mr-2" /> Upload ID Document</>
+                      <span className={styles.pending}>Pending</span>
                     )}
-                  </button>
-                </div>
-              </label>
-              <p className="mt-1 text-xs text-gray-500">
-                Please upload a clear photo of your Citizenship ID, Passport, or Driving License
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Address Document Section */}
-        <div className="border rounded-lg p-4">
-          <div className="flex items-center mb-3">
-            <FaFileAlt className="text-gray-600 mr-2" />
-            <h3 className="font-medium">Address Proof</h3>
+                  </div>
+                </li>
+              ))}
+            </ul>
           </div>
-          
-          {addressDocument ? (
-            <div className="mt-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">
-                  Uploaded: {new Date(addressDocument.uploadDate).toLocaleDateString()}
-                </span>
-                <StatusBadge status={verificationStatus} />
-              </div>
-              
-              {addressDocument.fileUrl && (
-                <div className="mt-2 border rounded p-2">
-                  <img 
-                    src={addressDocument.fileUrl} 
-                    alt="Address Document" 
-                    className="w-full h-auto max-h-40 object-contain"
-                  />
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="mt-2">
-              <label className="block w-full">
-                <span className="sr-only">Upload Address Proof</span>
-                <div className="relative">
-                  <input 
-                    type="file" 
-                    className="hidden"
-                    onChange={(e) => handleFileChange(e, 'address')}
-                    accept="image/*,.pdf"
-                    disabled={uploadLoading}
-                  />
-                  <button 
-                    onClick={() => document.querySelectorAll('input[type="file"]')[1].click()}
-                    className="w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
-                    disabled={uploadLoading}
-                  >
-                    {uploadLoading ? (
-                      <><FaSpinner className="animate-spin inline mr-2" /> Uploading...</>
-                    ) : (
-                      <><FaUpload className="inline mr-2" /> Upload Address Proof</>
-                    )}
-                  </button>
-                </div>
-              </label>
-              <p className="mt-1 text-xs text-gray-500">
-                Please upload a utility bill, bank statement, or Voter ID showing your address
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-      
-      {/* Payment Details Section */}
-      <div className="mt-8">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4">Payment Details for Withdrawals</h2>
-        
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Payment Method
-          </label>
-          <select
-            name="paymentMethod"
-            value={paymentDetails.paymentMethod}
-            onChange={handlePaymentDetailChange}
-            className="block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
-          >
-            <option value="bank">Bank Transfer</option>
-            <option value="khalti">Khalti</option>
-            <option value="esewa">eSewa</option>
-          </select>
-        </div>
-        
-        {paymentDetails.paymentMethod === 'bank' && (
-          <>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Bank Name
-              </label>
-              <input
-                type="text"
-                name="bankName"
-                value={paymentDetails.bankName}
-                onChange={handlePaymentDetailChange}
-                className="block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
-                placeholder="e.g., Nepal Investment Bank, NIC Asia"
-              />
-            </div>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Account Holder Name
-              </label>
-              <input
-                type="text"
-                name="accountName"
-                value={paymentDetails.accountName}
-                onChange={handlePaymentDetailChange}
-                className="block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
-                placeholder="Full name as per bank account"
-              />
-            </div>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Account Number
-              </label>
-              <input
-                type="text"
-                name="accountNumber"
-                value={paymentDetails.accountNumber}
-                onChange={handlePaymentDetailChange}
-                className="block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
-                placeholder="Your bank account number"
-              />
-            </div>
-          </>
-        )}
-        
-        {paymentDetails.paymentMethod === 'khalti' && (
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Khalti ID / Mobile Number
-            </label>
-            <input
-              type="text"
-              name="khaltiId"
-              value={paymentDetails.khaltiId}
-              onChange={handlePaymentDetailChange}
-              className="block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
-              placeholder="Your Khalti registered mobile number"
-            />
-          </div>
-        )}
-        
-        {paymentDetails.paymentMethod === 'esewa' && (
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              eSewa ID / Mobile Number
-            </label>
-            <input
-              type="text"
-              name="eSewa"
-              value={paymentDetails.eSewa}
-              onChange={handlePaymentDetailChange}
-              className="block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
-              placeholder="Your eSewa registered mobile number"
-            />
-          </div>
-        )}
-        
-        <div className="mt-4">
-          <button
-            type="button"
-            onClick={() => handleUpload(null, 'payment')}
-            className="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
-            disabled={uploadLoading}
-          >
-            {uploadLoading ? (
-              <><FaSpinner className="animate-spin mr-2" /> Saving...</>
-            ) : (
-              'Save Payment Details'
-            )}
-          </button>
-        </div>
-      </div>
-      
-      {/* Verification Status Info */}
-      <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-        <h3 className="font-medium text-gray-800 mb-2">Verification Status: <StatusBadge status={verificationStatus} /></h3>
-        
-        {verificationStatus === 'pending' && (
-          <p className="text-sm text-gray-600">
-            Your documents are under review. This usually takes 1-2 business days. 
-            We'll notify you once the verification is complete.
-          </p>
-        )}
-        
-        {verificationStatus === 'approved' && (
-          <p className="text-sm text-green-600">
-            Congratulations! Your account is fully verified. You can now request withdrawals.
-          </p>
-        )}
-        
-        {verificationStatus === 'rejected' && (
-          <p className="text-sm text-red-600">
-            Unfortunately, your verification was rejected. Please upload new documents with better quality.
-          </p>
-        )}
-        
-        {verificationStatus === 'not_submitted' && (
-          <p className="text-sm text-gray-600">
-            Please upload the required documents to verify your account.
-          </p>
         )}
       </div>
     </div>

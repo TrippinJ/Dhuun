@@ -55,10 +55,10 @@ const upload = multer({
 router.get('/me', authenticateUser, async (req, res) => {
   try {
     console.log("Fetching profile for user:", req.user.id);
-    
+
     // Look for existing profile
     let profile = await Profile.findOne({ user: req.user.id }).populate('user', 'name email');
-    
+
     // If no profile exists, create a basic one
     if (!profile) {
       profile = new Profile({
@@ -67,7 +67,7 @@ router.get('/me', authenticateUser, async (req, res) => {
       });
       await profile.save();
     }
-    
+
     res.json(profile);
   } catch (error) {
     console.error('Error fetching profile:', error);
@@ -83,20 +83,20 @@ router.put('/update', authenticateUser, upload.single('avatar'), async (req, res
     console.log("Profile update request for user:", req.user.id);
     console.log("Update data:", req.body);
     console.log("File uploaded:", req.file ? req.file.filename : "No file");
-    
+
     const { name, username, phonenumber, bio, socialLinks } = req.body;
-    
+
     // Update user's basic info
     const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    
+
     // Update user fields
-    if (name) user.name = name;
-    if (username) user.username = username;
-    if (phonenumber) user.phonenumber = phonenumber;
-    if (bio) user.bio = bio;
+    if (req.body.name) user.name = req.body.name;
+    if (req.body.username) user.username = req.body.username;
+    if (req.body.phonenumber) user.phonenumber = req.body.phonenumber;
+    if (req.body.bio) user.bio = req.body.bio;
 
     // Find or create profile
     let profile = await Profile.findOne({ user: req.user.id });
@@ -106,24 +106,24 @@ router.put('/update', authenticateUser, upload.single('avatar'), async (req, res
         username: username || user.username || user.email.split('@')[0]
       });
     }
-    
+
     // Update profile fields
     if (bio) profile.bio = bio;
-    
+
     // Handle social links if provided
     if (socialLinks) {
       let parsedLinks;
-      
+
       try {
         // Handle case where socialLinks might be sent as a string
-        parsedLinks = typeof socialLinks === 'string' 
-          ? JSON.parse(socialLinks) 
+        parsedLinks = typeof socialLinks === 'string'
+          ? JSON.parse(socialLinks)
           : socialLinks;
       } catch (e) {
         console.error("Error parsing social links:", e);
         parsedLinks = {};
       }
-      
+
       // Check if we have social links in the expected format (individual fields)
       if (req.body['socialLinks[instagram]']) {
         profile.socialLinks = profile.socialLinks || {};
@@ -131,7 +131,7 @@ router.put('/update', authenticateUser, upload.single('avatar'), async (req, res
         profile.socialLinks.twitter = req.body['socialLinks[twitter]'] || profile.socialLinks.twitter || '';
         profile.socialLinks.youtube = req.body['socialLinks[youtube]'] || profile.socialLinks.youtube || '';
         profile.socialLinks.soundcloud = req.body['socialLinks[soundcloud]'] || profile.socialLinks.soundcloud || '';
-      } 
+      }
       // Otherwise use the parsed object if it's valid
       else if (typeof parsedLinks === 'object') {
         profile.socialLinks = {
@@ -140,74 +140,72 @@ router.put('/update', authenticateUser, upload.single('avatar'), async (req, res
         };
       }
     }
-    
+
     // Handle avatar upload if file was included
     if (req.file) {
       try {
         console.log("Uploading avatar to Cloudinary");
-        
+
         // Upload to Cloudinary
         const result = await uploadToCloudinary(
-          req.file.path, 
+          req.file.path,
           'dhuun/avatars'
         );
-        
+
         console.log("Cloudinary upload result:", result);
-        
+
         // Delete old avatar if it exists
         if (user.avatarPublicId) {
           await deleteFromCloudinary(user.avatarPublicId);
         }
-        
+
         // Update user with new avatar
         user.avatar = result.secure_url;
         user.avatarPublicId = result.public_id;
-        
+
         // Also update profile avatar if it exists
         profile.avatar = result.secure_url;
-        
+
         // Delete temp file
         fs.unlinkSync(req.file.path);
       } catch (uploadError) {
         console.error('Avatar upload error:', uploadError);
-        
+
         // Clean up temp file if it exists
         if (req.file && fs.existsSync(req.file.path)) {
           fs.unlinkSync(req.file.path);
         }
-        
+
         return res.status(400).json({ message: 'Failed to upload avatar' });
       }
     }
-    
+
     // Save both user and profile
     await user.save();
     await profile.save();
-    
-    // Return combined response
+
+    const userResponse = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      username: user.username,
+      phonenumber: user.phonenumber,
+      avatar: user.avatar,
+      role: user.role
+    };
+
     res.json({
       message: 'Profile updated successfully',
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        username: user.username,
-        phonenumber: user.phonenumber,
-        avatar: user.avatar
-      },
-      profile: {
-        bio: profile.bio,
-        socialLinks: profile.socialLinks
-      }
+      user: userResponse
     });
   } catch (error) {
     console.error('Error updating profile:', error);
-    
+
     // Clean up temp file if it exists
     if (req.file && fs.existsSync(req.file.path)) {
       fs.unlinkSync(req.file.path);
     }
-    
+
     res.status(500).json({ message: 'Server error' });
   }
 });

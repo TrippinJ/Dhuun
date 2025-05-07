@@ -12,6 +12,7 @@
   padding: 20px 0;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
 }
+
 .sidebar nav {
   padding: 10px 0;
 }
@@ -512,6 +513,45 @@
   color: #FFB800;
 }
 
+.verificationStatus {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  margin-top: 12px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.statusIndicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.not_submitted {
+  background-color: #d1d5db;
+}
+
+.pending {
+  background-color: #f59e0b;
+}
+
+.approved {
+  background-color: #22c55e;
+}
+
+.rejected {
+  background-color: #ef4444;
+}
+
+.actionBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+
 @keyframes pulse {
   0% {
     opacity: 0.3;
@@ -526,10 +566,6 @@
   }
 }
 
-.actionBtn:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
 
 /* Responsive styles */
 @media (max-width: 1024px) {

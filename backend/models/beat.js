@@ -23,7 +23,7 @@ const BeatSchema = new mongoose.Schema({
     required: true,
     min: 0
   },
-  licenseType: {
+  licenseTypes: {
     type: [{
       type: { type: String, required: true },
       name: { type: String, required: true },

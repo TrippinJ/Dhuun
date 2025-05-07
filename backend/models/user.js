@@ -48,6 +48,13 @@ const UserSchema = new mongoose.Schema({
   resetPasswordToken: { type: String },
   resetPasswordExpires: { type: Date },
 
+  //verification status field
+  verificationStatus: {
+    type: String,
+    enum: ["not_submitted", "pending", "approved", "rejected"],
+    default: "not_submitted"
+  },
+
   // Track when the profile was last updated
   lastUpdated: { type: Date, default: Date.now }
 }, { timestamps: true });

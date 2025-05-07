@@ -1,0 +1,282 @@
+/* DocumentVerification.module.css */
+.verificationContainer {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  /* Loading and messages */
+  .loading {
+    display: flex;
+    justify-content: center;
+    padding: 40px 0;
+    font-size: 16px;
+    color: #666;
+  }
+  
+  .errorMessage, .successMessage {
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+  
+  .errorMessage {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border-left: 4px solid #ef4444;
+  }
+  
+  .successMessage {
+    background-color: rgba(34, 197, 94, 0.1);
+    color: #22c55e;
+    border-left: 4px solid #22c55e;
+  }
+  
+  /* Status card */
+  .statusCard {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  
+  .statusCard h2 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    color: #333;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 12px;
+  }
+  
+  .statusCard h3 {
+    font-size: 1.2rem;
+    margin: 24px 0 16px;
+    color: #444;
+  }
+  
+  /* Status indicators */
+  .statusPending, .statusApproved, .statusRejected {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px;
+    text-align: center;
+    border-radius: 6px;
+    margin-bottom: 24px;
+  }
+  
+  .statusPending {
+    background-color: rgba(245, 158, 11, 0.1);
+  }
+  
+  .statusApproved {
+    background-color: rgba(34, 197, 94, 0.1);
+  }
+  
+  .statusRejected {
+    background-color: rgba(239, 68, 68, 0.1);
+  }
+  
+  .spinnerIcon {
+    font-size: 36px;
+    color: #f59e0b;
+    animation: spin 2s linear infinite;
+    margin-bottom: 16px;
+  }
+  
+  .checkIcon {
+    font-size: 36px;
+    color: #22c55e;
+    margin-bottom: 16px;
+  }
+  
+  .timesIcon {
+    font-size: 36px;
+    color: #ef4444;
+    margin-bottom: 16px;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  .statusPending p, .statusApproved p, .statusRejected p {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  
+  .statusPending span, .statusApproved span, .statusRejected span {
+    font-size: 14px;
+    color: #666;
+  }
+  
+  /* Document upload section */
+  .documentSection, .paymentSection {
+    margin-bottom: 30px;
+  }
+  
+  .documentUpload {
+    margin-bottom: 20px;
+  }
+  
+  .documentUpload label, .formGroup label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #555;
+  }
+  
+  .uploadBox {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed #ccc;
+    border-radius: 6px;
+    padding: 24px;
+    position: relative;
+    transition: all 0.3s ease;
+    text-align: center;
+    background-color: #f8fafc;
+    cursor: pointer;
+  }
+  
+  .uploadBox:hover {
+    border-color: #7B2CBF;
+    background-color: rgba(123, 44, 191, 0.05);
+  }
+  
+  .uploadBox input[type="file"] {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+  
+  .idIcon, .fileIcon {
+    font-size: 32px;
+    color: #7B2CBF;
+    margin-bottom: 12px;
+  }
+  
+  .uploadBox span {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  /* Payment section */
+  .paymentMethod {
+    margin-bottom: 20px;
+  }
+  
+  .paymentMethod select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+    background-color: #fff;
+    cursor: pointer;
+  }
+  
+  .formGroup {
+    margin-bottom: 16px;
+  }
+  
+  .formGroup input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+  }
+  
+  .formGroup input:focus, .paymentMethod select:focus {
+    outline: none;
+    border-color: #7B2CBF;
+    box-shadow: 0 0 0 3px rgba(123, 44, 191, 0.2);
+  }
+  
+  /* Submit button */
+  .submitButton {
+    background-color: #7B2CBF;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: block;
+    width: 100%;
+    margin-top: 24px;
+  }
+  
+  .submitButton:hover {
+    background-color: #6a24a5;
+  }
+  
+  .submitButton:disabled {
+    background-color: #d1d5db;
+    cursor: not-allowed;
+  }
+  
+  /* Document list */
+  .documentList {
+    margin-top: 24px;
+    border-top: 1px solid #eee;
+    padding-top: 20px;
+  }
+  
+  .documentItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .documentType {
+    font-weight: 500;
+  }
+  
+  .documentStatus {
+    font-size: 14px;
+  }
+  
+  .verified {
+    color: #22c55e;
+    font-weight: 500;
+  }
+  
+  .pending {
+    color: #f59e0b;
+    font-weight: 500;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 640px) {
+    .verificationContainer {
+      padding: 16px;
+    }
+    
+    .statusCard {
+      padding: 16px;
+    }
+    
+    .uploadBox {
+      padding: 16px;
+    }
+  }

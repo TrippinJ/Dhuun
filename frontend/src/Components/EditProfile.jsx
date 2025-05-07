@@ -160,27 +160,32 @@ const EditProfile = () => {
       );
 
       console.log("Profile update response:", response.data);
-      setSuccessMessage("Profile updated successfully!");
-      
-      // If there's a new avatar URL in the response, update the preview
-      if (response.data.user && response.data.user.avatar) {
+    
+    // After successful update
+    if (response.data.user) {
+      // Update avatar preview if available
+      if (response.data.user.avatar) {
         setAvatarPreview(response.data.user.avatar);
-        
-        // Update localStorage user data with the new avatar URL
-        const userData = JSON.parse(localStorage.getItem("user") || "{}");
-        userData.name = userProfile.name;
-        userData.username = userProfile.username;
-        userData.avatar = response.data.user.avatar; // <-- This is crucial for the dashboard!
-        localStorage.setItem("user", JSON.stringify(userData));
       }
       
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      setError(error.response?.data?.message || "Failed to update profile. Please try again.");
-    } finally {
-      setLoading(false);
+      // Update localStorage with all user data
+      const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+      const updatedUser = { ...currentUser, ...response.data.user };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      
+      // Dispatch event to notify other components
+      window.dispatchEvent(new Event("profileUpdated"));
+      
+      setSuccessMessage("Profile updated successfully!");
     }
-  };
+    
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    setError(error.response?.data?.message || "Failed to update profile. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Open delete confirmation modal
   const openDeleteModal = () => {

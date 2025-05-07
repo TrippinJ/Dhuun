@@ -488,25 +488,37 @@ const Dashboard = ({ activePage: initialPage }) => {
             )}
             <h3>{user?.username || user?.name || "User"}</h3>
             <span className={styles.role}>{user?.role === "seller" ? "Producer" : "Listener"}</span>
-            
+
+            {user?.role === "seller" && (
+              <div className={styles.verificationStatus}>
+                <div className={`${styles.statusIndicator} ${styles[user?.verificationStatus || "not_submitted"]}`}></div>
+                <span>
+                  {user?.verificationStatus === "approved" && "Verified"}
+                  {user?.verificationStatus === "pending" && "Verification Pending"}
+                  {user?.verificationStatus === "rejected" && "Verification Rejected"}
+                  {(!user?.verificationStatus || user?.verificationStatus === "not_submitted") && "Not Verified"}
+                </span>
+              </div>
+            )}
+
             {user?.role === "seller" && user?.subscription?.plan && (
-              <div 
+              <div
                 className={styles.subscriptionBadge}
                 onClick={() => navigate("/subscription")}
               >
                 <span className={styles.planName}>{user.subscription.plan}</span>
                 <span className={styles.planDetails}>
-                  {user.subscription.uploadLimit === Infinity 
-                    ? "Unlimited uploads" 
+                  {user.subscription.uploadLimit === Infinity
+                    ? "Unlimited uploads"
                     : `${beats.length}/${user.subscription.uploadLimit} uploads`}
                 </span>
-                
+
                 {/* Progress bar for upload limit */}
                 {user.subscription.uploadLimit !== Infinity && (
                   <div className={styles.usageBar}>
-                    <div 
-                      className={styles.usageProgress} 
-                      style={{ 
+                    <div
+                      className={styles.usageProgress}
+                      style={{
                         width: `${Math.min(100, (beats.length / user.subscription.uploadLimit) * 100)}%`,
                       }}
                     ></div>
@@ -531,13 +543,13 @@ const Dashboard = ({ activePage: initialPage }) => {
 
               {user?.role === "seller" ? (
                 <>
-                <li className={activePage === "wallet" ? styles.active : ""} onClick={() => setActivePage("wallet")}>
-                  <FaWallet /> Wallet
-                </li>
-                <li className={activePage === "verification" ? styles.active : ""} onClick={() => setActivePage("verification")}>
-                <FaIdCard /> Verify Account
-              </li>
-              </>
+                  <li className={activePage === "wallet" ? styles.active : ""} onClick={() => setActivePage("wallet")}>
+                    <FaWallet /> Wallet
+                  </li>
+                  <li className={activePage === "verification" ? styles.active : ""} onClick={() => setActivePage("verification")}>
+                    <FaIdCard /> Verify Account
+                  </li>
+                </>
               ) : (
                 <li className={activePage === "purchases" ? styles.active : ""} onClick={() => setActivePage("purchases")}>
                   <FaMusic /> Purchased Beats
