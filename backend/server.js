@@ -1,4 +1,4 @@
-// server.js
+
 import 'dotenv/config';
 import express from 'express';
 import mongoose from 'mongoose';
@@ -99,7 +99,12 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/withdrawals', withdrawalRoutes);
 app.use('/api/admin/withdrawals', adminWithdrawalRoutes);
-
+console.log('✅ Admin withdrawals routes registered at: /api/admin/withdrawals');
+// Add a test route to verify the path is working
+app.get('/api/admin/withdrawals/test', (req, res) => {
+  res.json({ message: 'Admin withdrawals test route working' });
+});
+console.log('✅ Added test route at: /api/admin/withdrawals/test');
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('ERROR:', err.stack);

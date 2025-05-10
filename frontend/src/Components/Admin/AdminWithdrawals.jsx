@@ -20,7 +20,7 @@ const AdminWithdrawals = () => {
   const fetchWithdrawals = async () => {
     try {
       setLoading(true);
-      const response = await API.get('/api/withdrawals/admin/pending');
+      const response = await API.get('/api/admin/withdrawls/pending');
       
       if (response.data.success) {
         setWithdrawals(response.data.withdrawals);
@@ -53,7 +53,7 @@ const AdminWithdrawals = () => {
     try {
       setProcessingAction(true);
       
-      const response = await API.post('/api/withdrawals/admin/process', {
+      const response = await API.post('/api/admin/withdrawals/process', {
         withdrawalId: selectedWithdrawal._id,
         status,
         payoutReference: status === 'paid' ? payoutReference : undefined,
