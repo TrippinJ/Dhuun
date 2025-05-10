@@ -1,425 +1,514 @@
 .salesContainer {
-    padding: 20px;
+  padding: 20px;
+  background-color: #1E1E1E;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  color: #FFFFFF;
+}
+
+.salesHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.salesHeader h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #FFFFFF;
+}
+
+.exportButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 15px;
+  background-color: #7B2CBF;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.exportButton:hover {
+  background-color: #9333ea;
+}
+
+.salesControls {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.searchForm {
+  display: flex;
+  flex: 1;
+  max-width: 400px;
+  min-width: 300px;
+}
+
+.searchInput {
+  flex: 1;
+  padding: 10px 15px;
+  background-color: #121212;
+  border: 1px solid #333333;
+  border-right: none;
+  border-radius: 4px 0 0 4px;
+  font-size: 14px;
+  color: #FFFFFF;
+}
+
+.searchInput::placeholder {
+  color: #666666;
+}
+
+.searchButton {
+  background-color: #7B2CBF;
+  color: white;
+  border: none;
+  border-radius: 0 4px 4px 0;
+  padding: 0 15px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.searchButton:hover {
+  background-color: #9333ea;
+}
+
+.filterSelect {
+  padding: 10px 15px;
+  background-color: #121212;
+  border: 1px solid #333333;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #FFFFFF;
+  min-width: 150px;
+}
+
+.filterSelect option {
+  background-color: #1E1E1E;
+  color: #FFFFFF;
+}
+
+.ordersTable {
+  background-color: #121212;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  border: 1px solid #333333;
+}
+
+.tableHeader {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr 1fr 1fr 1fr 1fr;
+  padding: 15px;
+  background-color: #1a1a1a;
+  font-weight: 600;
+  color: #AAAAAA;
+  border-bottom: 1px solid #333333;
+}
+
+.tableRow {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr 1fr 1fr 1fr 1fr;
+  padding: 15px;
+  border-bottom: 1px solid #333333;
+  transition: background-color 0.3s;
+}
+
+.tableRow:hover {
+  background-color: #2a2a2a;
+}
+
+.tableRow:last-child {
+  border-bottom: none;
+}
+
+.orderIdCell, .customerCell, .dateCell, .itemsCell, .totalCell, .statusCell, .actionsCell {
+  display: flex;
+  align-items: center;
+}
+
+.orderIdCell {
+  color: #666666;
+  font-family: monospace;
+}
+
+.customerInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.customerName {
+  font-weight: 600;
+  color: #FFFFFF;
+  margin-bottom: 3px;
+}
+
+.customerEmail {
+  font-size: 12px;
+  color: #666666;
+}
+
+.dateCell, .itemsCell {
+  color: #AAAAAA;
+}
+
+.totalCell {
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+.statusTag {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.completed {
+  background-color: rgba(29, 185, 84, 0.2);
+  color: #1db954;
+  border: 1px solid rgba(29, 185, 84, 0.3);
+}
+
+.pending {
+  background-color: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+  border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.failed {
+  background-color: rgba(255, 26, 26, 0.2);
+  color: #ff1a1a;
+  border: 1px solid rgba(255, 26, 26, 0.3);
+}
+
+.actionsCell {
+  justify-content: center;
+}
+
+.actionButton {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  background-color: #121212;
+  border: 1px solid #333333;
+  color: #AAAAAA;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.actionButton:hover {
+  background-color: #2a2a2a;
+  color: #FFFFFF;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  gap: 15px;
+}
+
+.pageButton {
+  padding: 8px 15px;
+  border: 1px solid #333333;
+  border-radius: 4px;
+  background-color: #121212;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pageButton:hover {
+  background-color: #2a2a2a;
+  border-color: #7B2CBF;
+}
+
+.pageButton:disabled {
+  color: #666666;
+  background-color: #1a1a1a;
+  cursor: not-allowed;
+}
+
+.pageInfo {
+  font-size: 14px;
+  color: #AAAAAA;
+}
+
+.noOrders {
+  padding: 50px 20px;
+  text-align: center;
+  color: #AAAAAA;
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background-color: #1E1E1E;
+  border-radius: 8px;
+  width: 80%;
+  max-width: 700px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  border: 1px solid #333333;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #333333;
+}
+
+.modalHeader h3 {
+  margin: 0;
+  font-size: 20px;
+  color: #FFFFFF;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #666666;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.closeButton:hover {
+  color: #FFFFFF;
+}
+
+.orderInfo {
+  padding: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 15px;
+  border-bottom: 1px solid #333333;
+}
+
+.orderDetail {
+  display: flex;
+  flex-direction: column;
+}
+
+.detailLabel {
+  font-size: 12px;
+  color: #666666;
+  margin-bottom: 5px;
+}
+
+.detailValue {
+  font-weight: 600;
+  color: #FFFFFF;
+}
+
+.orderItems {
+  padding: 20px;
+}
+
+.orderItems h4 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #FFFFFF;
+  font-size: 18px;
+}
+
+.itemsTable {
+  width: 100%;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  border: 1px solid #333333;
+}
+
+.itemHeader {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  padding: 10px;
+  background-color: #121212;
+  font-weight: 600;
+  font-size: 14px;
+  color: #AAAAAA;
+}
+
+.itemRow {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  padding: 10px;
+  border-bottom: 1px solid #333333;
+  color: #FFFFFF;
+}
+
+.itemRow:last-child {
+  border-bottom: none;
+}
+
+.orderTotal {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 20px;
+  padding-right: 20px;
+}
+
+.totalLabel {
+  font-weight: 600;
+  margin-right: 15px;
+  color: #AAAAAA;
+}
+
+.totalValue {
+  font-weight: 600;
+  font-size: 18px;
+  color: #7B2CBF;
+}
+
+.modalActions {
+  padding: 15px 20px;
+  text-align: right;
+  border-top: 1px solid #333333;
+}
+
+.closeModalButton {
+  padding: 8px 15px;
+  background-color: #121212;
+  color: #FFFFFF;
+  border: 1px solid #333333;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.closeModalButton:hover {
+  background-color: #2a2a2a;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 300px;
+  font-size: 18px;
+  color: #7B2CBF;
+}
+
+.loading:before {
+  content: "";
+  width: 24px;
+  height: 24px;
+  border: 4px solid #333333;
+  border-top: 4px solid #7B2CBF;
+  border-radius: 50%;
+  margin-right: 10px;
+  animation: spin 1s linear infinite;
+}
+
+.error {
+  padding: 20px;
+  background-color: rgba(255, 26, 26, 0.1);
+  color: #ff1a1a;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255, 26, 26, 0.3);
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+  .tableHeader, .tableRow {
+    grid-template-columns: 1fr 2fr 1fr 1fr 1fr 1fr;
   }
   
-  .salesHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
+  .itemsCell {
+    display: none;
+  }
+}
+
+@media (max-width: 992px) {
+  .tableHeader, .tableRow {
+    grid-template-columns: 1fr 2fr 1fr 1fr 1fr;
   }
   
-  .salesHeader h2 {
-    margin: 0;
-    font-size: 24px;
-    color: #333;
+  .itemsCell {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .salesContainer {
+    padding: 15px;
   }
   
-  .exportButton {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 15px;
-    background-color: #7B2CBF;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.2s;
+  .tableHeader, .tableRow {
+    grid-template-columns: 1fr 2fr 1fr 1fr 1fr;
   }
   
-  .exportButton:hover {
-    background-color: #6a24a6;
+  .dateCell {
+    display: none;
   }
   
   .salesControls {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 20px;
+    flex-direction: column;
   }
   
   .searchForm {
-    display: flex;
-    flex: 1;
-    max-width: 400px;
-  }
-  
-  .searchInput {
-    flex: 1;
-    padding: 10px 15px;
-    border: 1px solid #ddd;
-    border-right: none;
-    border-radius: 4px 0 0 4px;
-    font-size: 14px;
-  }
-  
-  .searchButton {
-    background-color: #7B2CBF;
-    color: white;
-    border: none;
-    border-radius: 0 4px 4px 0;
-    padding: 0 15px;
-    cursor: pointer;
-  }
-  
-  .filterSelect {
-    padding: 10px 15px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 14px;
-    background-color: white;
-    min-width: 150px;
-  }
-  
-  .ordersTable {
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-    overflow: hidden;
-  }
-  
-  .tableHeader {
-    display: grid;
-    grid-template-columns: 1fr 2fr 1fr 1fr 1fr 1fr 1fr;
-    padding: 15px;
-    background-color: #f5f5f7;
-    font-weight: 600;
-    color: #333;
-    border-bottom: 1px solid #ddd;
-  }
-  
-  .tableRow {
-    display: grid;
-    grid-template-columns: 1fr 2fr 1fr 1fr 1fr 1fr 1fr;
-    padding: 15px;
-    border-bottom: 1px solid #f1f1f1;
-    transition: background-color 0.3s;
-  }
-  
-  .tableRow:hover {
-    background-color: #f9f9f9;
-  }
-  
-  .tableRow:last-child {
-    border-bottom: none;
-  }
-  
-  .orderIdCell, .customerCell, .dateCell, .itemsCell, .totalCell, .statusCell, .actionsCell {
-    display: flex;
-    align-items: center;
-  }
-  
-  .customerInfo {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .customerName {
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 3px;
-  }
-  
-  .customerEmail {
-    font-size: 12px;
-    color: #999;
-  }
-  
-  .statusTag {
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 500;
-  }
-  
-  .completed {
-    background-color: #dcfce7;
-    color: #16a34a;
-  }
-  
-  .pending {
-    background-color: #fef9c3;
-    color: #ca8a04;
-  }
-  
-  .failed {
-    background-color: #fee2e2;
-    color: #dc2626;
-  }
-  
-  .actionsCell {
-    justify-content: center;
-  }
-  
-  .actionButton {
-    width: 32px;
-    height: 32px;
-    border-radius: 4px;
-    background-color: #f1f1f1;
-    border: none;
-    color: #555;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-  
-  .actionButton:hover {
-    background-color: #e0e0e0;
-  }
-  
-  .pagination {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-top: 20px;
-    gap: 15px;
-  }
-  
-  .pageButton {
-    padding: 8px 15px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    background-color: white;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-  
-  .pageButton:hover {
-    background-color: #f1f1f1;
-  }
-  
-  .pageButton:disabled {
-    color: #999;
-    background-color: #f5f5f5;
-    cursor: not-allowed;
-  }
-  
-  .pageInfo {
-    font-size: 14px;
-    color: #555;
-  }
-  
-  .noOrders {
-    padding: 50px 20px;
-    text-align: center;
-    color: #666;
-  }
-  
-  .modalOverlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
+    max-width: 100%;
+    min-width: 100%;
   }
   
   .modalContent {
-    background-color: white;
-    border-radius: 8px;
-    width: 80%;
-    max-width: 700px;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    width: 95%;
+    max-width: 95%;
+  }
+}
+
+@media (max-width: 576px) {
+  .tableHeader, .tableRow {
+    grid-template-columns: 1fr 2fr 1fr 1fr;
   }
   
-  .modalHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 20px;
-    border-bottom: 1px solid #f1f1f1;
-  }
-  
-  .modalHeader h3 {
-    margin: 0;
-    font-size: 20px;
-    color: #333;
-  }
-  
-  .closeButton {
-    background: none;
-    border: none;
-    font-size: 24px;
-    color: #999;
-    cursor: pointer;
+  .totalCell {
+    display: none;
   }
   
   .orderInfo {
-    padding: 20px;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 15px;
-    border-bottom: 1px solid #f1f1f1;
+    grid-template-columns: 1fr;
   }
   
-  .orderDetail {
-    display: flex;
-    flex-direction: column;
+  .itemHeader, .itemRow {
+    grid-template-columns: 2fr 1fr 1fr;
   }
   
-  .detailLabel {
-    font-size: 12px;
-    color: #999;
-    margin-bottom: 5px;
+  .itemProducer {
+    display: none;
   }
-  
-  .detailValue {
-    font-weight: 600;
-    color: #333;
-  }
-  
-  .orderItems {
-    padding: 20px;
-  }
-  
-  .orderItems h4 {
-    margin-top: 0;
-    margin-bottom: 15px;
-    color: #333;
-    font-size: 18px;
-  }
-  
-  .itemsTable {
-    width: 100%;
-    border-radius: 4px;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  }
-  
-  .itemHeader {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr;
-    padding: 10px;
-    background-color: #f5f5f7;
-    font-weight: 600;
-    font-size: 14px;
-  }
-  
-  .itemRow {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr;
-    padding: 10px;
-    border-bottom: 1px solid #f1f1f1;
-  }
-  
-  .itemRow:last-child {
-    border-bottom: none;
-  }
-  
-  .orderTotal {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    margin-top: 20px;
-    padding-right: 20px;
-  }
-  
-  .totalLabel {
-    font-weight: 600;
-    margin-right: 15px;
-  }
-  
-  .totalValue {
-    font-weight: 600;
-    font-size: 18px;
-    color: #7B2CBF;
-  }
-  
-  .modalActions {
-    padding: 15px 20px;
-    text-align: right;
-    border-top: 1px solid #f1f1f1;
-  }
-  
-  .closeModalButton {
-    padding: 8px 15px;
-    background-color: #f1f1f1;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-  
-  .closeModalButton:hover {
-    background-color: #e0e0e0;
-  }
-  
-  .loading {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 300px;
-    font-size: 18px;
-    color: #7B2CBF;
-  }
-  
-  .loading:before {
-    content: "";
-    width: 24px;
-    height: 24px;
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #7B2CBF;
-    border-radius: 50%;
-    margin-right: 10px;
-    animation: spin 1s linear infinite;
-  }
-  
-  .error {
-    padding: 20px;
-    background-color: #FEE2E2;
-    color: #B91C1C;
-    border-radius: 8px;
-    margin-bottom: 20px;
-  }
-  
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-  
-  @media (max-width: 992px) {
-    .tableHeader, .tableRow {
-      grid-template-columns: 1fr 2fr 1fr 1fr 1fr 1fr;
-    }
-    
-    .itemsCell {
-      display: none;
-    }
-  }
-  
-  @media (max-width: 768px) {
-    .tableHeader, .tableRow {
-      grid-template-columns: 1fr 2fr 1fr 1fr 1fr;
-    }
-    
-    .dateCell {
-      display: none;
-    }
-    
-    .salesControls {
-      flex-direction: column;
-    }
-    
-    .searchForm {
-      max-width: 100%;
-    }
-  }
-  
-  @media (max-width: 576px) {
-    .tableHeader, .tableRow {
-      grid-template-columns: 1fr 2fr 1fr 1fr;
-    }
-    
-    .totalCell {
-      display: none;
-    }
-  }
+}
