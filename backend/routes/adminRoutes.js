@@ -1,8 +1,8 @@
-
 import express from 'express';
 import { authenticateUser } from './auth.js';
 import * as adminController from '../controllers/adminController.js';
 import * as verificationController from '../controllers/verificationController.js';
+
 const router = express.Router();
 
 // Middleware to check if user is admin
@@ -17,17 +17,19 @@ const isAdmin = (req, res, next) => {
 router.use(authenticateUser, isAdmin);
 
 // Dashboard routes
-router.get('/dashboard', adminController.getDashboardStats);
+router.get('/dashboard', adminController.getDashboardStats); 
 router.get('/analytics', adminController.getAnalytics);
 
 // User management routes
 router.get('/users', adminController.getUsers);
+router.get('/users/search', adminController.searchUsers); 
 router.patch('/users/:id', adminController.updateUser);
 
 // Beat management routes
 router.get('/beats', adminController.getBeats);
-router.patch('/beats/:id', adminController.updateBeat);
+router.get('/beats/search', adminController.searchBeats); 
 router.delete('/beats/:id', adminController.deleteBeat);
+router.patch('/beats/:id/featured', adminController.toggleFeaturedStatus);
 
 // Order management routes
 router.get('/orders', adminController.getOrders);
@@ -36,9 +38,7 @@ router.get('/orders', adminController.getOrders);
 router.get('/settings', adminController.getSettings);
 router.put('/settings', adminController.updateSettings);
 
-router.patch('/beats/:id/featured', adminController.toggleFeaturedStatus);
-
-// Add these routes for verification management
+// Verification routes
 router.get('/verification/pending', verificationController.getPendingVerifications);
 router.post('/verification/update', verificationController.updateVerificationStatus);
 
