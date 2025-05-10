@@ -259,7 +259,57 @@ const AdminWithdrawals = () => {
                 )}
               </div>
 
-                
+              {/* Wallet Information Section */}
+              {selectedWithdrawal.walletInfo && (
+                <div className={styles.detailsSection}>
+                  <h4>Wallet Information</h4>
+                  <div className={styles.walletSection}>
+                    <div className={styles.walletInfo}>
+                      <div className={styles.walletDetail}>
+                        <span className={styles.walletLabel}>Available Balance:</span>
+                        <span className={`${styles.walletValue} ${styles.availableBalance}`}>
+                          ${selectedWithdrawal.walletInfo.balance.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className={styles.walletDetail}>
+                        <span className={styles.walletLabel}>Pending Balance:</span>
+                        <span className={styles.walletValue}>
+                          ${selectedWithdrawal.walletInfo.pendingBalance.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Warning if insufficient balance */}
+                    {selectedWithdrawal.walletInfo.balance < selectedWithdrawal.amount && (
+                      <div className={styles.withdrawWarning}>
+                        <span>⚠️</span>
+                        <span>
+                          Insufficient funds! The seller only has ${selectedWithdrawal.walletInfo.balance.toFixed(2)} available,
+                          but is requesting ${selectedWithdrawal.amount.toFixed(2)}.
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Recent Transactions */}
+                    <div className={styles.recentTransactions}>
+                      <h5>Recent Transactions</h5>
+                      <div className={styles.transactionsList}>
+                        {selectedWithdrawal.walletInfo.recentTransactions.map((transaction, index) => (
+                          <div key={index} className={styles.transactionItem}>
+                            <div className={styles.transactionDescription}>
+                              {transaction.description || transaction.type}
+                            </div>
+                            <div className={`${styles.transactionAmount} ${transaction.amount > 0 ? styles.positive : styles.negative}`}>
+                              {transaction.amount > 0 ? '+' : ''}${transaction.amount.toFixed(2)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className={styles.actionSection}>
                 <div className={styles.formField}>
                   <label>Admin Notes:</label>
@@ -284,13 +334,13 @@ const AdminWithdrawals = () => {
             </div>
 
             <div className={styles.modalFooter}>
-              <button
+              {/* <button
                 className={styles.rejectButton}
                 onClick={() => handleProcessWithdrawal('rejected')}
                 disabled={processingAction}
               >
                 <FaTimes /> Reject
-              </button>
+              </button> */}
 
               <button
                 className={styles.approveButton}
