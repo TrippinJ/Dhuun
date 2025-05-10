@@ -20,7 +20,22 @@ const AdminWithdrawals = () => {
   const fetchWithdrawals = async () => {
     try {
       setLoading(true);
-      const response = await API.get('/api/admin/withdrawls/pending');
+      setError(null);
+      
+      // Get authentication token
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("Authentication required");
+        setLoading(false);
+        return;
+      }
+      
+      // Use the correct API endpoint with authentication token
+      const response = await API.get('/api/admin/withdrawals/pending', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      console.log("API Response:", response.data); // Debug log
       
       if (response.data.success) {
         setWithdrawals(response.data.withdrawals);
@@ -29,6 +44,7 @@ const AdminWithdrawals = () => {
       }
     } catch (error) {
       console.error('Error fetching withdrawals:', error);
+      console.error('Error details:', error.response?.data || error.message);
       setError('Failed to load withdrawal requests');
     } finally {
       setLoading(false);
@@ -53,11 +69,22 @@ const AdminWithdrawals = () => {
     try {
       setProcessingAction(true);
       
+      // Get authentication token
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Authentication required. Please log in again.");
+        setProcessingAction(false);
+        return;
+      }
+      
+      // Use the correct API endpoint with authentication token
       const response = await API.post('/api/admin/withdrawals/process', {
         withdrawalId: selectedWithdrawal._id,
         status,
         payoutReference: status === 'paid' ? payoutReference : undefined,
         adminNotes
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
       });
       
       if (response.data.success) {
@@ -72,7 +99,8 @@ const AdminWithdrawals = () => {
       }
     } catch (error) {
       console.error(`Error ${status} withdrawal:`, error);
-      alert(error.message || `Failed to ${status} withdrawal`);
+      console.error('Error details:', error.response?.data || error.message);
+      alert(error.response?.data?.message || error.message || `Failed to ${status} withdrawal`);
     } finally {
       setProcessingAction(false);
     }
