@@ -202,6 +202,12 @@ const BeatExplorePage = () => {
     return filteredBeats.slice(startIndex, startIndex + itemsPerPage);
   };
 
+  const handleProducerClick = (e, producerId) => {
+    e.stopPropagation();
+    e.preventDefault();
+    handleOpenProducerProfile(producerId);
+  };
+
   // Modified: Handle play using the global audio context
   const handlePlayPreview = (event, beat) => {
     event.stopPropagation(); // Prevent opening the modal
@@ -496,7 +502,7 @@ const BeatExplorePage = () => {
                     <h3 className={styles.beatTitle}>{beat.title}</h3>
                     <span
                       className={styles.producerName}
-                      onClick={() => handleOpenProducerProfile(beat.producer._id)}
+                      onClick={(e) => handleProducerClick(e, beat.producer._id)}
                       style={{ cursor: 'pointer', color: '#7B2CBF' }}
                     >
                       {beat.producer?.name || "Unknown Producer"}
@@ -585,8 +591,13 @@ const BeatExplorePage = () => {
                   <div className={styles.beatRowInfo}>
                     <h3 className={styles.beatRowTitle}>{beat.title}</h3>
                     <div className={styles.beatRowProducer}>
-                      {beat.producer?.name || "Unknown Producer"}
-                      {beat.producer?.verified && <span className={styles.verifiedBadge}>✓</span>}
+                      <span
+                        onClick={(e) => handleProducerClick(e, beat.producer._id)}
+                        style={{ cursor: 'pointer', color: '#7B2CBF' }}
+                      >
+                        {beat.producer?.name || "Unknown Producer"}
+                        {beat.producer?.verified && <span className={styles.verifiedBadge}>✓</span>}
+                      </span>
                     </div>
                   </div>
 

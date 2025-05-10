@@ -9,6 +9,7 @@ import crypto from 'crypto';
 import { sendOTPEmail } from '../utils/emailService.js';
 import { sendWelcomeEmail } from '../utils/emailService.js';
 import { deleteFromCloudinary } from '../utils/cloudinaryConfig.js';
+import Profile from '../models/profile.js';
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret_here";
@@ -59,6 +60,22 @@ router.post(
       });
 
       await user.save();
+
+      // Create a basic profile for the user
+      const profile = new Profile({
+        user: user._id,
+        username: user.username,
+        bio: '',
+        socialLinks: {},
+        stats: {
+          followers: 0,
+          following: 0,
+          beatsUploaded: 0,
+          beatsSold: 0,
+          totalEarnings: 0
+        }
+      });
+      await profile.save();
 
       // Send OTP email
       const emailResult = await sendOTPEmail(email, otp, name);
@@ -300,7 +317,23 @@ router.post("/google-login", async (req, res) => {
         role: "buyer" // Explicitly set to buyer
       });
 
-      console.log("New user object created:", user); // Log the complete user object for debugging
+      // Create a basic profile for new Google users
+      const profile = new Profile({
+        user: user._id,
+        username: user.username,
+        bio: '',
+        socialLinks: {},
+        stats: {
+          followers: 0,
+          following: 0,
+          beatsUploaded: 0,
+          beatsSold: 0,
+          totalEarnings: 0
+        }
+      });
+      await profile.save();
+      console.log("New user object created:", user); 
+      console.log("New user profile created:", user._id); 
       await user.save();
       console.log("New user saved to database");
     } else if (!user.googleId) {
@@ -545,17 +578,17 @@ router.post("/delete-account", authenticateUser, async (req, res) => {
   }
 });
 
-    // In backend/routes/auth.js
+// In backend/routes/auth.js
 router.delete("/delete-account", authenticateUser, async (req, res) => {
   try {
     // Get the user ID from the authenticated request
     const userId = req.user.id;
-    
+
     // Delete the user from the database
     await User.findByIdAndDelete(userId);
-    
+
     // You might also want to delete related data like profiles, beats, etc.
-    
+
     res.json({ message: "Account deleted successfully" });
   } catch (error) {
     console.error("Account deletion error:", error);
@@ -578,8 +611,8 @@ router.post("/forgot-password", async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) {
       // For security reasons, don't reveal that the user doesn't exist
-      return res.status(200).json({ 
-        message: "If a user with that email exists, a password reset token has been sent." 
+      return res.status(200).json({
+        message: "If a user with that email exists, a password reset token has been sent."
       });
     }
 
@@ -594,13 +627,13 @@ router.post("/forgot-password", async (req, res) => {
 
     // For development: Log or return the token
     console.log(`Password Reset Token for ${email}: ${resetToken}`);
-    
+
     // In development, we'll return the token in the response
     // In production, you'd send an email instead
     if (process.env.NODE_ENV === 'production') {
       // TODO: Send actual email with reset link
-      return res.status(200).json({ 
-        message: "Password reset email sent successfully!" 
+      return res.status(200).json({
+        message: "Password reset email sent successfully!"
       });
     } else {
       // For development only - return the token in the response
@@ -633,8 +666,8 @@ router.post("/reset-password", async (req, res) => {
     });
 
     if (!user) {
-      return res.status(400).json({ 
-        message: "Password reset token is invalid or has expired" 
+      return res.status(400).json({
+        message: "Password reset token is invalid or has expired"
       });
     }
 

@@ -60,8 +60,8 @@ const fileFilter = (req, file, cb) => {
 };
 
 // Set up multer with storage and file filter
-const upload = multer({ 
-  storage: storage, 
+const upload = multer({
+  storage: storage,
   fileFilter: fileFilter,
   limits: { fileSize: 50 * 1024 * 1024 } // Limit file size to 50MB
 });
@@ -87,7 +87,7 @@ const uploadToCloudinary = async (filePath, folder) => {
     // Determine resource type based on file extension
     const ext = path.extname(filePath).toLowerCase();
     const resourceType = ['.mp3', '.wav', '.ogg'].includes(ext) ? 'video' : 'image';
-    
+
     // Upload to Cloudinary
     const result = await cloudinary.uploader.upload(filePath, {
       resource_type: resourceType,
@@ -95,10 +95,10 @@ const uploadToCloudinary = async (filePath, folder) => {
       use_filename: true,
       unique_filename: true
     });
-    
+
     // Delete the temp file after upload
     fs.unlinkSync(filePath);
-    
+
     return result;
   } catch (error) {
     console.error('Cloudinary upload error:', error);
@@ -109,8 +109,8 @@ const uploadToCloudinary = async (filePath, folder) => {
 // Helper function to delete file from Cloudinary
 const deleteFromCloudinary = async (publicId, resourceType) => {
   try {
-    const result = await cloudinary.uploader.destroy(publicId, { 
-      resource_type: resourceType 
+    const result = await cloudinary.uploader.destroy(publicId, {
+      resource_type: resourceType
     });
     return result;
   } catch (error) {
@@ -123,17 +123,17 @@ const deleteFromCloudinary = async (publicId, resourceType) => {
 const getPublicIdFromUrl = (url) => {
   if (!url || typeof url !== 'string') return null;
   if (!url.includes('cloudinary.com')) return null;
-  
+
   // Example URL: https://res.cloudinary.com/cloud-name/image/upload/v1234567890/folder/filename.jpg
   const urlParts = url.split('/');
   const uploadIndex = urlParts.indexOf('upload');
-  
+
   if (uploadIndex === -1) return null;
-  
+
   // Get everything after "upload" excluding the version and file extension
   const publicIdWithVersion = urlParts.slice(uploadIndex + 1).join('/');
   const publicId = publicIdWithVersion.replace(/^v\d+\//, '').replace(/\.[^/.]+$/, '');
-  
+
   return publicId;
 };
 
@@ -144,12 +144,12 @@ router.get('/', async (req, res) => {
   try {
     const beats = await Beat.find(
       {
-        isExclusiveSold: { $ne: true } 
+        isExclusiveSold: { $ne: true }
       }
     )
       .populate('producer', 'name username')
       .sort({ createdAt: -1 });
-    
+
     res.json(beats);
   } catch (error) {
     console.error('Error fetching beats:', error);
@@ -165,7 +165,7 @@ router.get('/producer/beats', authenticateUser, async (req, res) => {
   try {
     const beats = await Beat.find({ producer: req.user.id })
       .sort({ createdAt: -1 });
-    
+
     res.json(beats);
   } catch (error) {
     console.error('Error fetching producer beats:', error);
@@ -178,11 +178,11 @@ router.get('/:id', async (req, res) => {
   try {
     const beat = await Beat.findById(req.params.id)
       .populate('producer', 'name username');
-    
+
     if (!beat) {
       return res.status(404).json({ message: 'Beat not found' });
     }
-    
+
     res.json(beat);
   } catch (error) {
     console.error('Error fetching beat:', error);
@@ -190,6 +190,47 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// Get beats by specific producer ID (public route)
+router.get('/producer/:producerId', async (req, res) => {
+  try {
+    const { producerId } = req.params;
+    const { limit = 20, page = 1 } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    // Build filter
+    const filter = {
+      producer: producerId,
+      isPublished: true,
+      isExclusiveSold: { $ne: true }
+    };
+
+    // Get beats with pagination
+    const beats = await Beat.find(filter)
+      .populate('producer', 'name username')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    // Get total count
+    const total = await Beat.countDocuments(filter);
+
+    res.status(200).json({
+      success: true,
+      count: beats.length,
+      total,
+      totalPages: Math.ceil(total / parseInt(limit)),
+      currentPage: parseInt(page),
+      data: beats
+    });
+  } catch (error) {
+    console.error('Error fetching producer beats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching producer beats',
+      error: error.message
+    });
+  }
+});
 // Create new beat (authorized route) with Cloudinary upload
 router.post('/', authenticateUser, upload.fields([
   { name: 'audio', maxCount: 1 },
@@ -201,25 +242,25 @@ router.post('/', authenticateUser, upload.fields([
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    
+
     // Count user's existing beats
     const beatCount = await Beat.countDocuments({ producer: req.user.id });
-    
+
     // Get upload limit from user's subscription (default to 5 if not defined)
     const uploadLimit = user.subscription?.uploadLimit || 5;
-    
+
     // Check if user has reached their upload limit
     if (beatCount >= uploadLimit) {
-      return res.status(403).json({ 
-        message: `You've reached your upload limit of ${uploadLimit} beats. Please upgrade your subscription to upload more.` 
+      return res.status(403).json({
+        message: `You've reached your upload limit of ${uploadLimit} beats. Please upgrade your subscription to upload more.`
       });
     }
-    
+
     // Process tags if provided
     let tags = [];
     if (req.body.tags) {
-      tags = Array.isArray(req.body.tags) 
-        ? req.body.tags 
+      tags = Array.isArray(req.body.tags)
+        ? req.body.tags
         : req.body.tags.split(',').map(tag => tag.trim());
     }
 
@@ -232,17 +273,17 @@ router.post('/', authenticateUser, upload.fields([
     if (!req.files.audio || !req.files.coverImage) {
       return res.status(400).json({ message: 'Both audio file and cover image are required' });
     }
-    
+
     // Upload files to Cloudinary
     const audioFile = req.files.audio[0];
     const imageFile = req.files.coverImage[0];
-    
+
     console.log(`⏳ Uploading audio to Cloudinary: ${audioFile.path}`);
     const audioResult = await uploadToCloudinary(
-      audioFile.path, 
+      audioFile.path,
       `dhuun/audio/${req.user.id}`
     );
-    
+
     console.log(`⏳ Uploading cover image to Cloudinary: ${imageFile.path}`);
     const imageResult = await uploadToCloudinary(
       imageFile.path,
@@ -256,7 +297,7 @@ router.post('/', authenticateUser, upload.fields([
         console.error('Error parsing license types:', error);
       }
     }
-    
+
     // Create a new beat with Cloudinary URLs and public IDs
     const newBeat = new Beat({
       title: req.body.title,
@@ -274,10 +315,10 @@ router.post('/', authenticateUser, upload.fields([
       coverImage: imageResult.secure_url,
       imagePublicId: imageResult.public_id
     });
-    
+
     // Save the beat
     await newBeat.save();
-    
+
     res.status(201).json({
       message: 'Beat uploaded successfully',
       beat: {
@@ -291,7 +332,7 @@ router.post('/', authenticateUser, upload.fields([
     });
   } catch (error) {
     console.error('Error uploading beat:', error);
-    
+
     // Clean up temp files if they still exist
     if (req.files) {
       Object.keys(req.files).forEach(key => {
@@ -302,7 +343,7 @@ router.post('/', authenticateUser, upload.fields([
         });
       });
     }
-    
+
     res.status(500).json({ message: 'Server error while uploading beat' });
   }
 });
@@ -314,24 +355,24 @@ router.put('/:id', authenticateUser, upload.fields([
 ]), handleMulterError, async (req, res) => {
   try {
     const beat = await Beat.findById(req.params.id);
-    
+
     if (!beat) {
       return res.status(404).json({ message: 'Beat not found' });
     }
-    
+
     // Check if user is the producer of the beat
     if (beat.producer.toString() !== req.user.id) {
       return res.status(403).json({ message: 'You are not authorized to update this beat' });
     }
-    
+
     // Process tags if provided
     let tags = beat.tags;
     if (req.body.tags) {
-      tags = Array.isArray(req.body.tags) 
-        ? req.body.tags 
+      tags = Array.isArray(req.body.tags)
+        ? req.body.tags
         : req.body.tags.split(',').map(tag => tag.trim());
     }
-    
+
     // Update allowed fields
     if (req.body.title) beat.title = req.body.title;
     if (req.body.genre) beat.genre = req.body.genre;
@@ -341,53 +382,53 @@ router.put('/:id', authenticateUser, upload.fields([
     if (req.body.licenseType) beat.licenseType = req.body.licenseType;
     if (req.body.description) beat.description = req.body.description;
     beat.tags = tags;
-    
+
     // Handle file updates if new files are provided
     if (req.files) {
       // Update audio file if provided
       if (req.files.audio && req.files.audio[0]) {
         const audioFile = req.files.audio[0];
-        
+
         // Upload new audio to Cloudinary
         const audioResult = await uploadToCloudinary(
-          audioFile.path, 
+          audioFile.path,
           `dhuun/audio/${req.user.id}`
         );
-        
+
         // Delete old audio file from Cloudinary if it exists
         if (beat.audioPublicId) {
           await deleteFromCloudinary(beat.audioPublicId, 'video');
         }
-        
+
         // Update beat with new audio info
         beat.audioFile = audioResult.secure_url;
         beat.audioPublicId = audioResult.public_id;
       }
-      
+
       // Update cover image if provided
       if (req.files.coverImage && req.files.coverImage[0]) {
         const imageFile = req.files.coverImage[0];
-        
+
         // Upload new image to Cloudinary
         const imageResult = await uploadToCloudinary(
-          imageFile.path, 
+          imageFile.path,
           `dhuun/images/${req.user.id}`
         );
-        
+
         // Delete old image from Cloudinary if it exists
         if (beat.imagePublicId) {
           await deleteFromCloudinary(beat.imagePublicId, 'image');
         }
-        
+
         // Update beat with new image info
         beat.coverImage = imageResult.secure_url;
         beat.imagePublicId = imageResult.public_id;
       }
     }
-    
+
     // Save the updated beat
     await beat.save();
-    
+
     res.json({
       message: 'Beat updated successfully',
       beat: {
@@ -401,7 +442,7 @@ router.put('/:id', authenticateUser, upload.fields([
     });
   } catch (error) {
     console.error('Error updating beat:', error);
-    
+
     // Clean up temp files if they still exist
     if (req.files) {
       Object.keys(req.files).forEach(key => {
@@ -412,7 +453,7 @@ router.put('/:id', authenticateUser, upload.fields([
         });
       });
     }
-    
+
     res.status(500).json({ message: 'Server error while updating beat' });
   }
 });
@@ -421,23 +462,23 @@ router.put('/:id', authenticateUser, upload.fields([
 router.delete('/:id', authenticateUser, async (req, res) => {
   try {
     const beat = await Beat.findById(req.params.id);
-    
+
     if (!beat) {
       return res.status(404).json({ message: 'Beat not found' });
     }
-    
+
     // Check if user is the producer of the beat
     if (beat.producer.toString() !== req.user.id) {
       return res.status(403).json({ message: 'You are not authorized to delete this beat' });
     }
-    
+
     // Delete files from Cloudinary
     try {
       // Delete audio file from Cloudinary
       if (beat.audioPublicId) {
         await deleteFromCloudinary(beat.audioPublicId, 'video');
       }
-      
+
       // Delete image file from Cloudinary
       if (beat.imagePublicId) {
         await deleteFromCloudinary(beat.imagePublicId, 'image');
@@ -446,10 +487,10 @@ router.delete('/:id', authenticateUser, async (req, res) => {
       console.error('Error deleting files from Cloudinary:', cloudinaryError);
       // Continue with beat deletion even if Cloudinary deletion fails
     }
-    
+
     // Delete the beat from the database
     await Beat.findByIdAndDelete(req.params.id);
-    
+
     res.json({ message: 'Beat deleted successfully' });
   } catch (error) {
     console.error('Error deleting beat:', error);
@@ -461,15 +502,15 @@ router.delete('/:id', authenticateUser, async (req, res) => {
 router.post('/:id/play', async (req, res) => {
   try {
     const beat = await Beat.findById(req.params.id);
-    
+
     if (!beat) {
       return res.status(404).json({ message: 'Beat not found' });
     }
-    
+
     // Increment play count
     beat.plays = (beat.plays || 0) + 1;
     await beat.save();
-    
+
     res.json({ plays: beat.plays });
   } catch (error) {
     console.error('Error incrementing play count:', error);
@@ -481,19 +522,62 @@ router.post('/:id/play', async (req, res) => {
 router.post('/:id/like', authenticateUser, async (req, res) => {
   try {
     const beat = await Beat.findById(req.params.id);
-    
+
     if (!beat) {
       return res.status(404).json({ message: 'Beat not found' });
     }
-    
+
     // Increment likes
     beat.likes = (beat.likes || 0) + 1;
     await beat.save();
-    
+
     res.json({ likes: beat.likes });
   } catch (error) {
     console.error('Error liking beat:', error);
     res.status(500).json({ message: 'Server error while liking beat' });
+  }
+});
+
+// Add this new route to beatRoutes.js
+// Get beats by specific producer ID (public route)
+router.get('/producer/:producerId', async (req, res) => {
+  try {
+    const { producerId } = req.params;
+    const { limit = 20, page = 1 } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    // Build filter
+    const filter = {
+      producer: producerId,
+      isPublished: true,
+      isExclusiveSold: { $ne: true }
+    };
+
+    // Get beats with pagination
+    const beats = await Beat.find(filter)
+      .populate('producer', 'name username')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    // Get total count
+    const total = await Beat.countDocuments(filter);
+
+    res.status(200).json({
+      success: true,
+      count: beats.length,
+      total,
+      totalPages: Math.ceil(total / parseInt(limit)),
+      currentPage: parseInt(page),
+      data: beats
+    });
+  } catch (error) {
+    console.error('Error fetching producer beats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching producer beats',
+      error: error.message
+    });
   }
 });
 

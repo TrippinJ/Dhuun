@@ -48,6 +48,57 @@ const upload = multer({
     fileSize: 2 * 1024 * 1024 // 2MB limit
   }
 });
+// Get profile by user ID (for viewing other users' profiles)
+router.get('/:userId', async (req, res) => {
+  try {
+    console.log('🔍 Fetching profile for user ID:', req.params.userId);
+
+    // First try to find existing profile
+    let profile = await Profile.findOne({
+      user: req.params.userId
+    }).populate('user', 'name email avatar followersCount followingCount');
+
+    // If no profile exists, create a basic one
+    if (!profile) {
+      console.log('📄 No profile found, creating basic profile...');
+
+      // Get user data
+      const user = await User.findById(req.params.userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Create a basic profile
+      profile = new Profile({
+        user: req.params.userId,
+        username: user.username || user.email.split('@')[0],
+        bio: '',
+        socialLinks: {},
+        stats: {
+          followers: user.followersCount || 0,
+          following: user.followingCount || 0,
+          beatsUploaded: 0,
+          beatsSold: 0,
+          totalEarnings: 0
+        }
+      });
+
+      await profile.save();
+      console.log('✅ Profile created successfully');
+
+      // Populate user data for the response
+      profile = await Profile.findOne({
+        user: req.params.userId
+      }).populate('user', 'name email avatar followersCount followingCount');
+    }
+
+    console.log('📤 Sending profile data');
+    res.json(profile);
+  } catch (error) {
+    console.error('Error fetching profile:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
 
 // @route   GET api/profile/me
 // @desc    Get current user's profile
@@ -209,5 +260,7 @@ router.put('/update', authenticateUser, upload.single('avatar'), async (req, res
     res.status(500).json({ message: 'Server error' });
   }
 });
+
+
 
 export default router;
