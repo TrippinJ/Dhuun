@@ -1,8 +1,8 @@
-// frontend/src/Components/Admin/AdminSales.jsx
+
 import React, { useState, useEffect } from 'react';
 import { FaSearch, FaEye, FaFileDownload } from 'react-icons/fa';
 import API from '../../api/api';
-// import styles from '../../css/Admin/AdminSales.module.css';
+import styles from '../../css/Admin/AdminSales.module.css';
 
 const AdminSales = () => {
   const [orders, setOrders] = useState([]);

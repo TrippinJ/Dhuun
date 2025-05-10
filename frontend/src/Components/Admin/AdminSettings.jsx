@@ -1,8 +1,7 @@
-// frontend/src/Components/Admin/AdminSettings.jsx
 import React, { useState, useEffect } from 'react';
 import { FaSave } from 'react-icons/fa';
 import API from '../../api/api';
-// import styles from '../../css/Admin/AdminSettings.module.css';
+import styles from '../../css/Admin/AdminSettings.module.css';
 
 const AdminSettings = () => {
   const [settings, setSettings] = useState({

@@ -464,8 +464,28 @@ export const getAnalytics = async (req, res) => {
       }
     ]);
 
-    // Get dashboard stats
-    const dashboardStats = await getDashboardStatsHelper();
+    // Get dashboard stats directly here instead of calling helper
+    const dashboardStats = {
+      totalUsers: await User.countDocuments(),
+      totalBeats: await Beat.countDocuments(),
+      totalSales: await Order.countDocuments(),
+      totalRevenue: (await Order.aggregate([
+        { $group: { _id: null, totalRevenue: { $sum: "$totalAmount" } } }
+      ]))[0]?.totalRevenue || 0,
+      newUsersToday: await User.countDocuments({
+        createdAt: {
+          $gte: new Date(now.getFullYear(), now.getMonth(), now.getDate())
+        }
+      }),
+      newBeatsToday: await Beat.countDocuments({
+        createdAt: {
+          $gte: new Date(now.getFullYear(), now.getMonth(), now.getDate())
+        }
+      }),
+      // Calculate percentage changes
+      salesPercentage: await calculateSalesPercentage(),
+      revenuePercentage: await calculateRevenuePercentage()
+    };
 
     res.json({
       timeRange,
@@ -476,6 +496,66 @@ export const getAnalytics = async (req, res) => {
   } catch (error) {
     console.error('Error getting analytics:', error);
     res.status(500).json({ message: 'Failed to get analytics data' });
+  }
+};
+
+// Add these helper functions at the end of the file
+const calculateSalesPercentage = async () => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const lastWeek = new Date();
+    lastWeek.setDate(lastWeek.getDate() - 7);
+
+    const previousWeek = new Date();
+    previousWeek.setDate(previousWeek.getDate() - 14);
+
+    const salesLastWeek = await Order.countDocuments({
+      createdAt: { $gte: lastWeek, $lt: today }
+    });
+
+    const salesPreviousWeek = await Order.countDocuments({
+      createdAt: { $gte: previousWeek, $lt: lastWeek }
+    });
+
+    if (salesPreviousWeek === 0) return 100;
+    return Number((((salesLastWeek - salesPreviousWeek) / salesPreviousWeek) * 100).toFixed(2));
+  } catch (error) {
+    console.error('Error calculating sales percentage:', error);
+    return 0;
+  }
+};
+
+const calculateRevenuePercentage = async () => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const lastWeek = new Date();
+    lastWeek.setDate(lastWeek.getDate() - 7);
+
+    const previousWeek = new Date();
+    previousWeek.setDate(previousWeek.getDate() - 14);
+
+    const revenueLastWeek = await Order.aggregate([
+      { $match: { createdAt: { $gte: lastWeek, $lt: today } } },
+      { $group: { _id: null, total: { $sum: "$totalAmount" } } }
+    ]);
+
+    const revenuePreviousWeek = await Order.aggregate([
+      { $match: { createdAt: { $gte: previousWeek, $lt: lastWeek } } },
+      { $group: { _id: null, total: { $sum: "$totalAmount" } } }
+    ]);
+
+    const revenueLastWeekValue = revenueLastWeek[0]?.total || 0;
+    const revenuePreviousWeekValue = revenuePreviousWeek[0]?.total || 0;
+
+    if (revenuePreviousWeekValue === 0) return 100;
+    return Number((((revenueLastWeekValue - revenuePreviousWeekValue) / revenuePreviousWeekValue) * 100).toFixed(2));
+  } catch (error) {
+    console.error('Error calculating revenue percentage:', error);
+    return 0;
   }
 };
 

@@ -1,4 +1,4 @@
-// frontend/src/Components/Admin/AdminAnalytics.jsx
+
 import React, { useState, useEffect } from 'react';
 import { FaUsers, FaMusic, FaShoppingCart, FaDollarSign, FaArrowUp, FaArrowDown } from 'react-icons/fa';
 import { 
@@ -150,7 +150,7 @@ const AdminAnalytics = () => {
           </div>
         </div>
 
-        // Continuing frontend/src/Components/Admin/AdminAnalytics.jsx
+        
         <div className={styles.statCard}>
           <div className={styles.statIcon}>
             <FaShoppingCart />
