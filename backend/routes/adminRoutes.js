@@ -38,4 +38,6 @@ router.put('/settings', adminController.updateSettings);
 
 router.patch('/beats/:id/featured', adminController.toggleFeaturedStatus);
 
+
+
 export default router;

@@ -19,6 +19,8 @@ import beatRoutes from './routes/beatRoutes.js';
 import subscriptionRoutes from './routes/subscription.js';
 import adminRoutes from './routes/adminRoutes.js';
 import walletRoutes from './routes/walletRoutes.js';
+import withdrawalRoutes from './routes/withdrawalRoutes.js';
+import adminWithdrawalRoutes from './routes/adminWithdrawalRoutes.js';
 
 // Get __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -95,6 +97,8 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/wallet', walletRoutes);
+app.use('/api/withdrawals', withdrawalRoutes);
+app.use('/api/admin/withdrawals', adminWithdrawalRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

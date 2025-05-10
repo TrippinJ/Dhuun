@@ -8,6 +8,7 @@ import AdminBeats from '../../Components/Admin/AdminBeats';
 import AdminSales from '../../Components/Admin/AdminSales';
 import AdminAnalytics from '../../Components/Admin/AdminAnalytics';
 import AdminSettings from '../../Components/Admin/AdminSettings';
+import AdminWithdrawals from '../../Components/Admin/AdminWithdrawals';
 import API from '../../api/api';
 import styles from '../../css/Admin/AdminDashboard.module.css';
 
@@ -67,6 +68,8 @@ const AdminDashboard = () => {
         return <AdminAnalytics />;
       case 'settings':
         return <AdminSettings />;
+        case 'withdrawals': 
+        return <AdminWithdrawals />;
       default:
         return <AdminOverview />;
     }
