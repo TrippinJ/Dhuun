@@ -22,8 +22,8 @@ export const getWallet = async (req, res) => {
     res.json({
       success: true,
       wallet: {
-        balance: wallet.balance,
-        pendingBalance: wallet.pendingBalance,
+        balance: wallet.balance || 0,
+        pendingBalance: wallet.pendingBalance || 0,
         transactions: wallet.transactions.sort((a, b) => b.createdAt - a.createdAt).slice(0, 10) // Get most recent 10 transactions
       }
     });

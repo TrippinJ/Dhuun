@@ -62,7 +62,7 @@ const SellerWallet = () => {
     }
 
     if (amount > wallet.balance) {
-      setError(`Insufficient balance. Available: $${wallet.balance.toFixed(2)}`);
+      setError(`Insufficient balance. Available: $${wallet.balance ? wallet.balance.toFixed(2): '0.00'}`);
       return;
     }
 
@@ -144,7 +144,7 @@ const SellerWallet = () => {
           </div>
           <div className={styles.balanceInfo}>
             <h3>Available Balance</h3>
-            <div className={styles.balanceAmount}>${wallet.balance.toFixed(2)}</div>
+            <div className={styles.balanceAmount}>${wallet.balance ? wallet.balance.toFixed(2) : '0.00'}</div>
             <div className={styles.balanceNote}>Ready to withdraw</div>
           </div>
         </div>
@@ -155,7 +155,7 @@ const SellerWallet = () => {
           </div>
           <div className={styles.balanceInfo}>
             <h3>Pending Balance</h3>
-            <div className={styles.balanceAmount}>${wallet.pendingBalance.toFixed(2)}</div>
+            <div className={styles.balanceAmount}>${wallet.balance ? wallet.balance.toFixed(2) : '0.00'}</div>
             <div className={styles.balanceNote}>Processing payments</div>
           </div>
         </div>
