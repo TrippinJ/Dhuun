@@ -1,8 +1,8 @@
-// backend/routes/adminRoutes.js
+
 import express from 'express';
 import { authenticateUser } from './auth.js';
 import * as adminController from '../controllers/adminController.js';
-
+import * as verificationController from '../controllers/verificationController.js';
 const router = express.Router();
 
 // Middleware to check if user is admin
@@ -38,6 +38,8 @@ router.put('/settings', adminController.updateSettings);
 
 router.patch('/beats/:id/featured', adminController.toggleFeaturedStatus);
 
-
+// Add these routes for verification management
+router.get('/verification/pending', verificationController.getPendingVerifications);
+router.post('/verification/update', verificationController.updateVerificationStatus);
 
 export default router;

@@ -68,7 +68,9 @@ const AdminDashboard = () => {
         return <AdminAnalytics />;
       case 'settings':
         return <AdminSettings />;
-        case 'withdrawals': 
+      case 'verifications': 
+        return <AdminDocumentVerification />;
+      case 'withdrawals':
         return <AdminWithdrawals />;
       default:
         return <AdminOverview />;
@@ -85,9 +87,9 @@ const AdminDashboard = () => {
 
   return (
     <div className={styles.adminContainer}>
-      <AdminSidebar 
-        activeSection={activeSection} 
-        setActiveSection={setActiveSection} 
+      <AdminSidebar
+        activeSection={activeSection}
+        setActiveSection={setActiveSection}
       />
       <div className={styles.mainContent}>
         <div className={styles.header}>

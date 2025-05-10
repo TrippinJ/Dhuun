@@ -28,6 +28,7 @@ const AdminSidebar = ({ activeSection, setActiveSection }) => {
     { id: 'users', label: 'Users', icon: <FaUsers /> },
     { id: 'beats', label: 'Beats', icon: <FaMusic /> },
     { id: 'sales', label: 'Sales', icon: <FaShoppingCart /> },
+    { id: 'verifications', label: 'Document Verification', icon: <FaIdCard /> },
     { id: 'withdrawals', label: 'Withdrawals', icon: <FaMoneyBillWave /> },
     { id: 'analytics', label: 'Analytics', icon: <FaChartLine /> },
     { id: 'settings', label: 'Settings', icon: <FaCog /> },
