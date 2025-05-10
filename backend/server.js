@@ -19,6 +19,7 @@ import beatRoutes from './routes/beatRoutes.js';
 import subscriptionRoutes from './routes/subscription.js';
 import adminRoutes from './routes/adminRoutes.js';
 import walletRoutes from './routes/walletRoutes.js';
+import verificationRoutes from './routes/verificationRoutes.js';
 import withdrawalRoutes from './routes/withdrawalRoutes.js';
 import adminWithdrawalRoutes from './routes/adminWithdrawalRoutes.js';
 
@@ -99,12 +100,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/withdrawals', withdrawalRoutes);
 app.use('/api/admin/withdrawals', adminWithdrawalRoutes);
-console.log('✅ Admin withdrawals routes registered at: /api/admin/withdrawals');
-// Add a test route to verify the path is working
-app.get('/api/admin/withdrawals/test', (req, res) => {
-  res.json({ message: 'Admin withdrawals test route working' });
-});
-console.log('✅ Added test route at: /api/admin/withdrawals/test');
+app.use('/api/verification', verificationRoutes);
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('ERROR:', err.stack);

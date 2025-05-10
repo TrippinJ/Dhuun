@@ -70,7 +70,7 @@ const SellerWallet = () => {
       setWithdrawLoading(true);
       setError(null);
 
-      const response = await API.post("/api/wallet/withdraw", {
+      const response = await API.post("/api/withdrawals", {
         amount,
         paymentMethod: withdrawMethod
       });

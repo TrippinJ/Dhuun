@@ -128,7 +128,15 @@ export const getPendingWithdrawals = async (req, res) => {
       
       return {
         ...withdrawal.toObject(),
-        payoutDetails: verification?.payoutDetails || {}
+        payoutDetails: verification?.payoutDetails || {},
+        // Add documents array with URLs and upload dates
+        verificationDocuments: verification?.documents.map(doc => ({
+          type: doc.type,
+          fileUrl: doc.fileUrl,
+          uploadDate: doc.uploadDate,
+          verifiedDate: doc.verifiedDate,
+          adminNotes: doc.adminNotes
+        })) || []
       };
     }));
     
@@ -220,3 +228,5 @@ export const processWithdrawal = async (req, res) => {
     });
   }
 };
+
+

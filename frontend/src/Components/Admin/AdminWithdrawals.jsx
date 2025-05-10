@@ -3,6 +3,16 @@ import { FaCheck, FaTimes, FaEye, FaMoneyBillWave } from 'react-icons/fa';
 import API from '../../api/api';
 import styles from '../../css/Admin/AdminWithdrawals.module.css';
 
+const getDocumentTypeName = (type) => {
+  const typeNames = {
+    'id': 'ID Document',
+    'address': 'Address Proof',
+    'bank': 'Bank Statement',
+    'tax': 'Tax Document'
+  };
+  return typeNames[type] || type;
+};
+
 const AdminWithdrawals = () => {
   const [withdrawals, setWithdrawals] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,7 +31,7 @@ const AdminWithdrawals = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Get authentication token
       const token = localStorage.getItem("token");
       if (!token) {
@@ -29,11 +39,11 @@ const AdminWithdrawals = () => {
         setLoading(false);
         return;
       }
-      
+
       // Use the correct API endpoint with authentication token
       const response = await API.get('/api/admin/withdrawals/pending');
-    
-      
+
+
       if (response.data.success) {
         setWithdrawals(response.data.withdrawals);
       } else {
@@ -62,10 +72,10 @@ const AdminWithdrawals = () => {
 
   const handleProcessWithdrawal = async (status) => {
     if (!selectedWithdrawal) return;
-    
+
     try {
       setProcessingAction(true);
-      
+
       // Get authentication token
       const token = localStorage.getItem("token");
       if (!token) {
@@ -73,7 +83,7 @@ const AdminWithdrawals = () => {
         setProcessingAction(false);
         return;
       }
-      
+
       // Use the correct API endpoint with authentication token
       const response = await API.post('/api/admin/withdrawals/process', {
         withdrawalId: selectedWithdrawal._id,
@@ -83,12 +93,12 @@ const AdminWithdrawals = () => {
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       if (response.data.success) {
         // Remove processed withdrawal from the list
         setWithdrawals(withdrawals.filter(w => w._id !== selectedWithdrawal._id));
         handleCloseModal();
-        
+
         // Show success message
         alert(`Withdrawal ${status} successfully`);
       } else {
@@ -136,7 +146,7 @@ const AdminWithdrawals = () => {
             <div className={styles.dateColumn}>Requested</div>
             <div className={styles.actionsColumn}>Actions</div>
           </div>
-          
+
           {withdrawals.map((withdrawal) => (
             <div key={withdrawal._id} className={styles.tableRow}>
               <div className={styles.sellerColumn}>
@@ -145,19 +155,19 @@ const AdminWithdrawals = () => {
                   <span className={styles.sellerEmail}>{withdrawal.user.email}</span>
                 </div>
               </div>
-              
+
               <div className={styles.amountColumn}>
                 ${withdrawal.amount.toFixed(2)}
               </div>
-              
+
               <div className={styles.methodColumn}>
                 {withdrawal.paymentMethod}
               </div>
-              
+
               <div className={styles.dateColumn}>
                 {new Date(withdrawal.requestDate).toLocaleDateString()}
               </div>
-              
+
               <div className={styles.actionsColumn}>
                 <button
                   className={styles.actionButton}
@@ -184,7 +194,7 @@ const AdminWithdrawals = () => {
                 &times;
               </button>
             </div>
-            
+
             <div className={styles.modalBody}>
               <div className={styles.detailsSection}>
                 <h4>Seller Information</h4>
@@ -201,7 +211,7 @@ const AdminWithdrawals = () => {
                   <span className={styles.detailValue}>{selectedWithdrawal.user.username}</span>
                 </div>
               </div>
-              
+
               <div className={styles.detailsSection}>
                 <h4>Withdrawal Details</h4>
                 <div className={styles.detailRow}>
@@ -219,7 +229,7 @@ const AdminWithdrawals = () => {
                   </span>
                 </div>
               </div>
-              
+
               <div className={styles.detailsSection}>
                 <h4>Payment Details</h4>
                 {selectedWithdrawal.paymentMethod === "bank" && (
@@ -242,14 +252,14 @@ const AdminWithdrawals = () => {
                     </div>
                   </>
                 )}
-                
+
                 {selectedWithdrawal.paymentMethod === "paypal" && (
                   <div className={styles.detailRow}>
                     <span className={styles.detailLabel}>PayPal Email:</span>
                     <span className={styles.detailValue}>{selectedWithdrawal.payoutDetails?.paypalEmail || 'Not provided'}</span>
                   </div>
                 )}
-                
+
                 {selectedWithdrawal.paymentMethod === "khalti" && (
                   <div className={styles.detailRow}>
                     <span className={styles.detailLabel}>Khalti ID:</span>
@@ -257,7 +267,57 @@ const AdminWithdrawals = () => {
                   </div>
                 )}
               </div>
-              
+
+                 {/* DOCUMENTS VERIFICATION SECTION */}
+
+              {selectedWithdrawal.verificationDocuments && selectedWithdrawal.verificationDocuments.length > 0 && (
+                <div className={styles.detailsSection}>
+                  <h4>Verification Documents</h4>
+                  <div className={styles.documentsGrid}>
+                    {selectedWithdrawal.verificationDocuments.map((doc, index) => (
+                      <div key={index} className={styles.documentCard}>
+                        <div className={styles.documentHeader}>
+                          <h5>{getDocumentTypeName(doc.type)}</h5>
+                          <span className={styles.uploadDate}>
+                            Uploaded: {new Date(doc.uploadDate).toLocaleDateString()}
+                          </span>
+                        </div>
+
+                        <div className={styles.documentPreview}>
+                          <img
+                            src={doc.fileUrl}
+                            alt={getDocumentTypeName(doc.type)}
+                            className={styles.documentImage}
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              // Show a placeholder or icon for non-image files
+                              const placeholder = document.createElement('div');
+                              placeholder.className = styles.documentPlaceholder;
+                              placeholder.innerHTML = `<span>📄 ${getDocumentTypeName(doc.type)}</span>`;
+                              e.target.parentNode.appendChild(placeholder);
+                            }}
+                          />
+                        </div>
+
+                        <a
+                          href={doc.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.viewDocumentButton}
+                        >
+                          View Full Document
+                        </a>
+
+                        {doc.adminNotes && (
+                          <div className={styles.documentNotes}>
+                            <strong>Admin Notes:</strong> {doc.adminNotes}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className={styles.actionSection}>
                 <div className={styles.formField}>
                   <label>Admin Notes:</label>
@@ -268,7 +328,7 @@ const AdminWithdrawals = () => {
                     rows={3}
                   />
                 </div>
-                
+
                 <div className={styles.formField}>
                   <label>Payout Reference (for completed withdrawals):</label>
                   <input
@@ -280,7 +340,7 @@ const AdminWithdrawals = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className={styles.modalFooter}>
               <button
                 className={styles.rejectButton}
@@ -289,7 +349,7 @@ const AdminWithdrawals = () => {
               >
                 <FaTimes /> Reject
               </button>
-              
+
               <button
                 className={styles.approveButton}
                 onClick={() => handleProcessWithdrawal('approved')}
@@ -297,7 +357,7 @@ const AdminWithdrawals = () => {
               >
                 <FaCheck /> Approve
               </button>
-              
+
               <button
                 className={styles.completeButton}
                 onClick={() => handleProcessWithdrawal('paid')}
