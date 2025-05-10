@@ -3,15 +3,6 @@ import { FaCheck, FaTimes, FaEye, FaMoneyBillWave } from 'react-icons/fa';
 import API from '../../api/api';
 import styles from '../../css/Admin/AdminWithdrawals.module.css';
 
-const getDocumentTypeName = (type) => {
-  const typeNames = {
-    'id': 'ID Document',
-    'address': 'Address Proof',
-    'bank': 'Bank Statement',
-    'tax': 'Tax Document'
-  };
-  return typeNames[type] || type;
-};
 
 const AdminWithdrawals = () => {
   const [withdrawals, setWithdrawals] = useState([]);
@@ -268,56 +259,7 @@ const AdminWithdrawals = () => {
                 )}
               </div>
 
-                 {/* DOCUMENTS VERIFICATION SECTION */}
-
-              {selectedWithdrawal.verificationDocuments && selectedWithdrawal.verificationDocuments.length > 0 && (
-                <div className={styles.detailsSection}>
-                  <h4>Verification Documents</h4>
-                  <div className={styles.documentsGrid}>
-                    {selectedWithdrawal.verificationDocuments.map((doc, index) => (
-                      <div key={index} className={styles.documentCard}>
-                        <div className={styles.documentHeader}>
-                          <h5>{getDocumentTypeName(doc.type)}</h5>
-                          <span className={styles.uploadDate}>
-                            Uploaded: {new Date(doc.uploadDate).toLocaleDateString()}
-                          </span>
-                        </div>
-
-                        <div className={styles.documentPreview}>
-                          <img
-                            src={doc.fileUrl}
-                            alt={getDocumentTypeName(doc.type)}
-                            className={styles.documentImage}
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                              // Show a placeholder or icon for non-image files
-                              const placeholder = document.createElement('div');
-                              placeholder.className = styles.documentPlaceholder;
-                              placeholder.innerHTML = `<span>📄 ${getDocumentTypeName(doc.type)}</span>`;
-                              e.target.parentNode.appendChild(placeholder);
-                            }}
-                          />
-                        </div>
-
-                        <a
-                          href={doc.fileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={styles.viewDocumentButton}
-                        >
-                          View Full Document
-                        </a>
-
-                        {doc.adminNotes && (
-                          <div className={styles.documentNotes}>
-                            <strong>Admin Notes:</strong> {doc.adminNotes}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                
               <div className={styles.actionSection}>
                 <div className={styles.formField}>
                   <label>Admin Notes:</label>
