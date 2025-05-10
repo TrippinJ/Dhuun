@@ -1,5 +1,6 @@
 import Wallet from '../models/wallet.js';
 import User from '../models/user.js';
+import Withdrawal from '../models/withdrawal.js';
 
 // Get wallet information for the authenticated user
 export const getWallet = async (req, res) => {
@@ -119,11 +120,24 @@ export const requestWithdrawal = async (req, res) => {
       description: `Withdrawal request via ${paymentMethod}`,
       status: 'pending'
     });
+
+    
     
     // Update pending balance
     wallet.pendingBalance += amount;
     
     await wallet.save();
+
+     // Create a withdrawal record 
+    const withdrawal = new Withdrawal({
+      user: req.user.id,
+      amount: amount,
+      paymentMethod: paymentMethod,
+      status: 'pending',
+      requestDate: new Date()
+    });
+    
+    await withdrawal.save();
     
     // In a real application, you would also create a withdrawal request record
     // and notify administrators to process it

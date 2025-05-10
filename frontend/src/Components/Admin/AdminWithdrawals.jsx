@@ -31,11 +31,8 @@ const AdminWithdrawals = () => {
       }
       
       // Use the correct API endpoint with authentication token
-      const response = await API.get('/api/admin/withdrawals/pending', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      console.log("API Response:", response.data); // Debug log
+      const response = await API.get('/api/admin/withdrawals/pending');
+    
       
       if (response.data.success) {
         setWithdrawals(response.data.withdrawals);
