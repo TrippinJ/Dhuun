@@ -9,10 +9,12 @@ import {
   FaCog, 
   FaTachometerAlt,
   FaSignOutAlt,
-  FaMoneyBillWave
+  FaMoneyBillWave,
+  FaIdCard
 } from 'react-icons/fa';
 import styles from '../../css/Admin/AdminSidebar.module.css';
 import Logo from '../../Assets/DHUUN.png';
+
 
 const AdminSidebar = ({ activeSection, setActiveSection }) => {
   const navigate = useNavigate();

@@ -9,6 +9,7 @@ import AdminSales from '../../Components/Admin/AdminSales';
 import AdminAnalytics from '../../Components/Admin/AdminAnalytics';
 import AdminSettings from '../../Components/Admin/AdminSettings';
 import AdminWithdrawals from '../../Components/Admin/AdminWithdrawals';
+import AdminDocumentVerification from '../../Components/Admin/AdminDocumentVerification';
 import API from '../../api/api';
 import styles from '../../css/Admin/AdminDashboard.module.css';
 
