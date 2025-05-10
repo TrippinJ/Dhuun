@@ -323,8 +323,8 @@ const Dashboard = ({ activePage: initialPage }) => {
               <p>{beats.reduce((sum, beat) => sum + (beat.plays || 0), 0)}</p>
             </div>
             <div className={styles.statCard}>
-              <h3>Total Likes</h3>
-              <p>{beats.reduce((sum, beat) => sum + (beat.likes || 0), 0)}</p>
+              <h3>Total Followers</h3>
+              <p>{user.followersCount || 0}</p>  
             </div>
             <div className={styles.statCard}>
               <h3>Upload Limit</h3>

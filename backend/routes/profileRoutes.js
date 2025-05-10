@@ -53,27 +53,34 @@ router.get('/:userId', async (req, res) => {
   try {
     console.log('🔍 Fetching profile for user ID:', req.params.userId);
 
-    // First try to find existing profile
-    let profile = await Profile.findOne({
-      user: req.params.userId
-    }).populate('user', 'name email avatar followersCount followingCount');
+    // First, get user data with all required fields
+    const user = await User.findById(req.params.userId)
+      .select('name email username phonenumber avatar bio followersCount followingCount verificationStatus role');
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Try to find existing profile
+    let profile = await Profile.findOne({ user: req.params.userId });
 
     // If no profile exists, create a basic one
     if (!profile) {
       console.log('📄 No profile found, creating basic profile...');
 
-      // Get user data
-      const user = await User.findById(req.params.userId);
-      if (!user) {
-        return res.status(404).json({ message: 'User not found' });
-      }
-
-      // Create a basic profile
       profile = new Profile({
         user: req.params.userId,
         username: user.username || user.email.split('@')[0],
-        bio: '',
-        socialLinks: {},
+        bio: user.bio || '',
+        location: '',
+        website: '',
+        avatar: user.avatar || '',
+        socialLinks: {
+          instagram: '',
+          twitter: '',
+          youtube: '',
+          soundcloud: ''
+        },
         stats: {
           followers: user.followersCount || 0,
           following: user.followingCount || 0,
@@ -85,15 +92,21 @@ router.get('/:userId', async (req, res) => {
 
       await profile.save();
       console.log('✅ Profile created successfully');
-
-      // Populate user data for the response
-      profile = await Profile.findOne({
-        user: req.params.userId
-      }).populate('user', 'name email avatar followersCount followingCount');
+    } else {
+      // Update profile stats to match user stats
+      profile.stats.followers = user.followersCount || 0;
+      profile.stats.following = user.followingCount || 0;
+      await profile.save();
     }
 
+    // Combine user and profile data for the response
+    const responseData = {
+      ...profile.toObject(),
+      user: user.toObject()
+    };
+
     console.log('📤 Sending profile data');
-    res.json(profile);
+    res.json(responseData);
   } catch (error) {
     console.error('Error fetching profile:', error);
     res.status(500).json({ message: 'Server error', error: error.message });

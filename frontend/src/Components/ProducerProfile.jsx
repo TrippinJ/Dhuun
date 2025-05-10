@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaUserCircle, FaMusic, FaHeart, FaTimes, FaComment, FaPlay, FaPause } from 'react-icons/fa';
+import { FaUserCircle, FaMusic, FaHeart, FaTimes, FaComment, FaPlay, FaPause, FaCheckCircle} from 'react-icons/fa';
 import API from '../api/api';
 import styles from '../css/ProducerProfile.module.css';
 import { useAudio } from '../context/AudioContext';
@@ -27,8 +27,20 @@ const ProducerProfile = ({ producerId, isOpen, onClose }) => {
 
       // Fetch producer profile
       const profileRes = await API.get(`/api/profile/${producerId}`);
-      setProducer(profileRes.data);
-      setFollowersCount(profileRes.data.stats?.followers || 0);
+      const profileData = profileRes.data;
+
+      // Set producer data with fallbacks
+      setProducer({
+        ...profileData,
+        name: profileData.user?.name || profileData.username,
+        avatar: profileData.user?.avatar || profileData.avatar,
+        bio: profileData.user?.bio || profileData.bio || '',
+        username: profileData.username || profileData.user?.username,
+        verificationStatus: profileData.user?.verificationStatus
+      });
+
+      // Use user's followersCount as the source of truth
+      setFollowersCount(profileData.user?.followersCount || profileData.stats?.followers || 0);
 
       // Fetch producer's beats
       const beatsRes = await API.get(`/api/beats/producer/${producerId}`);
@@ -55,12 +67,12 @@ const ProducerProfile = ({ producerId, isOpen, onClose }) => {
 
   const handleFollow = async () => {
     try {
-      const endpoint = isFollowing 
+      const endpoint = isFollowing
         ? `/api/follow/unfollow/${producerId}`
         : `/api/follow/follow/${producerId}`;
 
       const response = await API.post(endpoint);
-      
+
       if (response.data.success) {
         setIsFollowing(!isFollowing);
         setFollowersCount(response.data.followersCount);
@@ -98,7 +110,7 @@ const ProducerProfile = ({ producerId, isOpen, onClose }) => {
             {/* Producer Header */}
             <div className={styles.header}>
               <div className={styles.avatarSection}>
-                {producer.user?.avatar ? (
+                {producer.avatar ? (
                   <img
                     src={producer.user.avatar}
                     alt={producer.user.name}
@@ -109,7 +121,10 @@ const ProducerProfile = ({ producerId, isOpen, onClose }) => {
                 )}
                 <div className={styles.producerInfo}>
                   <h2 className={styles.producerName}>
-                    {producer.user?.name || producer.username}
+                    {producer.name}
+                    {producer.verificationStatus === 'approved' && (
+                      <FaCheckCircle className={styles.verifiedBadge} />
+                    )}
                   </h2>
                   <p className={styles.username}>@{producer.username}</p>
                   <div className={styles.stats}>
@@ -194,7 +209,7 @@ const ProducerProfile = ({ producerId, isOpen, onClose }) => {
                       <div className={styles.beatInfo}>
                         <h4 className={styles.beatTitle}>{beat.title}</h4>
                         <p className={styles.beatGenre}>{beat.genre}</p>
-                        <p className={styles.beatPrice}>${beat.price}</p>
+                        <p className={styles.beatPrice}>${beat.price?.toFixed(2)}</p>
                       </div>
                     </div>
                   ))
