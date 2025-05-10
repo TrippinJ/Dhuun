@@ -22,6 +22,7 @@ import walletRoutes from './routes/walletRoutes.js';
 import verificationRoutes from './routes/verificationRoutes.js';
 import withdrawalRoutes from './routes/withdrawalRoutes.js';
 import adminWithdrawalRoutes from './routes/adminWithdrawalRoutes.js';
+import followRoutes from './routes/followRoutes.js';
 
 // Get __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -101,6 +102,7 @@ app.use('/api/wallet', walletRoutes);
 app.use('/api/withdrawals', withdrawalRoutes);
 app.use('/api/admin/withdrawals', adminWithdrawalRoutes);
 app.use('/api/verification', verificationRoutes);
+app.use('/api/follow', followRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

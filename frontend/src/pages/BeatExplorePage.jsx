@@ -19,8 +19,9 @@ import {
 } from "react-icons/fa";
 import NavbarBeatExplore from '../Components/NavbarBeatExplore';
 import SingleBeatModal from '../Components/SingleBeatModal';
-import { useAudio } from '../context/AudioContext'; // Import the audio context
+import { useAudio } from '../context/AudioContext';
 import LicenseSelectionModal from '../Components/LicenseSelectionModal';
+import ProducerProfile from '../Components/ProducerProfile';
 
 const BeatExplorePage = () => {
   // State variables
@@ -40,6 +41,16 @@ const BeatExplorePage = () => {
   const [wishlist, setWishlist] = useState([]);
   const [showLicenseModal, setShowLicenseModal] = useState(false);
   const [selectedBeatForLicense, setSelectedBeatForLicense] = useState(null);
+
+  //Producer Profile
+  const [showProducerProfile, setShowProducerProfile] = useState(false);
+  const [selectedProducerId, setSelectedProducerId] = useState(null);
+
+  //Function to initiate producer profile
+  const handleOpenProducerProfile = (producerId) => {
+    setSelectedProducerId(producerId);
+    setShowProducerProfile(true);
+  };
 
   // Use the audio context
   const { playTrack, currentTrack, isPlaying } = useAudio();
@@ -483,10 +494,14 @@ const BeatExplorePage = () => {
 
                   <div className={styles.beatInfo}>
                     <h3 className={styles.beatTitle}>{beat.title}</h3>
-                    <div className={styles.producerName}>
+                    <span
+                      className={styles.producerName}
+                      onClick={() => handleOpenProducerProfile(beat.producer._id)}
+                      style={{ cursor: 'pointer', color: '#7B2CBF' }}
+                    >
                       {beat.producer?.name || "Unknown Producer"}
                       {beat.producer?.verified && <span className={styles.verifiedBadge}>✓</span>}
-                    </div>
+                    </span>
                     <div className={styles.beatStats}>
                       <span className={styles.beatPrice}>${beat.price?.toFixed(2) || "0.00"}</span>
                       <span className={styles.beatGenre}>{beat.genre}</span>
@@ -691,6 +706,17 @@ const BeatExplorePage = () => {
             setSelectedBeatForLicense(null);
           }}
           onSelectLicense={handleLicenseSelect}
+        />
+      )}
+
+      {showProducerProfile && selectedProducerId && (
+        <ProducerProfile
+          producerId={selectedProducerId}
+          isOpen={showProducerProfile}
+          onClose={() => {
+            setShowProducerProfile(false);
+            setSelectedProducerId(null);
+          }}
         />
       )}
     </div>

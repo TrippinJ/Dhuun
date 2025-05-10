@@ -39,7 +39,9 @@ const ProfileSchema = new mongoose.Schema({
   stats: {
     beatsUploaded: { type: Number, default: 0 },
     beatsSold: { type: Number, default: 0 },
-    totalEarnings: { type: Number, default: 0 }
+    totalEarnings: { type: Number, default: 0 },
+    followers: { type: Number, default: 0 },
+    following: { type: Number, default: 0 }
   }
 }, { timestamps: true });
 

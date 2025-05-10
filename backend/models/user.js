@@ -6,7 +6,23 @@ const UserSchema = new mongoose.Schema({
   phonenumber: { type: String, required: false },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  googleId: { type: String, unique: true, sparse: true }, // For Google Auth Users
+  googleId: { type: String, unique: true, sparse: true },
+  followers: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  following: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  followersCount: {
+    type: Number,
+    default: 0
+  },
+  followingCount: {
+    type: Number,
+    default: 0
+  },
 
   //OTP verification fields
   isVerified: { type: Boolean, default: false },
