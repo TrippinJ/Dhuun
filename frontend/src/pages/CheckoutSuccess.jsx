@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import styles from "../css/CheckoutSuccess.module.css";
 import { FaDownload, FaArrowRight, FaHome, FaInbox, FaCheck, FaTimes } from "react-icons/fa";
@@ -14,12 +14,15 @@ const CheckoutSuccess = () => {
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [verifyingPayment, setVerifyingPayment] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
-
+  
   // Confetti effect state
   const [showConfetti, setShowConfetti] = useState(false);
-
+  
   // Get cart items for display
   const [cartItems, setCartItems] = useState([]);
+  
+  // Add this ref to track if payment has been processed
+  const hasProcessedPayment = useRef(false);
 
   useEffect(() => {
     const items = JSON.parse(localStorage.getItem("cart") || "[]");
@@ -38,7 +41,7 @@ const CheckoutSuccess = () => {
       // Step 1: Verify payment with backend
       const verifyResponse = await API.post(
         "/api/orders/verify-payment",
-        { pidx: pidx }, // Fixed variable name (was Pidx)
+        { pidx: pidx },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -51,7 +54,7 @@ const CheckoutSuccess = () => {
           totalAmount: pendingOrderData.totalAmount,
           paymentMethod: "khalti",
           paymentId: verifyResponse.data.transaction_id,
-          paymentPidx: pidx // Fixed variable name
+          paymentPidx: pidx
         };
 
         try {
@@ -161,6 +164,12 @@ const CheckoutSuccess = () => {
 
   useEffect(() => {
     const processPayment = async () => {
+      // Add guard to prevent duplicate processing
+      if (hasProcessedPayment.current) {
+        console.log("Payment already processed, skipping...");
+        return;
+      }
+
       try {
         // Get URL parameters from Khalti redirect
         const params = new URLSearchParams(window.location.search);
@@ -171,7 +180,13 @@ const CheckoutSuccess = () => {
         const stripeSessionId = localStorage.getItem("stripeSessionId");
         
         // Only proceed if we have a payment identifier
-        if (!returnedPidx && !stripeSessionId) return;
+        if (!returnedPidx && !stripeSessionId) {
+          setLoading(false);
+          return;
+        }
+
+        // Set flag to prevent duplicate processing
+        hasProcessedPayment.current = true;
 
         setVerifyingPayment(true);
         setLoading(true);
@@ -215,16 +230,19 @@ const CheckoutSuccess = () => {
 
     // Execute payment processing
     processPayment();
+  }, [location]); // Remove showConfetti from dependencies
 
-    // Hide confetti after 5 seconds if shown
+  // Separate effect for confetti cleanup
+  useEffect(() => {
     if (showConfetti) {
       const timer = setTimeout(() => {
         setShowConfetti(false);
       }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [location, navigate, showConfetti]); // Removed processKhaltiPayment and processStripePayment from dependencies
+  }, [showConfetti]);
 
+  // Rest of your component remains the same...
   if (loading) {
     return (
       <div className={styles.successContainer}>
