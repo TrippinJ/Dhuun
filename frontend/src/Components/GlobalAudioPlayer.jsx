@@ -11,7 +11,8 @@ import {
   FaBackward, 
   FaHeart, 
   FaEllipsisH,
-  FaShoppingCart
+  FaShoppingCart,
+  FaTimes
 } from 'react-icons/fa';
 import styles from '../css/GlobalAudioPlayer.module.css';
 
@@ -25,7 +26,8 @@ const GlobalAudioPlayer = () => {
     playTrack, 
     pauseTrack, 
     seekTo,
-    changeVolume 
+    changeVolume,
+    stopTrack
   } = useAudio();
   
   const [showVolume, setShowVolume] = useState(false);
@@ -161,6 +163,15 @@ const GlobalAudioPlayer = () => {
   const goToArtist = () => {
     navigate(`/producer/${currentTrack.producer?._id || currentTrack.producer?.id}`);
     setShowOptions(false);
+  };
+
+  if (!currentTrack) {
+    return null;
+  }
+
+  // Handle close/stop button click
+  const handleClose = () => {
+    stopTrack();
   };
 
   return (

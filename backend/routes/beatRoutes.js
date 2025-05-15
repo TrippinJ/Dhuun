@@ -310,6 +310,7 @@ router.post('/', authenticateUser, upload.fields([
       licenseType: licenseTypes,
       description: req.body.description || '',
       // Store Cloudinary URLs
+      isPublished: true,
       audioFile: audioResult.secure_url,
       audioPublicId: audioResult.public_id,
       coverImage: imageResult.secure_url,
@@ -549,7 +550,7 @@ router.get('/producer/:producerId', async (req, res) => {
     // Build filter
     const filter = {
       producer: producerId,
-      isPublished: true,
+      // isPublished: true,
       isExclusiveSold: { $ne: true }
     };
 

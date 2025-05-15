@@ -6,15 +6,17 @@ import TrendingBeats from "./TrendingBeats";
 import ProducersCarousel from "./ProducersCarousel";
 import API from "../api/api";
 import "../css/Home.css";
+import { useAudio } from "../context/AudioContext"; 
 
 const Home = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [heroBeats, setHeroBeats] = useState([]);
   const [currentBeatIndex, setCurrentBeatIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
+  // const [isPlaying, setIsPlaying] = useState(false);
   const [audioLoading, setAudioLoading] = useState(false);
   const audioRef = useRef(new Audio());
+  const { currentTrack, isPlaying, playTrack } = useAudio();
 
 
   // In the useEffect for fetching hero beats
@@ -62,7 +64,7 @@ const Home = () => {
             console.error("Error fetching trending beats as fallback:", trendingError);
           }
 
-          // If both featured and trending fail, use hardcoded fallback data
+          // If both featured and trending fail, fallback to hardcoded data
           setHeroBeats([
             {
               _id: "sample1",

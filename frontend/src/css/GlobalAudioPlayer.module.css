@@ -1,4 +1,4 @@
-/* src/css/GlobalAudioPlayer.module.css */
+
 .playerContainer {
   position: fixed;
   bottom: 0;
@@ -314,6 +314,33 @@
 .cartIcon {
   margin-right: 5px;
   font-size: 12px;
+}
+
+
+.closeButton {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 16px;
+  transition: color 0.2s;
+  z-index: 10;
+}
+
+.closeButton:hover {
+  color: #fff;
+}
+
+.closeButton:active {
+  transform: scale(0.95);
+}
+
+.playerContainer {
+  position: relative;
 }
 
 /* Responsive design for smaller screens */

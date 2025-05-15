@@ -2,6 +2,9 @@ import express from 'express';
 import { authenticateUser } from './auth.js';
 import * as adminController from '../controllers/adminController.js';
 import * as verificationController from '../controllers/verificationController.js';
+import { updateLogo, updateAboutSection, updateTestimonials } from '../controllers/adminController.js';
+import { upload } from '../utils/storageManger.js'
+
 
 const router = express.Router();
 
@@ -41,5 +44,10 @@ router.put('/settings', adminController.updateSettings);
 // Verification routes
 router.get('/verification/pending', verificationController.getPendingVerifications);
 router.post('/verification/update', verificationController.updateVerificationStatus);
+
+// Admin Settings
+router.put('/settings/logo', upload.single('logo'), updateLogo);
+router.put('/settings/about', updateAboutSection);
+router.put('/settings/testimonials', updateTestimonials);
 
 export default router;

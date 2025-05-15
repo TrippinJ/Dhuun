@@ -6,6 +6,7 @@ import Wallet from '../models/wallet.js';
 import Withdrawal from '../models/withdrawal.js';
 import Verification from '../models/verification.js';
 import Settings from '../models/settings.js';
+import { uploadFileToCloudinary } from '../utils/storageManger.js';
 
 // Get dashboard overview stats
 export const getDashboardStats = async (req, res) => {
@@ -733,5 +734,51 @@ export const toggleFeaturedStatus = async (req, res) => {
   } catch (error) {
     console.error('Error toggling featured status:', error);
     res.status(500).json({ message: 'Failed to update featured status' });
+  }
+};
+
+// Update site logo
+export const updateLogo = async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file) return res.status(400).json({ error: 'No file uploaded' });
+
+    const uploadResult = await uploadFileToCloudinary(file.path, false);
+    const settings = await Settings.findOneAndUpdate(
+      {},
+      { logoUrl: uploadResult.url },
+      { new: true }
+    );
+
+    res.json({ success: true, logoUrl: settings.logoUrl });
+  } catch (error) {
+    console.error("Update Logo Error:", error);
+    res.status(500).json({ error: "Failed to upload and update logo" });
+  }
+};
+
+// Update About section
+export const updateAboutSection = async (req, res) => {
+  try {
+    const { title, description, image } = req.body;
+    const settings = await Settings.findOneAndUpdate({}, {
+      aboutSection: { title, description, image }
+    }, { new: true });
+    res.json({ success: true, aboutSection: settings.aboutSection });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Update Testimonials
+export const updateTestimonials = async (req, res) => {
+  try {
+    const { testimonials } = req.body;
+    const settings = await Settings.findOneAndUpdate({}, {
+      testimonials
+    }, { new: true });
+    res.json({ success: true, testimonials: settings.testimonials });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 };

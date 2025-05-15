@@ -14,6 +14,17 @@ export const AudioProvider = ({ children }) => {
   const [audioError, setAudioError] = useState(null);
   
   const audioRef = useRef(new Audio());
+
+  const stopTrack = () => {
+  const audio = audioRef.current;
+  audio.pause();
+  audio.currentTime = 0;
+  setCurrentTrack(null);
+  setIsPlaying(false);
+  setCurrentTime(0);
+  setDuration(0);
+};
+
   
   // Set up audio element
   useEffect(() => {
@@ -170,7 +181,8 @@ export const AudioProvider = ({ children }) => {
     seekTo,
     changeVolume,
     playNextTrack,
-    playPreviousTrack
+    playPreviousTrack,
+    stopTrack
   };
   
   return (
