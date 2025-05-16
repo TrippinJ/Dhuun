@@ -1,4 +1,4 @@
-
+/* AdminSettings.module.css */
 .settingsContainer {
   padding: 24px;
   background-color: #1E1E1E;
@@ -6,6 +6,7 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   border: 1px solid #333333;
   min-height: 100%;
+  color: #FFFFFF;
 }
 
 .settingsHeader {
@@ -34,6 +35,7 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   border: 1px solid #333333;
   position: relative;
+  margin-bottom: 28px;
 }
 
 .formSection::before {
@@ -116,6 +118,27 @@
   color: #666666;
 }
 
+.fileInput {
+  background-color: #2a2a2a;
+  padding: 10px;
+  border-radius: 4px;
+}
+
+.fileInput::-webkit-file-upload-button {
+  background: #7B2CBF;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  padding: 8px 12px;
+  margin-right: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.fileInput::-webkit-file-upload-button:hover {
+  background: #9333ea;
+}
+
 .checkboxControl {
   display: flex;
   align-items: center;
@@ -126,6 +149,8 @@
   width: auto;
   margin: 0;
   accent-color: #7B2CBF;
+  width: 18px;
+  height: 18px;
 }
 
 .checkboxControl label {
@@ -148,19 +173,22 @@
   border-top: 1px solid #333333;
 }
 
-.saveButton {
+.saveButton, .addButton, .deleteButton {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 12px 24px;
-  background-color: #7B2CBF;
-  color: white;
   border: none;
   border-radius: 6px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+}
+
+.saveButton {
+  background-color: #7B2CBF;
+  color: white;
   box-shadow: 0 2px 8px rgba(123, 44, 191, 0.3);
 }
 
@@ -175,6 +203,26 @@
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+.addButton {
+  background-color: #2a2a2a;
+  color: #FFFFFF;
+  border: 1px solid #333333;
+}
+
+.addButton:hover {
+  background-color: #3a3a3a;
+}
+
+.deleteButton {
+  background-color: rgba(255, 26, 26, 0.1);
+  color: #ff1a1a;
+  border: 1px solid rgba(255, 26, 26, 0.3);
+}
+
+.deleteButton:hover {
+  background-color: rgba(255, 26, 26, 0.2);
 }
 
 .saveIcon {
@@ -248,26 +296,108 @@
   100% { transform: rotate(360deg); }
 }
 
-/* Enhanced input states */
-.formGroup input[type="number"]::-webkit-outer-spin-button,
-.formGroup input[type="number"]::-webkit-inner-spin-button {
-  -webkit-appearance: none;
+/* Logo preview styles */
+.logoPreviewContainer {
+  margin-bottom: 16px;
+  background-color: #2a2a2a;
+  padding: 20px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80px;
+  border: 1px dashed #555;
+}
+
+.logoPreview {
+  max-height: 80px;
+  max-width: 100%;
+}
+
+.noLogo {
+  color: #666;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+/* Image preview styles */
+.imagePreview {
+  margin-bottom: 16px;
+  border-radius: 8px;
+  overflow: hidden;
+  max-width: 300px;
+  border: 1px solid #333;
+}
+
+.imagePreview img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.avatarPreview {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-bottom: 16px;
+  border: 2px solid #333;
+}
+
+.avatarPreview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Uploading indicator */
+.uploadingIndicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  color: #AAAAAA;
+  font-size: 14px;
+}
+
+.spinnerIcon {
+  animation: spin 1s linear infinite;
+}
+
+/* Testimonial styles */
+.testimonialItem {
+  background-color: #1a1a1a;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  border: 1px solid #333;
+}
+
+.testimonialHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #333;
+  padding-bottom: 12px;
+}
+
+.testimonialHeader h4 {
   margin: 0;
+  font-size: 16px;
+  color: #FFFFFF;
 }
 
-.formGroup input[type="number"] {
-  -moz-appearance: textfield;
+.testimonialActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  justify-content: space-between;
 }
 
-.formGroup input:invalid {
-  border-color: rgba(255, 26, 26, 0.5);
-}
-
-.formGroup input:valid {
-  border-color: rgba(29, 185, 84, 0.5);
-}
-
-/* Responsive design */
 @media (max-width: 768px) {
   .settingsContainer {
     padding: 16px;
@@ -281,9 +411,13 @@
     flex-direction: column;
   }
   
-  .saveButton {
+  .saveButton, .addButton, .deleteButton {
     width: 100%;
     justify-content: center;
+  }
+  
+  .testimonialActions {
+    flex-direction: column;
   }
   
   .settingsHeader h2 {
