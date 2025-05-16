@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import styles from "../css/NavbarBeatExplore.module.css";
 import Logo from "../Assets/DHUUN.png";
 import { FaShoppingCart, FaUserCircle, FaHeart, FaSignOutAlt, FaCog, FaCrown, FaDownload } from 'react-icons/fa';
+import { useSettings } from '../context/SettingsContext';
 
 const NavbarBeatExplore = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -13,6 +14,7 @@ const NavbarBeatExplore = () => {
   const dropdownRef = useRef(null);
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
+  const { settings } = useSettings();
 
   // Check if user is logged in
   useEffect(() => {
@@ -253,7 +255,7 @@ const NavbarBeatExplore = () => {
   return (
     <nav className={styles.navbar}>
       <div className={styles.navLogo}>
-        <img src={Logo} alt="Dhuun Logo" onClick={() => navigate("/")} />
+        <img src={settings.logoUrl || '/DHUUN.png'} alt="Dhuun Logo" onClick={() => navigate("/")} />
       </div>
 
       <div className={styles.navLinks}>

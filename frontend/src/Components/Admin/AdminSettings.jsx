@@ -2,16 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { FaSave, FaTrash, FaPlus, FaImage, FaSpinner } from 'react-icons/fa';
 import API from '../../api/api';
 import styles from '../../css/Admin/AdminSettings.module.css';
+import { useSettings } from '../../context/SettingsContext';
 
 const AdminSettings = () => {
+  const { settings: globalSettings, setSettings: setGlobalSettings } = useSettings();
   const [settings, setSettings] = useState({
-    siteName: 'Dhuun',
-    siteDescription: 'A marketplace for producers and artists to buy and sell beats',
-    contactEmail: 'admin@dhuun.com',
-    maxUploadSizeMB: 20,
-    commissionRate: 10,
-    featuredBeatsLimit: 8,
-    maintenanceMode: false
+    ...globalSettings,
+    siteName: globalSettings.siteName || 'Dhuun',
+    siteDescription: globalSettings.siteDescription || 'A marketplace for producers and artists to buy and sell beats',
+    contactEmail: globalSettings.contactEmail || 'admin@dhuun.com',
+    maxUploadSizeMB: globalSettings.maxUploadSizeMB || 20,
+    commissionRate: globalSettings.commissionRate || 10,
+    featuredBeatsLimit: globalSettings.featuredBeatsLimit || 8,
+    maintenanceMode: globalSettings.maintenanceMode || false
   });
 
   const [loading, setLoading] = useState(true);
@@ -20,7 +23,7 @@ const AdminSettings = () => {
   const [successMessage, setSuccessMessage] = useState('');
   
   // Logo state
-  const [logoPreview, setLogoPreview] = useState('');
+  const [logoPreview, setLogoPreview] = useState(globalSettings.logoUrl || '');
   const [uploadingLogo, setUploadingLogo] = useState(false);
   
   // About section state
@@ -51,20 +54,22 @@ const AdminSettings = () => {
       if (response.data && response.data.settings) {
         const { settings } = response.data;
         setSettings(settings);
+
+        setGlobalSettings(fetchedSettings);
         
         // Set logo preview if available
-        if (settings.logoUrl) {
-          setLogoPreview(settings.logoUrl);
+        if (fetchedSettings.logoUrl) {
+          setLogoPreview(fetchedSettings.logoUrl);
         }
         
         // Set about section if available
-        if (settings.aboutSection) {
-          setAboutSection(settings.aboutSection);
+        if (fetchedSettings.aboutSection) {
+          setAboutSection(fetchedSettings.aboutSection);
         }
         
         // Set testimonials if available
-        if (settings.testimonials) {
-          setTestimonials(settings.testimonials);
+        if (fetchedSettings.testimonials) {
+          setTestimonials(fetchedSettings.testimonials);
         }
       }
       
@@ -93,7 +98,21 @@ const AdminSettings = () => {
       });
       
       if (response.data && response.data.success && response.data.logoUrl) {
+        // Update logo preview
         setLogoPreview(response.data.logoUrl);
+        
+        // Update global settings
+        setGlobalSettings({
+          ...globalSettings,
+          logoUrl: response.data.logoUrl
+        });
+        
+        // Update local settings
+        setSettings({
+          ...settings,
+          logoUrl: response.data.logoUrl
+        });
+        
         setSuccessMessage('Logo updated successfully!');
         setTimeout(() => setSuccessMessage(''), 3000);
       } else {
@@ -268,6 +287,12 @@ const AdminSettings = () => {
       const response = await API.put('/api/admin/settings', settings);
       
       if (response.data && response.data.success) {
+        // Update global settings
+        setGlobalSettings({
+          ...globalSettings,
+          ...settings
+        });
+        
         setSuccessMessage('Settings updated successfully!');
         setTimeout(() => setSuccessMessage(''), 3000);
       } else {

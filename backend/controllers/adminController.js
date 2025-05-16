@@ -740,20 +740,47 @@ export const toggleFeaturedStatus = async (req, res) => {
 // Update site logo
 export const updateLogo = async (req, res) => {
   try {
-    const file = req.file;
-    if (!file) return res.status(400).json({ error: 'No file uploaded' });
+    // Check if file was uploaded
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No logo file uploaded' });
+    }
 
-    const uploadResult = await uploadFileToCloudinary(file.path, false);
-    const settings = await Settings.findOneAndUpdate(
-      {},
-      { logoUrl: uploadResult.url },
-      { new: true }
+    // Log the file for debugging
+    console.log('Uploaded file:', req.file);
+
+    // Use your existing storage manager to upload to Cloudinary
+    const uploadResult = await uploadFileToCloudinary(
+      req.file.path,
+      false, // Not audio
+      { folder: 'dhuun/logo' }
     );
 
-    res.json({ success: true, logoUrl: settings.logoUrl });
+    // Find settings document or create if it doesn't exist
+    let settings = await Settings.findOne();
+    if (!settings) {
+      settings = new Settings();
+    }
+
+    // Update logo URL
+    settings.logoUrl = uploadResult.url;
+    settings.lastUpdated = new Date();
+    settings.updatedBy = req.user.id;
+    
+    await settings.save();
+
+    // Return success response
+    res.json({
+      success: true,
+      message: 'Logo updated successfully',
+      logoUrl: settings.logoUrl
+    });
   } catch (error) {
-    console.error("Update Logo Error:", error);
-    res.status(500).json({ error: "Failed to upload and update logo" });
+    console.error('Logo upload error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to update logo',
+      error: error.message
+    });
   }
 };
 

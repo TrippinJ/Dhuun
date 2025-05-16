@@ -24,6 +24,7 @@ import EditBeat from "./Components/EditBeat"
 import Favorites from "./Components/Favourites";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import { AudioProvider } from "./context/AudioContext";
+import { SettingsProvider } from './context/SettingsContext';
 import GlobalAudioPlayer from "./Components/GlobalAudioPlayer";
 import VerifyOTP from "./pages/VerifyOTP";
 import { LicenseProvider } from './context/LicenseContext';
@@ -35,6 +36,7 @@ function App() {
   return (
     <AudioProvider>
       <LicenseProvider>
+         <SettingsProvider>
         <div className="App">
           <BrowserRouter>
             <Routes>
@@ -133,6 +135,7 @@ function App() {
             <GlobalAudioPlayer />
           </BrowserRouter>
         </div>
+        </SettingsProvider>
       </LicenseProvider>
     </AudioProvider>
   );
