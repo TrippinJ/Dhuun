@@ -101,7 +101,7 @@ const Cart = () => {
                     </p>
                   </div>
                   <div className={styles.itemPrice}>
-                    ${(item.licensePrice || item.price).toFixed(2)}
+                    Rs {(item.licensePrice || item.price).toFixed(2)}
                   </div>
                   <button
                     className={styles.removeButton}
@@ -119,15 +119,15 @@ const Cart = () => {
               <div className={styles.summaryDetails}>
                 <div className={styles.summaryRow}>
                   <span>Subtotal</span>
-                  <span>${total.toFixed(2)}</span>
+                  <span>Rs {total.toFixed(2)}</span>
                 </div>
                 <div className={styles.summaryRow}>
                   <span>Tax</span>
-                  <span>$0.00</span>
+                  <span>Rs 0.00</span>
                 </div>
                 <div className={`${styles.summaryRow} ${styles.total}`}>
                   <span>Total</span>
-                  <span>${total.toFixed(2)}</span>
+                  <span>Rs {total.toFixed(2)}</span>
                 </div>
               </div>
 

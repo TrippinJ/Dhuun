@@ -346,7 +346,7 @@ const CheckoutSuccess = () => {
               <div className={styles.totalAmount}>
                 <span>Total:</span>
                 <span>
-                  ${cartItems.reduce((sum, item) =>
+                  Rs {cartItems.reduce((sum, item) =>
                     sum + (item.licensePrice || item.price), 0
                   ).toFixed(2)}
                 </span>

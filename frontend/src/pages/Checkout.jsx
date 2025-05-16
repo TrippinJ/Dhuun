@@ -219,7 +219,7 @@ const Checkout = () => {
                       </p>
                     </div>
                     <div className={styles.itemPrice}>
-                      ${(item.licensePrice || item.price).toFixed(2)}
+                      Rs {(item.licensePrice || item.price).toFixed(2)}
                     </div>
                   </div>
                 ))
@@ -229,15 +229,15 @@ const Checkout = () => {
             <div className={styles.orderTotal}>
               <div className={styles.totalRow}>
                 <span>Subtotal</span>
-                <span>${total.toFixed(2)}</span>
+                <span>Rs {total.toFixed(2)}</span>
               </div>
               <div className={styles.totalRow}>
                 <span>Tax</span>
-                <span>$0.00</span>
+                <span>Rs 0.00</span>
               </div>
               <div className={`${styles.totalRow} ${styles.finalTotal}`}>
                 <span>Total</span>
-                <span>${total.toFixed(2)}</span>
+                <span>Rs {total.toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -283,7 +283,7 @@ const Checkout = () => {
                   className={styles.khaltiButton}
                   disabled={cartItems.length === 0 || paymentProcessing}
                 >
-                  {paymentProcessing ? "Processing..." : `Pay $${total.toFixed(2)} with Khalti`}
+                  {paymentProcessing ? "Processing..." : `Pay Rs ${total.toFixed(2)} with Khalti`}
                 </button>
               ) : (
                 <button
@@ -292,7 +292,7 @@ const Checkout = () => {
                   className={styles.stripeButton}
                   disabled={cartItems.length === 0 || paymentProcessing}
                 >
-                  {paymentProcessing ? "Processing..." : `Pay $${total.toFixed(2)} with Card`}
+                  {paymentProcessing ? "Processing..." : `Pay Rs ${total.toFixed(2)} with Card`}
                 </button>
               )}
             </div>

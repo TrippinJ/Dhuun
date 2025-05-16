@@ -148,7 +148,7 @@ const AdminWithdrawals = () => {
               </div>
 
               <div className={styles.amountColumn}>
-                ${withdrawal.amount.toFixed(2)}
+                Rs {withdrawal.amount.toFixed(2)}
               </div>
 
               <div className={styles.methodColumn}>
@@ -268,13 +268,13 @@ const AdminWithdrawals = () => {
                       <div className={styles.walletDetail}>
                         <span className={styles.walletLabel}>Available Balance:</span>
                         <span className={`${styles.walletValue} ${styles.availableBalance}`}>
-                          ${selectedWithdrawal.walletInfo.balance.toFixed(2)}
+                          Rs {selectedWithdrawal.walletInfo.balance.toFixed(2)}
                         </span>
                       </div>
                       <div className={styles.walletDetail}>
                         <span className={styles.walletLabel}>Pending Balance:</span>
                         <span className={styles.walletValue}>
-                          ${selectedWithdrawal.walletInfo.pendingBalance.toFixed(2)}
+                          Rs {selectedWithdrawal.walletInfo.pendingBalance.toFixed(2)}
                         </span>
                       </div>
                     </div>
@@ -284,8 +284,8 @@ const AdminWithdrawals = () => {
                       <div className={styles.withdrawWarning}>
                         <span>⚠️</span>
                         <span>
-                          Insufficient funds! The seller only has ${selectedWithdrawal.walletInfo.balance.toFixed(2)} available,
-                          but is requesting ${selectedWithdrawal.amount.toFixed(2)}.
+                          Insufficient funds! The seller only has Rs {selectedWithdrawal.walletInfo.balance.toFixed(2)} available,
+                          but is requesting Rs {selectedWithdrawal.amount.toFixed(2)}.
                         </span>
                       </div>
                     )}
@@ -300,7 +300,7 @@ const AdminWithdrawals = () => {
                               {transaction.description || transaction.type}
                             </div>
                             <div className={`${styles.transactionAmount} ${transaction.amount > 0 ? styles.positive : styles.negative}`}>
-                              {transaction.amount > 0 ? '+' : ''}${transaction.amount.toFixed(2)}
+                              {transaction.amount > 0 ? '+' : ''}Rs {transaction.amount.toFixed(2)}
                             </div>
                           </div>
                         ))}

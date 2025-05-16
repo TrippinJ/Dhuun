@@ -422,7 +422,7 @@ const BeatExplorePage = () => {
 
           {/* Price range filter */}
           <div className={styles.filterGroup}>
-            <h3 className={styles.filterLabel}>Max Price: ${priceRange}</h3>
+            <h3 className={styles.filterLabel}>Max Price: Rs {priceRange}</h3>
             <input
               type="range"
               min={0}
@@ -509,7 +509,7 @@ const BeatExplorePage = () => {
                       {beat.producer?.verified && <span className={styles.verifiedBadge}>✓</span>}
                     </span>
                     <div className={styles.beatStats}>
-                      <span className={styles.beatPrice}>${beat.price?.toFixed(2) || "0.00"}</span>
+                      <span className={styles.beatPrice}>Rs {beat.price?.toFixed(2) || "0.00"}</span>
                       <span className={styles.beatGenre}>{beat.genre}</span>
                     </div>
                   </div>
@@ -603,7 +603,7 @@ const BeatExplorePage = () => {
 
                   <div className={styles.beatRowGenre}>{beat.genre}</div>
 
-                  <div className={styles.beatRowPrice}>${beat.price?.toFixed(2) || "0.00"}</div>
+                  <div className={styles.beatRowPrice}>Rs {beat.price?.toFixed(2) || "0.00"}</div>
 
                   <div className={styles.beatRowActions}>
                     <button

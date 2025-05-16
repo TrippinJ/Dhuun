@@ -232,7 +232,7 @@ const FeaturedBeatsCarousel = () => {
                 <h3>{beat.title}</h3>
                 <p className={styles.producer}>{beat.producer}</p>
                 <div className={styles.priceRow}>
-                  <span className={styles.price}>${beat.price.toFixed(2)}</span>
+                  <span className={styles.price}>Rs {beat.price.toFixed(2)}</span>
                   <button 
                     className={styles.buyButton}
                     onClick={() => handleBuyNow(beat.id)}

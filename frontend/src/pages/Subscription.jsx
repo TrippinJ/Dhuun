@@ -397,7 +397,7 @@ const Subscription = () => {
                 </div>
                 <h3>{plan.name}</h3>
                 <div className={styles.price}>
-                  ${plan.price}
+                  Rs {plan.price}
                   <span>/mo</span>
                 </div>
               </div>
@@ -412,7 +412,7 @@ const Subscription = () => {
                     ? "Current Plan"
                     : plan.price === 0
                     ? "Choose Plan"
-                    : `Subscribe $${plan.price}/mo`}
+                    : `Subscribe Rs ${plan.price}/mo`}
                 </button>
               <div className={styles.planFeatures}>
                 <ul>

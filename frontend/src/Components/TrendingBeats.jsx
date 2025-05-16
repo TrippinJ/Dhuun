@@ -252,7 +252,7 @@ const TrendingBeats = () => {
                     )}
                   </div>
                   <div className={styles.beatActions}>
-                    <span className={styles.price}>${beat.price?.toFixed(2) || "0.00"}</span>
+                    <span className={styles.price}>Rs {beat.price?.toFixed(2) || "0.00"}</span>
                     <button 
                       className={styles.cartButton}
                       onClick={() => handleAddToCart(beat)}

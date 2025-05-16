@@ -354,7 +354,7 @@ const EditBeat = () => {
                 <div key={index} className={styles.licenseOption}>
                   <h4>{license.name}</h4>
                   <div className={styles.formGroup}>
-                    <label htmlFor={`license-${index}`}>Price ($)</label>
+                    <label htmlFor={`license-${index}`}>Price (Rs)</label>
                     <input
                       type="number"
                       id={`license-${index}`}

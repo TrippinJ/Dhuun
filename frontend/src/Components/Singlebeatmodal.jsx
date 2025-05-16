@@ -351,7 +351,7 @@ const SingleBeatModal = ({
               <div key={key} className={`${styles.licenseOption} ${selectedLicense === key ? styles.selectedLicense : ''}`}>
                 <div className={styles.licenseTop}>
                   <h4 className={styles.licenseName}>{license.name}</h4>
-                  <span className={styles.licensePrice}>${license.price.toFixed(2)}</span>
+                  <span className={styles.licensePrice}>Rs {license.price.toFixed(2)}</span>
                 </div>
                 
                 {showLicenseDetails && (

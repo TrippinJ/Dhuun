@@ -99,7 +99,7 @@ const AdminOverview = () => {
           </div>
           <div className={styles.statInfo}>
             <h3>Total Revenue</h3>
-            <div className={styles.statValue}>${stats.totalRevenue.toFixed(2)}</div>
+            <div className={styles.statValue}>Rs {stats.totalRevenue.toFixed(2)}</div>
           </div>
         </div>
       </div>

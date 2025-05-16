@@ -1,6 +1,6 @@
 // frontend/src/Components/Admin/AdminOverview.jsx
 import React, { useState, useEffect } from 'react';
-import { FaUsers, FaMusic, FaShoppingCart, FaDollarSign } from 'react-icons/fa';
+import { FaUsers, FaMusic, FaShoppingCart, FaRupeeSign } from 'react-icons/fa';
 import API from '../../api/api';
 import styles from '../../css/Admin/AdminOverview.module.css';
 
@@ -108,11 +108,11 @@ const AdminOverview = () => {
         
         <div className={styles.statCard}>
           <div className={styles.statIcon}>
-            <FaDollarSign />
+            <FaRupeeSign />
           </div>
           <div className={styles.statInfo}>
             <h3>Total Revenue</h3>
-            <div className={styles.statValue}>${stats.totalRevenue.toFixed(2)}</div>
+            <div className={styles.statValue}>Rs {stats.totalRevenue.toFixed(2)}</div>
           </div>
         </div>
       </div>

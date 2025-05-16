@@ -144,7 +144,7 @@ const SellerWallet = () => {
           </div>
           <div className={styles.balanceInfo}>
             <h3>Available Balance</h3>
-            <div className={styles.balanceAmount}>${wallet.balance ? wallet.balance.toFixed(2) : '0.00'}</div>
+            <div className={styles.balanceAmount}>Rs {wallet.balance ? wallet.balance.toFixed(2) : '0.00'}</div>
             <div className={styles.balanceNote}>Ready to withdraw</div>
           </div>
         </div>
@@ -155,7 +155,7 @@ const SellerWallet = () => {
           </div>
           <div className={styles.balanceInfo}>
             <h3>Pending Balance</h3>
-            <div className={styles.balanceAmount}>${wallet.balance ? wallet.balance.toFixed(2) : '0.00'}</div>
+            <div className={styles.balanceAmount}>Rs {wallet.balance ? wallet.balance.toFixed(2) : '0.00'}</div>
             <div className={styles.balanceNote}>Processing payments</div>
           </div>
         </div>
@@ -166,7 +166,7 @@ const SellerWallet = () => {
           <h3>Withdraw Funds</h3>
           <form onSubmit={handleWithdraw} className={styles.withdrawForm}>
             <div className={styles.formGroup}>
-              <label>Amount ($)</label>
+              <label>Amount (Rs )</label>
               <input
                 type="number"
                 value={withdrawAmount}

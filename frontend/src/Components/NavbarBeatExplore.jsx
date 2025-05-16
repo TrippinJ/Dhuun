@@ -4,6 +4,7 @@ import styles from "../css/NavbarBeatExplore.module.css";
 import Logo from "../Assets/DHUUN.png";
 import { FaShoppingCart, FaUserCircle, FaHeart, FaSignOutAlt, FaCog, FaCrown, FaDownload } from 'react-icons/fa';
 import { useSettings } from '../context/SettingsContext';
+import API from "../api/api";
 
 const NavbarBeatExplore = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);

@@ -121,7 +121,7 @@ const LicenseSelectionModal = ({ beat, onClose, onSelectLicense }) => {
             >
               <div className={styles.licenseHeader}>
                 <h4>{license.name}</h4>
-                <span className={styles.licensePrice}>${license.price.toFixed(2)}</span>
+                <span className={styles.licensePrice}>Rs {license.price.toFixed(2)}</span>
               </div>
               
               <p className={styles.licenseDescription}>{license.description}</p>

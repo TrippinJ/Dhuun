@@ -105,7 +105,7 @@ const AdminSales = () => {
       order.user?.email || 'Unknown',
       new Date(order.createdAt).toLocaleDateString(),
       order.items.length,
-      `$${order.totalAmount.toFixed(2)}`,
+      `Rs ${order.totalAmount.toFixed(2)}`,
       order.paymentStatus
     ]);
     
@@ -335,7 +335,7 @@ const AdminSales = () => {
                       {item.license}
                     </div>
                     <div className={styles.itemPrice}>
-                      ${item.price.toFixed(2)}
+                      Rs {item.price.toFixed(2)}
                     </div>
                   </div>
                 ))}
@@ -344,7 +344,7 @@ const AdminSales = () => {
               <div className={styles.orderTotal}>
                 <span className={styles.totalLabel}>Total:</span>
                 <span className={styles.totalValue}>
-                  ${selectedOrder.totalAmount.toFixed(2)}
+                  Rs {selectedOrder.totalAmount.toFixed(2)}
                 </span>
               </div>
             </div>

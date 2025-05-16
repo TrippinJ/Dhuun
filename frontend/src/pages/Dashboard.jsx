@@ -377,7 +377,7 @@ const Dashboard = ({ activePage: initialPage }) => {
                         </div>
                         <div className={styles.beatTitle}>{beat.title}</div>
                         <div className={styles.beatGenre}>{beat.genre}</div>
-                        <div className={styles.beatPrice}>${beat.price}</div>
+                        <div className={styles.beatPrice}>Rs {beat.price}</div>
                         <div className={styles.beatStats}>
                           <div className={styles.statItem}>
                             <FaHeadphones /> {beat.plays || 0}
