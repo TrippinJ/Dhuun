@@ -670,7 +670,10 @@ export const updateSettings = async (req, res) => {
       maxUploadSizeMB,
       commissionRate,
       featuredBeatsLimit,
-      maintenanceMode
+      maintenanceMode,
+      logoUrl,
+      aboutSection,
+      testimonials
     } = req.body;
 
     // Validation
@@ -680,12 +683,11 @@ export const updateSettings = async (req, res) => {
 
     // Find existing settings or create new
     let settings = await Settings.findOne();
-
     if (!settings) {
       settings = new Settings();
     }
 
-    // Update fields
+    // Update all fields
     settings.siteName = siteName;
     settings.siteDescription = siteDescription;
     settings.contactEmail = contactEmail;
@@ -693,6 +695,9 @@ export const updateSettings = async (req, res) => {
     settings.commissionRate = commissionRate;
     settings.featuredBeatsLimit = featuredBeatsLimit;
     settings.maintenanceMode = maintenanceMode;
+    settings.logoUrl = logoUrl;
+    settings.aboutSection = aboutSection;
+    settings.testimonials = testimonials;
     settings.lastUpdated = new Date();
     settings.updatedBy = req.user.id;
 
@@ -706,7 +711,11 @@ export const updateSettings = async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating settings:', error);
-    res.status(500).json({ message: 'Failed to update settings' });
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to update settings',
+      error: error.message
+    });
   }
 };
 
