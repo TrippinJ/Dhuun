@@ -15,21 +15,29 @@ export const SettingsProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const response = await API.get('/api/admin/settings');
-        if (response.data && response.data.settings) {
-          setSettings(response.data.settings);
-        }
-      } catch (error) {
-        console.error('Error fetching settings:', error);
-      } finally {
-        setLoading(false);
+  const fetchSettings = async () => {
+    try {
+      console.log('Fetching settings from public endpoint...');
+      // Use the public endpoint instead of admin endpoint
+      const response = await API.get('/api/settings/public');
+      
+      if (response.data && response.data.settings) {
+        console.log('Settings loaded successfully:', response.data.settings);
+        setSettings(prevSettings => ({
+          ...prevSettings,  // Keep defaults for missing properties
+          ...response.data.settings
+        }));
       }
-    };
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+      // Keep using default settings on error
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchSettings();
-  }, []);
+  fetchSettings();
+}, []);
 
   return (
     <SettingsContext.Provider value={{ settings, setSettings, loading }}>
