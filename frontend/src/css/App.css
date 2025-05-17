@@ -37,6 +37,7 @@ img {
 body {
   max-width: 100%;
   overflow-x: hidden;
+  height: 100%;
   background-color: var(--primary-dark); /* Updated background color */
   color: var(--light-text); /* Updated text color */
 }

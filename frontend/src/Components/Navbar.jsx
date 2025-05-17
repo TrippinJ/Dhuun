@@ -45,6 +45,8 @@ const Navbar = () => {
   const [wishlistCount, setWishlistCount] = useState(0);
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
+  const [userName, setUserName, ] = useState('');
+  const [userAvatar, setUserAvatar] = useState('');
 
   // Check if user is logged in and get user info
   useEffect(() => {

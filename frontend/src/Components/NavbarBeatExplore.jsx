@@ -16,6 +16,7 @@ const NavbarBeatExplore = () => {
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
   const { settings } = useSettings();
+  const [userRole, setUserRole] = useState(null);
 
   // Check if user is logged in
   useEffect(() => {
@@ -25,11 +26,12 @@ const NavbarBeatExplore = () => {
     if (token) {
       setIsLoggedIn(true);
 
-      // Try to get user name and avatar from localStorage
+      // Try to get user name, avatar and role from localStorage
       if (user) {
         try {
           const userData = JSON.parse(user);
-          setUserName(userData.username || "User");
+          setUserName(userData.username || userData.name || "User");
+          setUserRole(userData.role || "buyer"); // Set default role as buyer
           if (userData.avatar) {
             setUserAvatar(userData.avatar);
           }
@@ -120,35 +122,6 @@ const NavbarBeatExplore = () => {
     navigate("/login");
   };
 
-
-  const [userRole, setUserRole] = useState(null);
-
-  // Update the useEffect where you check if user is logged in
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const user = localStorage.getItem("user");
-
-    if (token) {
-      setIsLoggedIn(true);
-
-      // Try to get user name, avatar and role from localStorage
-      if (user) {
-        try {
-          const userData = JSON.parse(user);
-          setUserName(userData.username || userData.name || "User");
-          setUserRole(userData.role || "buyer"); // Set default role as buyer
-          if (userData.avatar) {
-            setUserAvatar(userData.avatar);
-          }
-        } catch (error) {
-          console.error("Error parsing user data", error);
-        }
-      }
-    } else {
-      setIsLoggedIn(false);
-    }
-  }, []);
-
   const refreshUserData = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -223,35 +196,47 @@ const NavbarBeatExplore = () => {
       navigate("/dashboard");
     }
   };
-  // User menu items
-  const userMenuItems = [
-    {
-      text: "Dashboard",
-      icon: <FaCog className={styles.dropdownIcon} />,
-      onClick: navigateToDashboard
-    },
-    {
-      text: "Upgrade Plan",
-      icon: <FaCrown className={styles.dropdownIcon} />,
-      onClick: () => navigate("/subscription")
-    },
-    {
-      text: "Favorites",
-      icon: <FaHeart className={styles.dropdownIcon} />,
-      onClick: () => navigate("/favorites")
-    },
-    {
-      text: "Purchased",
-      icon: <FaDownload className={styles.dropdownIcon} />,
-      onClick: () => navigate("/dashboard")
-    },
 
-    {
-      text: "Logout",
-      icon: <FaSignOutAlt className={styles.dropdownIcon} />,
-      onClick: handleLogout
+  // User menu items - dynamically generated based on role
+  const getUserMenuItems = () => {
+    const baseItems = [
+      {
+        text: "Dashboard",
+        icon: <FaCog className={styles.dropdownIcon} />,
+        onClick: navigateToDashboard
+      },
+      {
+        text: "Favorites",
+        icon: <FaHeart className={styles.dropdownIcon} />,
+        onClick: () => navigate("/favorites")
+      },
+      {
+        text: "Purchased",
+        icon: <FaDownload className={styles.dropdownIcon} />,
+        onClick: () => navigate("/dashboard/purchased")
+      },
+      {
+        text: "Logout",
+        icon: <FaSignOutAlt className={styles.dropdownIcon} />,
+        onClick: handleLogout
+      }
+    ];
+
+    // Only add Upgrade Plan for seller role
+    if (userRole === "seller") {
+      return [
+        baseItems[0], // Dashboard
+        {
+          text: "Upgrade Plan",
+          icon: <FaCrown className={styles.dropdownIcon} />,
+          onClick: () => navigate("/subscription")
+        },
+        ...baseItems.slice(1) // Rest of the items
+      ];
     }
-  ];
+
+    return baseItems;
+  };
 
   return (
     <nav className={styles.navbar}>
@@ -300,7 +285,7 @@ const NavbarBeatExplore = () => {
 
             {showDropdown && (
               <div className={styles.dropdown}>
-                {userMenuItems.map((item, index) => (
+                {getUserMenuItems().map((item, index) => (
                   <button
                     key={index}
                     className={styles.dropdownItem}
