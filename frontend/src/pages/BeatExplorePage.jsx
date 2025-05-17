@@ -506,7 +506,7 @@ const BeatExplorePage = () => {
                       style={{ cursor: 'pointer', color: '#7B2CBF' }}
                     >
                       {beat.producer?.name || "Unknown Producer"}
-                      {beat.producer?.verified && <span className={styles.verifiedBadge}>✓</span>}
+                      {beat.producer?.verificationStatus === "approved" && <span className={styles.verifiedBadge}>✓</span>}
                     </span>
                     <div className={styles.beatStats}>
                       <span className={styles.beatPrice}>Rs {beat.price?.toFixed(2) || "0.00"}</span>
@@ -596,7 +596,7 @@ const BeatExplorePage = () => {
                         style={{ cursor: 'pointer', color: '#7B2CBF' }}
                       >
                         {beat.producer?.name || "Unknown Producer"}
-                        {beat.producer?.verified && <span className={styles.verifiedBadge}>✓</span>}
+                        {beat.producer?.verificationStatus === "approved" && <span className={styles.verifiedBadge}>✓</span>}
                       </span>
                     </div>
                   </div>

@@ -111,9 +111,9 @@ export const getAllBeats = async (req, res) => {
     } = req.query;
 
     // Build filter object
-    const filter = { 
+    const filter = {
       isPublished: true,
-      isExclusiveSold: { $ne: true }  
+      isExclusiveSold: { $ne: true }
     };
 
     if (genre) {
@@ -140,8 +140,11 @@ export const getAllBeats = async (req, res) => {
 
     // Execute query with pagination
     const beats = await Beat.find(filter)
-      .populate('producer', 'name username')
-      .sort(sort)
+      .populate({
+        path: 'producer',
+        select: 'name username verified' 
+      })
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit));
 
