@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { FaUserCircle, FaMusic, FaHeart, FaTimes, FaComment, FaPlay, FaPause, FaCheckCircle} from 'react-icons/fa';
+import { FaUserCircle, FaMusic, FaHeart, FaTimes, FaComment, FaPlay, FaPause, FaCheckCircle } from 'react-icons/fa';
 import API from '../api/api';
 import styles from '../css/ProducerProfile.module.css';
 import { useAudio } from '../context/AudioContext';
+import { useNavigate } from 'react-router-dom';
 
 const ProducerProfile = ({ producerId, isOpen, onClose }) => {
   const [producer, setProducer] = useState(null);
@@ -10,8 +11,10 @@ const ProducerProfile = ({ producerId, isOpen, onClose }) => {
   const [loading, setLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
+  const [beatsCount, setBeatsCount] = useState(0);
   const [error, setError] = useState(null);
   const { playTrack, currentTrack, isPlaying } = useAudio();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (isOpen && producerId) {
@@ -41,10 +44,32 @@ const ProducerProfile = ({ producerId, isOpen, onClose }) => {
 
       // Use user's followersCount as the source of truth
       setFollowersCount(profileData.user?.followersCount || profileData.stats?.followers || 0);
-
+      
+      // Set beats count from profile data
+      setBeatsCount(profileData.stats?.beatsUploaded || 0);
       // Fetch producer's beats
       const beatsRes = await API.get(`/api/beats/producer/${producerId}`);
-      setBeats(beatsRes.data.data || []);
+      console.log("Beats response:", beatsRes.data); // Add this for debugging
+
+      // Make sure we're accessing the correct property in the response
+      let beatsArray = [];
+      if (beatsRes.data && beatsRes.data.data) {
+        beatsArray = beatsRes.data.data;
+      } else if (Array.isArray(beatsRes.data)) {
+        beatsArray = beatsRes.data;
+      }
+      
+      setBeats(beatsArray);
+      
+      // If we didn't get a beats count from profile data, use the length of the beats array
+      if (!profileData.stats?.beatsUploaded) {
+        // Check if the response has a total count field
+        if (beatsRes.data && typeof beatsRes.data.total === 'number') {
+          setBeatsCount(beatsRes.data.total);
+        } else {
+          setBeatsCount(beatsArray.length);
+        }
+      }
     } catch (error) {
       console.error('Error fetching producer data:', error);
       setError('Failed to load producer profile');
@@ -56,17 +81,30 @@ const ProducerProfile = ({ producerId, isOpen, onClose }) => {
   const checkFollowStatus = async () => {
     try {
       const token = localStorage.getItem('token');
-      if (!token) return;
+      if (!token) {
+        setIsFollowing(false);
+        return;
+      }
 
       const response = await API.get(`/api/follow/check/${producerId}`);
       setIsFollowing(response.data.isFollowing);
     } catch (error) {
       console.error('Error checking follow status:', error);
+      setIsFollowing(false);
     }
   };
 
   const handleFollow = async () => {
     try {
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        // If no token, redirect to login or show a message
+        alert('Please log in to follow this producer');
+        navigate('/login'); 
+        return;
+      }
+
       const endpoint = isFollowing
         ? `/api/follow/unfollow/${producerId}`
         : `/api/follow/follow/${producerId}`;
@@ -87,10 +125,10 @@ const ProducerProfile = ({ producerId, isOpen, onClose }) => {
     playTrack(beat);
   };
 
-  const handleMessage = () => {
-    // TODO: Implement messaging functionality
-    alert('Messaging feature coming soon!');
-  };
+  // const handleMessage = () => {
+
+  //   alert('Messaging feature coming soon!');
+  // };
 
   if (!isOpen) return null;
 
@@ -129,7 +167,7 @@ const ProducerProfile = ({ producerId, isOpen, onClose }) => {
                   <p className={styles.username}>@{producer.username}</p>
                   <div className={styles.stats}>
                     <span>{followersCount} followers</span>
-                    <span>{beats.length} beats</span>
+                    <span>{beatsCount} beats</span>
                   </div>
                 </div>
               </div>
@@ -142,10 +180,10 @@ const ProducerProfile = ({ producerId, isOpen, onClose }) => {
                   <FaHeart />
                   {isFollowing ? 'Following' : 'Follow'}
                 </button>
-                <button className={styles.messageButton} onClick={handleMessage}>
+                {/* <button className={styles.messageButton} onClick={handleMessage}>
                   <FaComment />
                   Message
-                </button>
+                </button> */}
               </div>
             </div>
 
@@ -209,7 +247,7 @@ const ProducerProfile = ({ producerId, isOpen, onClose }) => {
                       <div className={styles.beatInfo}>
                         <h4 className={styles.beatTitle}>{beat.title}</h4>
                         <p className={styles.beatGenre}>{beat.genre}</p>
-                        <p className={styles.beatPrice}>${beat.price?.toFixed(2)}</p>
+                        <p className={styles.beatPrice}>Rs {beat.price?.toFixed(2)}</p>
                       </div>
                     </div>
                   ))

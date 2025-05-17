@@ -291,7 +291,11 @@
 
 .playButton:hover {
   background-color: #7B2CBF;
-  transform: scale(1.1);
+  /* transform: scale(1.1); */
+}
+
+.beatCard:hover .playButton {
+  opacity: 1;
 }
 
 .beatInfo {
