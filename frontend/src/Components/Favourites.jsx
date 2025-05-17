@@ -120,7 +120,7 @@ const Favorites = () => {
       
       <div className={styles.content}>
         <div className={styles.header}>
-          <h1>Your Favorites</h1>
+          <h1>Your Wishlist</h1>
           <p className={styles.subheading}>
             <FaHeart className={styles.heartIcon} /> 
             {favorites.length} {favorites.length === 1 ? 'beat' : 'beats'} saved to your wishlist

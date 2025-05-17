@@ -356,6 +356,7 @@ router.post("/google-login", async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        avatar: user.avatar,
         subscription: user.subscription
       },
       isNewUser // Send this flag to the frontend
@@ -595,8 +596,6 @@ router.delete("/delete-account", authenticateUser, async (req, res) => {
     res.status(500).json({ message: "Failed to delete account" });
   }
 });
-
-// Add these routes to your auth.js file
 
 // Forgot Password Route
 router.post("/forgot-password", async (req, res) => {

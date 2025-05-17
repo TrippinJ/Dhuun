@@ -206,7 +206,7 @@ const NavbarBeatExplore = () => {
         onClick: navigateToDashboard
       },
       {
-        text: "Favorites",
+        text: "Wishlist",
         icon: <FaHeart className={styles.dropdownIcon} />,
         onClick: () => navigate("/favorites")
       },
