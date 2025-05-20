@@ -22,6 +22,7 @@ import FavoriteIcon from "@mui/icons-material/Favorite";
 import DownloadIcon from "@mui/icons-material/Download";
 import { styled } from '@mui/material/styles';
 import "../css/Navbar.css";
+import { useAuth } from '../context/AuthContext';
 
 // Custom styled components for the sidebar menu
 const StyledListItemButton = styled(ListItemButton)({
@@ -38,31 +39,14 @@ const StyledListItemIcon = styled(ListItemIcon)({
 
 const Navbar = () => {
   const [openMenu, setOpenMenu] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userInfo, setUserInfo] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
 
-  // Check if user is logged in and get user info
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const user = localStorage.getItem("user");
-
-    if (token && user) {
-      setIsLoggedIn(true);
-      try {
-        const userData = JSON.parse(user);
-        setUserInfo(userData);
-      } catch (error) {
-        console.error("Error parsing user data:", error);
-      }
-    } else {
-      setIsLoggedIn(false);
-    }
-  }, []);
+  // Use Auth Context instead of multiple states
+  const { user, isLoggedIn, logout } = useAuth();
 
   // Get cart count
   useEffect(() => {
@@ -125,52 +109,24 @@ const Navbar = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setIsLoggedIn(false);
-    setShowDropdown(false);
+    logout(); // Use the logout function from AuthContext
     navigate("/");
   };
 
-  const [userRole, setUserRole] = useState(null);
-
-  // Update the useEffect where you check if user is logged in
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const user = localStorage.getItem("user");
-
-    if (token) {
-      setIsLoggedIn(true);
-
-      // Try to get user name, avatar and role from localStorage
-      if (user) {
-        try {
-          const userData = JSON.parse(user);
-          setUserName(userData.fullname || userData.name || "User");
-          setUserRole(userData.role || "buyer"); // Set default role as buyer
-          if (userData.avatar) {
-            setUserAvatar(userData.avatar);
-          }
-        } catch (error) {
-          console.error("Error parsing user data", error);
-        }
-      }
-    } else {
-      setIsLoggedIn(false);
-    }
-  }, []);
-
-  // Updated function to handle dashboard navigation based on role
+  // Function to navigate to dashboard based on user role
   const navigateToDashboard = () => {
-    if (userRole === "admin") {
-      navigate("/admin/dashboard");
-    } else if (userRole === "seller") {
-      navigate("/dashboard");
+    if (!user) return "/dashboard";
+    
+    if (user.role === "admin") {
+      return "/admin/dashboard";
+    } else if (user.role === "seller") {
+      return "/dashboard";
     } else {
       // For buyers or unspecified roles
-      navigate("/dashboard/purchases");
+      return "/dashboard/purchases";
     }
   };
+
   // Menu items - used for both navbar and sidebar
   const menuItems = [
     {
@@ -195,7 +151,7 @@ const Navbar = () => {
     {
       text: "Dashboard",
       icon: <FaCog />,
-      route: navigateToDashboard
+      route: navigateToDashboard()
     },
     {
       text: "Upgrade Plan",
@@ -283,16 +239,16 @@ const Navbar = () => {
                 className="profile-trigger"
                 onClick={() => setShowDropdown(!showDropdown)}
               >
-                {userInfo?.avatar ? (
+                {user?.avatar ? (
                   <img
-                    src={userInfo.avatar}
-                    alt={userInfo.name || "User"}
+                    src={user.avatar}
+                    alt={user.name || "User"}
                     className="avatar-img"
                   />
                 ) : (
                   <FaUserCircle className="avatar-icon" />
                 )}
-                <span className="username">{userInfo?.name || "User"}</span>
+                <span className="username">{user?.name || "User"}</span>
               </div>
 
               {showDropdown && (

@@ -12,6 +12,7 @@ export const AudioProvider = ({ children }) => {
   const [currentTime, setCurrentTime] = useState(0);
   const [volume, setVolume] = useState(0.8); // Start at 80% volume
   const [audioError, setAudioError] = useState(null);
+  const [audioInitialized, setAudioInitialized] = useState(false);
 
   const audioRef = useRef(new Audio());
 
