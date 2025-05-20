@@ -7,6 +7,7 @@ import ProducersCarousel from "./ProducersCarousel";
 import API from "../api/api";
 import "../css/Home.css";
 import { useAudio } from "../context/AudioContext"; 
+import { useSettings } from '../context/SettingsContext';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ const Home = () => {
   const [audioLoading, setAudioLoading] = useState(false);
   const audioRef = useRef(new Audio());
   const { currentTrack, isPlaying, playTrack } = useAudio();
+  const { settings } = useSettings();
 
 
   // In the useEffect for fetching hero beats
@@ -237,7 +239,7 @@ const Home = () => {
         <div className="hero-content">
           {/* Left Section with Text and Search */}
           <div className="hero-left">
-            <h1 className="hero-heading">YOUR FIRST HIT STARTS HERE</h1>
+            <h1 className="hero-heading">{settings.heroTitle || "YOUR FIRST HIT STARTS HERE"}</h1>
 
             {/* BeatStars-style search bar */}
             <div className="hero-search-container">

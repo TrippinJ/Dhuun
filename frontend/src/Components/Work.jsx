@@ -3,9 +3,13 @@ import React from "react";
 import PickMeals from "../Assets/cookup.png";
 import ChooseMeals from "../Assets/choose-image.png";
 import DeliveryMeals from "../Assets/delivery-image.png";
+import { useSettings } from "../context/SettingsContext";
 
 const Work = () => {
-  const workInfoData = [
+
+  const { settings } = useSettings();
+  // Default work info data
+  const defaultWorkInfoData = [
     {
       image: PickMeals,
       title: "Cook Ups",
@@ -21,15 +25,19 @@ const Work = () => {
       title: "Instant Delivery",
       text: "Lorem ipsum dolor sit amet consectetur. Maecenas orci et lorem ipsum",
     },
-  ];
+  ]
+
+  // Use either the settings workInfoData or default
+  const workInfoData = settings.workInfoData || defaultWorkInfoData;
+
   return (
     <div className="work-section-wrapper">
       <div className="work-section-top">
         <p className="primary-subheading">Work</p>
-        <h1 className="primary-heading">How It Works</h1>
+        <h1 className="primary-heading">{settings.workTitle || "How It Works"}</h1>
         <p className="primary-text">
-          Lorem ipsum dolor sit amet consectetur. Non tincidunt magna non et
-          elit. Dolor turpis molestie dui magnis facilisis at fringilla quam.
+          {settings.workDescription ||
+            "Lorem ipsum dolor sit amet consectetur. Non tincidunt magna non et elit. Dolor turpis molestie dui magnis facilisis at fringilla quam."}
         </p>
       </div>
       <div className="work-section-bottom">

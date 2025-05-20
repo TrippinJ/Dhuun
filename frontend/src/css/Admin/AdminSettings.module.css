@@ -143,26 +143,99 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  padding: 12px;
+  background-color: rgba(123, 44, 191, 0.05);
+  border-radius: 6px;
+  border: 1px solid #333;
+  margin-bottom: 10px;
 }
 
-.checkboxControl input {
-  width: auto;
+.checkboxControl input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-color: #1e1e1e;
+  border: 2px solid #444;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-block;
+  position: relative;
   margin: 0;
-  accent-color: #7B2CBF;
-  width: 18px;
-  height: 18px;
+  padding: 0;
+}
+
+.checkboxControl input[type="checkbox"]:checked {
+  background-color: #7B2CBF;
+  border-color: #7B2CBF;
+}
+
+.checkboxControl input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.checkboxControl input[type="checkbox"]:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(123, 44, 191, 0.2);
 }
 
 .checkboxControl label {
   margin: 0;
   cursor: pointer;
+  font-weight: 500;
+  user-select: none;
 }
 
+/* Field help text styling improvement */
 .fieldHelp {
   margin-top: 6px;
   font-size: 12px;
   color: #AAAAAA;
   line-height: 1.4;
+  margin-left: 30px;
+  /* Better alignment with checkbox */
+}
+
+/* Form input addon button (the UI element in top right of inputs) */
+.inputWithAddon {
+  position: relative;
+}
+
+.inputAddonBtn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  color: #aaa;
+  transition: all 0.2s;
+}
+
+.inputAddonBtn:hover {
+  background-color: #3a3a3a;
+  color: #fff;
+}
+
+/* Input with right padding for addon */
+.inputWithAddon input {
+  padding-right: 45px;
 }
 
 .formActions {
@@ -173,7 +246,9 @@
   border-top: 1px solid #333333;
 }
 
-.saveButton, .addButton, .deleteButton {
+.saveButton,
+.addButton,
+.deleteButton {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -264,6 +339,7 @@
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -292,8 +368,13 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Logo preview styles */
@@ -398,28 +479,132 @@
   justify-content: space-between;
 }
 
+/* src/css/Admin/AdminSettings.module.css */
+/* Add these new styles for tabs */
+
+.tabsContainer {
+  margin-top: 20px;
+  border: 1px solid #333;
+  border-radius: 6px;
+  overflow: hidden;
+  background-color: #1e1e1e;
+}
+
+.tabsNav {
+  display: flex;
+  background-color: #111;
+  border-bottom: 1px solid #333;
+}
+
+.tabButton {
+  padding: 12px 20px;
+  background: none;
+  border: none;
+  color: #aaa;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.tabButton:hover {
+  color: #fff;
+  background-color: rgba(123, 44, 191, 0.1);
+}
+
+.activeTab {
+  color: #7B2CBF;
+  background-color: #1e1e1e;
+  border-bottom: 2px solid #7B2CBF;
+}
+
+.tabContent {
+  padding: 20px;
+}
+
+/* Update existing styles */
+.formSection {
+  margin-bottom: 30px;
+  padding-bottom: 25px;
+  border-bottom: 1px solid #333;
+}
+
+.formSection:last-child {
+  border-bottom: none;
+}
+
+.formActions {
+  padding: 20px;
+  background-color: #111;
+  border-top: 1px solid #333;
+  text-align: right;
+}
+
+.saveButton {
+  background-color: #7B2CBF;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.saveButton:hover {
+  background-color: #8E44AD;
+}
+
+.saveButton:disabled {
+  background-color: #666;
+  cursor: not-allowed;
+}
+
+.spinnerIcon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (max-width: 768px) {
   .settingsContainer {
     padding: 16px;
   }
-  
+
   .formSection {
     padding: 20px;
   }
-  
+
   .formActions {
     flex-direction: column;
   }
-  
-  .saveButton, .addButton, .deleteButton {
+
+  .saveButton,
+  .addButton,
+  .deleteButton {
     width: 100%;
     justify-content: center;
   }
-  
+
   .testimonialActions {
     flex-direction: column;
   }
-  
+
   .settingsHeader h2 {
     font-size: 20px;
   }
@@ -429,15 +614,15 @@
   .settingsContainer {
     padding: 12px;
   }
-  
+
   .formSection {
     padding: 16px;
   }
-  
+
   .formGroup label {
     font-size: 13px;
   }
-  
+
   .formGroup input,
   .formGroup textarea,
   .formGroup select {

@@ -677,8 +677,8 @@ export const updateSettings = async (req, res) => {
     } = req.body;
 
     // Validation
-    if (!siteName || !contactEmail) {
-      return res.status(400).json({ message: 'Site name and contact email are required' });
+    if (!siteName) {
+      return res.status(400).json({ message: 'Site name is required' });
     }
 
     // Find existing settings or create new
@@ -695,9 +695,22 @@ export const updateSettings = async (req, res) => {
     settings.commissionRate = commissionRate;
     settings.featuredBeatsLimit = featuredBeatsLimit;
     settings.maintenanceMode = maintenanceMode;
-    settings.logoUrl = logoUrl;
-    settings.aboutSection = aboutSection;
-    settings.testimonials = testimonials;
+    
+    // Only update logo if provided
+    if (logoUrl) {
+      settings.logoUrl = logoUrl;
+    }
+    
+    // Update about section if provided
+    if (aboutSection) {
+      settings.aboutSection = aboutSection;
+    }
+    
+    // Update testimonials if provided
+    if (testimonials) {
+      settings.testimonials = testimonials;
+    }
+    
     settings.lastUpdated = new Date();
     settings.updatedBy = req.user.id;
 
@@ -754,8 +767,7 @@ export const updateLogo = async (req, res) => {
       return res.status(400).json({ success: false, message: 'No logo file uploaded' });
     }
 
-    // Log the file for debugging
-    console.log('Uploaded file:', req.file);
+ 
 
     // Use your existing storage manager to upload to Cloudinary
     const uploadResult = await uploadFileToCloudinary(

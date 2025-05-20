@@ -1,35 +1,41 @@
-// src/Components/Admin/AdminSettings.jsx
 import React, { useState, useEffect } from 'react';
-import { FaSave, FaTrash, FaPlus, FaImage, FaSpinner } from 'react-icons/fa';
+import { FaSave, FaTrash, FaPlus, FaImage, FaSpinner, FaCog, FaPalette, FaHome, FaUsers, FaServer, FaQuestion } from 'react-icons/fa';
 import API from '../../api/api';
 import styles from '../../css/Admin/AdminSettings.module.css';
 import { useSettings } from '../../context/SettingsContext';
 
 const AdminSettings = () => {
-  const { settings: globalSettings, setSettings: setGlobalSettings } = useSettings();
+  const { settings: globalSettings, updateSettings } = useSettings();
+  const [activeTab, setActiveTab] = useState('general');
 
-  // Main form state
   const [formData, setFormData] = useState({
-    siteName: globalSettings.siteName || 'Dhuun',
-    siteDescription: globalSettings.siteDescription || '',
-    contactEmail: globalSettings.contactEmail || '',
-    maxUploadSizeMB: globalSettings.maxUploadSizeMB || 20,
-    commissionRate: globalSettings.commissionRate || 10,
-    featuredBeatsLimit: globalSettings.featuredBeatsLimit || 8,
-    maintenanceMode: globalSettings.maintenanceMode || false,
+    // Site fields
+    siteName: '',
+    siteDescription: '',
+    contactEmail: '',
+    maxUploadSizeMB: 20,
+    commissionRate: 10,
+    featuredBeatsLimit: 8,
+    maintenanceMode: false,
 
     // About section
-    aboutTitle: globalSettings.aboutSection?.title || '',
-    aboutDescription: globalSettings.aboutSection?.description || '',
-    aboutImage: globalSettings.aboutSection?.image || '',
+    aboutTitle: '',
+    aboutDescription: '',
+    aboutImage: '',
+
+    // New fields for other landing page sections
+    heroTitle: '',
+    contactPhone: '',
+    websiteURL: '',
+    shortURL: '',
+    workTitle: '',
+    workDescription: '',
   });
 
-  // Separate state for testimonials as it's an array
-  const [testimonials, setTestimonials] = useState(globalSettings.testimonials || []);
 
   // File upload states
   const [logoFile, setLogoFile] = useState(null);
-  const [logoPreview, setLogoPreview] = useState(globalSettings.logoUrl || '');
+  const [logoPreview, setLogoPreview] = useState('');
   const [aboutImageFile, setAboutImageFile] = useState(null);
 
   // UI states
@@ -39,22 +45,24 @@ const AdminSettings = () => {
 
   // Update form data when global settings change
   useEffect(() => {
-    setFormData({
-      siteName: globalSettings.siteName || 'Dhuun',
-      siteDescription: globalSettings.siteDescription || '',
-      contactEmail: globalSettings.contactEmail || '',
-      maxUploadSizeMB: globalSettings.maxUploadSizeMB || 20,
-      commissionRate: globalSettings.commissionRate || 10,
-      featuredBeatsLimit: globalSettings.featuredBeatsLimit || 8,
-      maintenanceMode: globalSettings.maintenanceMode || false,
+    if (globalSettings) {
+      setFormData({
+        siteName: globalSettings.siteName || 'Dhuun',
+        siteDescription: globalSettings.siteDescription || '',
+        contactEmail: globalSettings.contactEmail || '',
+        maxUploadSizeMB: globalSettings.maxUploadSizeMB || 20,
+        commissionRate: globalSettings.commissionRate || 10,
+        featuredBeatsLimit: globalSettings.featuredBeatsLimit || 8,
+        maintenanceMode: globalSettings.maintenanceMode || false,
 
-      aboutTitle: globalSettings.aboutSection?.title || '',
-      aboutDescription: globalSettings.aboutSection?.description || '',
-      aboutImage: globalSettings.aboutSection?.image || '',
-    });
+        aboutTitle: globalSettings.aboutSection?.title || '',
+        aboutDescription: globalSettings.aboutSection?.description || '',
+        aboutImage: globalSettings.aboutSection?.image || '',
+      });
 
-    setTestimonials(globalSettings.testimonials || []);
-    setLogoPreview(globalSettings.logoUrl || '');
+
+      setLogoPreview(globalSettings.logoUrl || '');
+    }
   }, [globalSettings]);
 
   // Handle form input changes
@@ -89,25 +97,7 @@ const AdminSettings = () => {
     }
   };
 
-  // Handle testimonial input change
-  const handleTestimonialChange = (index, field, value) => {
-    const updatedTestimonials = [...testimonials];
-    updatedTestimonials[index] = {
-      ...updatedTestimonials[index],
-      [field]: value
-    };
-    setTestimonials(updatedTestimonials);
-  };
 
-  // Add new testimonial
-  const addTestimonial = () => {
-    setTestimonials([...testimonials, { name: '', message: '', avatar: '' }]);
-  };
-
-  // Remove testimonial
-  const removeTestimonial = (index) => {
-    setTestimonials(testimonials.filter((_, i) => i !== index));
-  };
 
   // Main form submission handler
   const handleSubmit = async (e) => {
@@ -126,21 +116,19 @@ const AdminSettings = () => {
         const logoFormData = new FormData();
         logoFormData.append('logo', logoFile);
 
-        const logoResponse = await API.put('/api/admin/settings/logo', logoFormData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
-
-        if (logoResponse.data && logoResponse.data.success) {
-          logoUrl = logoResponse.data.logoUrl;
-
-          // Update the logoUrl in global settings immediately
-          setGlobalSettings({
-            ...globalSettings,
-            logoUrl: logoResponse.data.logoUrl
+        try {
+          const logoResponse = await API.put('/api/admin/settings/logo', logoFormData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
           });
 
-        } else {
-          throw new Error('Failed to upload logo');
+          if (logoResponse.data && logoResponse.data.success) {
+            logoUrl = logoResponse.data.logoUrl;
+          } else {
+            throw new Error('Failed to upload logo');
+          }
+        } catch (logoError) {
+          console.error('Logo upload error:', logoError);
+          throw new Error('Failed to upload logo: ' + (logoError.message || 'Unknown error'));
         }
       }
 
@@ -149,14 +137,20 @@ const AdminSettings = () => {
         const imageFormData = new FormData();
         imageFormData.append('image', aboutImageFile);
 
-        const imageResponse = await API.post('/api/admin/upload', imageFormData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        try {
+          const imageResponse = await API.post('/api/admin/upload', imageFormData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          });
 
-        if (imageResponse.data && imageResponse.data.url) {
-          aboutImageUrl = imageResponse.data.url;
-        } else {
-          throw new Error('Failed to upload about image');
+          if (imageResponse.data && imageResponse.data.url) {
+            aboutImageUrl = imageResponse.data.url;
+          } else {
+            throw new Error('Failed to upload about image');
+          }
+        } catch (imageError) {
+          console.error('Image upload error:', imageError);
+          // Don't block the form submission if image upload fails
+          console.warn('Continuing with settings update despite image upload failure');
         }
       }
 
@@ -175,19 +169,12 @@ const AdminSettings = () => {
           description: formData.aboutDescription,
           image: aboutImageUrl
         },
-        testimonials: testimonials
       };
 
-      // Make API call to save all settings at once
-      const response = await API.put('/api/admin/settings', updatedSettings);
+      // Use the context function to update settings
+      const result = await updateSettings(updatedSettings);
 
-      if (response.data && response.data.success) {
-        // Update global settings
-        setGlobalSettings({
-          ...globalSettings,
-          ...updatedSettings
-        });
-
+      if (result.success) {
         // Clear file states
         setLogoFile(null);
         setAboutImageFile(null);
@@ -196,7 +183,7 @@ const AdminSettings = () => {
         setSuccessMessage('All settings updated successfully!');
         setTimeout(() => setSuccessMessage(''), 3000);
       } else {
-        throw new Error('Failed to update settings');
+        throw new Error(result.message || 'Failed to update settings');
       }
     } catch (error) {
       console.error('Error saving settings:', error);
@@ -215,262 +202,353 @@ const AdminSettings = () => {
       {error && <div className={styles.errorMessage}>{error}</div>}
       {successMessage && <div className={styles.successMessage}>{successMessage}</div>}
 
-      <form onSubmit={handleSubmit} className={styles.settingsForm}>
-        {/* General Settings Section */}
-        <div className={styles.formSection}>
-          <h3>General Settings</h3>
+      <div className={styles.tabsContainer}>
+        <div className={styles.tabsNav}>
+          <button
+            className={`${styles.tabButton} ${activeTab === 'general' ? styles.activeTab : ''}`}
+            onClick={() => setActiveTab('general')}
+          >
+            <FaCog /> General
+          </button>
+          <button
+            className={`${styles.tabButton} ${activeTab === 'appearance' ? styles.activeTab : ''}`}
+            onClick={() => setActiveTab('appearance')}
+          >
+            <FaPalette /> Appearance
+          </button>
+          <button
+            className={`${styles.tabButton} ${activeTab === 'homepage' ? styles.activeTab : ''}`}
+            onClick={() => setActiveTab('homepage')}
+          >
+            <FaHome /> Homepage
+          </button>
 
-          <div className={styles.formGroup}>
-            <label htmlFor="siteName">Site Name</label>
-            <input
-              type="text"
-              id="siteName"
-              name="siteName"
-              value={formData.siteName}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
+          <button
+            className={`${styles.tabButton} ${activeTab === 'advanced' ? styles.activeTab : ''}`}
+            onClick={() => setActiveTab('advanced')}
+          >
+            <FaServer /> Advanced
+          </button>
+        </div>
 
-          <div className={styles.formGroup}>
-            <label htmlFor="siteDescription">Site Description</label>
-            <textarea
-              id="siteDescription"
-              name="siteDescription"
-              value={formData.siteDescription}
-              onChange={handleInputChange}
-              rows="3"
-            ></textarea>
-          </div>
+        <form onSubmit={handleSubmit} className={styles.settingsForm}>
+          {/* General Settings Tab */}
+          {activeTab === 'general' && (
+            <div className={styles.tabContent}>
+              <div className={styles.formSection}>
+                <h3>General Settings</h3>
 
-          <div className={styles.formGroup}>
-            <label htmlFor="contactEmail">Contact Email</label>
-            <input
-              type="email"
-              id="contactEmail"
-              name="contactEmail"
-              value={formData.contactEmail}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="siteName">Site Name</label>
+                  <input
+                    type="text"
+                    id="siteName"
+                    name="siteName"
+                    value={formData.siteName}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
 
-          <div className={styles.formGroup}>
-            <label htmlFor="maxUploadSizeMB">Max Upload Size (MB)</label>
-            <input
-              type="number"
-              id="maxUploadSizeMB"
-              name="maxUploadSizeMB"
-              min="1"
-              max="100"
-              value={formData.maxUploadSizeMB}
-              onChange={handleInputChange}
-              required
-            />
-          </div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="siteDescription">Site Description</label>
+                  <textarea
+                    id="siteDescription"
+                    name="siteDescription"
+                    value={formData.siteDescription}
+                    onChange={handleInputChange}
+                    rows="3"
+                  ></textarea>
+                </div>
 
-          <div className={styles.formGroup}>
-            <label htmlFor="commissionRate">Commission Rate (%)</label>
-            <input
-              type="number"
-              id="commissionRate"
-              name="commissionRate"
-              min="0"
-              max="100"
-              value={formData.commissionRate}
-              onChange={handleInputChange}
-              required
-            />
-            <p className={styles.fieldHelp}>
-              Percentage of each sale that goes to the platform
-            </p>
-          </div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="contactEmail">Contact Email</label>
+                  <input
+                    type="email"
+                    id="contactEmail"
+                    name="contactEmail"
+                    value={formData.contactEmail}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
 
-          <div className={styles.formGroup}>
-            <label htmlFor="featuredBeatsLimit">Featured Beats Limit</label>
-            <input
-              type="number"
-              id="featuredBeatsLimit"
-              name="featuredBeatsLimit"
-              min="1"
-              max="20"
-              value={formData.featuredBeatsLimit}
-              onChange={handleInputChange}
-              required
-            />
-            <p className={styles.fieldHelp}>
-              Maximum number of beats to show in featured sections
-            </p>
-          </div>
+              {/* Contact Information */}
+              <div className={styles.formSection}>
+                <h3>Contact Information</h3>
 
-          <div className={styles.formGroup}>
-            <div className={styles.checkboxControl}>
-              <input
-                type="checkbox"
-                id="maintenanceMode"
-                name="maintenanceMode"
-                checked={formData.maintenanceMode}
-                onChange={handleInputChange}
-              />
-              <label htmlFor="maintenanceMode">Enable Maintenance Mode</label>
+                <div className={styles.formGroup}>
+                  <label htmlFor="contactPhone">Phone Number</label>
+                  <input
+                    type="text"
+                    id="contactPhone"
+                    name="contactPhone"
+                    value={formData.contactPhone}
+                    onChange={handleInputChange}
+                    placeholder="9823******"
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="websiteURL">Website URL</label>
+                  <input
+                    type="text"
+                    id="websiteURL"
+                    name="websiteURL"
+                    value={formData.websiteURL}
+                    onChange={handleInputChange}
+                    placeholder="trippinjbeatz.com"
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="shortURL">Short URL</label>
+                  <input
+                    type="text"
+                    id="shortURL"
+                    name="shortURL"
+                    value={formData.shortURL}
+                    onChange={handleInputChange}
+                    placeholder="tj.com"
+                  />
+                </div>
+              </div>
             </div>
-            <p className={styles.fieldHelp}>
-              When enabled, only administrators can access the site
-            </p>
-          </div>
-        </div>
+          )}
 
-        {/* Logo Section */}
-        <div className={styles.formSection}>
-          <h3>Site Logo</h3>
+          {/* Appearance Tab */}
+          {activeTab === 'appearance' && (
+            <div className={styles.tabContent}>
+              <div className={styles.formSection}>
+                <h3>Site Logo</h3>
 
-          <div className={styles.logoPreviewContainer}>
-            {logoPreview && (
-              <img
-                src={logoPreview}
-                alt="Site Logo"
-                className={styles.logoPreview}
-              />
-            )}
+                <div className={styles.logoPreviewContainer}>
+                  {logoPreview && (
+                    <img
+                      src={logoPreview}
+                      alt="Site Logo"
+                      className={styles.logoPreview}
+                    />
+                  )}
 
-            {!logoPreview && (
-              <div className={styles.noLogo}>
-                <FaImage /> No logo uploaded
+                  {!logoPreview && (
+                    <div className={styles.noLogo}>
+                      <FaImage /> No logo uploaded
+                    </div>
+                  )}
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="logoUpload">Upload Logo</label>
+                  <input
+                    type="file"
+                    id="logoUpload"
+                    accept="image/*"
+                    onChange={handleLogoChange}
+                    className={styles.fileInput}
+                  />
+                </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
-          <div className={styles.formGroup}>
-            <label htmlFor="logoUpload">Upload Logo</label>
-            <input
-              type="file"
-              id="logoUpload"
-              accept="image/*"
-              onChange={handleLogoChange}
-              className={styles.fileInput}
-            />
-          </div>
-        </div>
+          {/* Homepage Content Tab */}
+          {activeTab === 'homepage' && (
+            <div className={styles.tabContent}>
+              {/* Hero Section */}
+              <div className={styles.formSection}>
+                <h3>Hero Section</h3>
 
-        {/* About Section */}
-        <div className={styles.formSection}>
-          <h3>About Section</h3>
-
-          <div className={styles.formGroup}>
-            <label htmlFor="aboutTitle">Title</label>
-            <input
-              type="text"
-              id="aboutTitle"
-              name="aboutTitle"
-              value={formData.aboutTitle}
-              onChange={handleInputChange}
-              placeholder="About section title"
-            />
-          </div>
-
-          <div className={styles.formGroup}>
-            <label htmlFor="aboutDescription">Description</label>
-            <textarea
-              id="aboutDescription"
-              name="aboutDescription"
-              value={formData.aboutDescription}
-              onChange={handleInputChange}
-              rows="4"
-              placeholder="About section description"
-            ></textarea>
-          </div>
-
-          <div className={styles.formGroup}>
-            <label htmlFor="aboutImage">Image</label>
-
-            {formData.aboutImage && (
-              <div className={styles.imagePreview}>
-                <img src={formData.aboutImage} alt="About section" />
+                <div className={styles.formGroup}>
+                  <label htmlFor="heroTitle">Hero Title</label>
+                  <input
+                    type="text"
+                    id="heroTitle"
+                    name="heroTitle"
+                    value={formData.heroTitle}
+                    onChange={handleInputChange}
+                    placeholder="YOUR FIRST HIT STARTS HERE"
+                  />
+                </div>
               </div>
-            )}
 
-            <input
-              type="file"
-              id="aboutImage"
-              accept="image/*"
-              onChange={handleAboutImageChange}
-              className={styles.fileInput}
-            />
-          </div>
-        </div>
+              {/* About Section */}
+              <div className={styles.formSection}>
+                <h3>About Section</h3>
 
-        {/* Testimonials Section */}
-        <div className={styles.formSection}>
-          <h3>Testimonials</h3>
+                <div className={styles.formGroup}>
+                  <label htmlFor="aboutTitle">Title</label>
+                  <input
+                    type="text"
+                    id="aboutTitle"
+                    name="aboutTitle"
+                    value={formData.aboutTitle}
+                    onChange={handleInputChange}
+                    placeholder="About section title"
+                  />
+                </div>
 
-          {testimonials.map((testimonial, index) => (
-            <div key={index} className={styles.testimonialItem}>
-              <div className={styles.testimonialHeader}>
-                <h4>Testimonial #{index + 1}</h4>
-                <button
-                  type="button"
-                  className={styles.deleteButton}
-                  onClick={() => removeTestimonial(index)}
-                >
-                  <FaTrash /> Remove
-                </button>
+                <div className={styles.formGroup}>
+                  <label htmlFor="aboutDescription">Description</label>
+                  <textarea
+                    id="aboutDescription"
+                    name="aboutDescription"
+                    value={formData.aboutDescription}
+                    onChange={handleInputChange}
+                    rows="4"
+                    placeholder="About section description"
+                  ></textarea>
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="aboutImage">Image</label>
+
+                  {formData.aboutImage && (
+                    <div className={styles.imagePreview}>
+                      <img src={formData.aboutImage} alt="About section" />
+                    </div>
+                  )}
+
+                  <input
+                    type="file"
+                    id="aboutImage"
+                    accept="image/*"
+                    onChange={handleAboutImageChange}
+                    className={styles.fileInput}
+                  />
+                </div>
+              </div>
+
+              {/* How It Works Section */}
+              <div className={styles.formSection}>
+                <h3>How It Works Section</h3>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="workTitle">Section Title</label>
+                  <input
+                    type="text"
+                    id="workTitle"
+                    name="workTitle"
+                    value={formData.workTitle}
+                    onChange={handleInputChange}
+                    placeholder="How It Works"
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="workDescription">Section Description</label>
+                  <textarea
+                    id="workDescription"
+                    name="workDescription"
+                    value={formData.workDescription}
+                    onChange={handleInputChange}
+                    rows="3"
+                    placeholder="Describe how your platform works"
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Advanced Settings Tab */}
+          {activeTab === 'advanced' && (
+            <div className={styles.tabContent}>
+              <div className={styles.formSection}>
+                <h3>Advanced Settings</h3>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="maxUploadSizeMB">Max Upload Size (MB)</label>
+                  <input
+                    type="number"
+                    id="maxUploadSizeMB"
+                    name="maxUploadSizeMB"
+                    min="1"
+                    max="100"
+                    value={formData.maxUploadSizeMB}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="commissionRate">Commission Rate (%)</label>
+                  <div className={styles.inputWithAddon}>
+                  <input
+                    type="number"
+                    id="commissionRate"
+                    name="commissionRate"
+                    min="0"
+                    max="100"
+                    value={formData.commissionRate}
+                    onChange={handleInputChange}
+                    required
+                  />
+                  <button type="button" className={styles.inputAddonBtn} title="Help">
+                    <FaQuestion />
+                  </button>
+                </div>
+                <p className={styles.fieldHelp}>
+                  Percentage of each sale that goes to the platform
+                </p>
               </div>
 
               <div className={styles.formGroup}>
-                <label htmlFor={`testimonialName${index}`}>Name</label>
+                <label htmlFor="featuredBeatsLimit">Featured Beats Limit</label>
                 <input
-                  type="text"
-                  id={`testimonialName${index}`}
-                  value={testimonial.name || ''}
-                  onChange={(e) => handleTestimonialChange(index, 'name', e.target.value)}
-                  placeholder="Testimonial author"
+                  type="number"
+                  id="featuredBeatsLimit"
+                  name="featuredBeatsLimit"
+                  min="1"
+                  max="20"
+                  value={formData.featuredBeatsLimit}
+                  onChange={handleInputChange}
+                  required
                 />
+                <p className={styles.fieldHelp}>
+                  Maximum number of beats to show in featured sections
+                </p>
               </div>
 
               <div className={styles.formGroup}>
-                <label htmlFor={`testimonialMessage${index}`}>Message</label>
-                <textarea
-                  id={`testimonialMessage${index}`}
-                  value={testimonial.message || ''}
-                  onChange={(e) => handleTestimonialChange(index, 'message', e.target.value)}
-                  rows="3"
-                  placeholder="Testimonial message"
-                ></textarea>
+                <div className={styles.checkboxControl}>
+                  <input
+                    type="checkbox"
+                    id="maintenanceMode"
+                    name="maintenanceMode"
+                    checked={formData.maintenanceMode}
+                    onChange={handleInputChange}
+                  />
+                  <label htmlFor="maintenanceMode">Enable Maintenance Mode</label>
+                </div>
+                <p className={styles.fieldHelp}>
+                  When enabled, only administrators can access the site
+                </p>
               </div>
-
-              {/* Add avatar upload functionality if needed */}
             </div>
-          ))}
+            </div>
+          )}
 
-          <button
-            type="button"
-            onClick={addTestimonial}
-            className={styles.addButton}
-          >
-            <FaPlus /> Add Testimonial
-          </button>
-        </div>
-
-        {/* Single Save Button for all settings */}
-        <div className={styles.formActions}>
-          <button
-            type="submit"
-            className={styles.saveButton}
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <FaSpinner className={styles.spinnerIcon} /> Saving All Settings...
-              </>
-            ) : (
-              <>
-                <FaSave className={styles.saveIcon} /> Save All Settings
-              </>
-            )}
-          </button>
-        </div>
-      </form>
-    </div>
+      {/* Save Button - Always visible at bottom */}
+      <div className={styles.formActions}>
+        <button
+          type="submit"
+          className={styles.saveButton}
+          disabled={loading}
+        >
+          {loading ? (
+            <>
+              <FaSpinner className={styles.spinnerIcon} /> Saving 
+            </>
+          ) : (
+            <>
+              <FaSave className={styles.saveIcon} /> Save
+            </>
+          )}
+        </button>
+      </div>
+    </form>
+      </div >
+    </div >
   );
 };
 
