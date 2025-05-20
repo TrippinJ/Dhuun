@@ -1,6 +1,7 @@
 
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import API from '../api/api';
+import LogoImage from '../Assets/DHUUN.png';
 
 const SettingsContext = createContext();
 
@@ -8,9 +9,9 @@ export const useSettings = () => useContext(SettingsContext);
 
 export const SettingsProvider = ({ children }) => {
   const [settings, setSettings] = useState({
-    logoUrl: '/DHUUN.png', // Default logo
+    logoUrl: LogoImage, // Default logo
     siteName: 'Dhuun',
-    // other settings
+    
   });
   const [loading, setLoading] = useState(true);
 

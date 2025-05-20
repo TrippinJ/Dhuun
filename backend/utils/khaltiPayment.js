@@ -1,4 +1,4 @@
-// backend/utils/khaltiPayment.js - ESM VERSION
+// backend/utils/khaltiPayment.js 
 
 import axios from 'axios';
 import dotenv from 'dotenv';

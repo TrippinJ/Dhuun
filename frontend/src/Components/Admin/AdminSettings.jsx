@@ -7,7 +7,7 @@ import { useSettings } from '../../context/SettingsContext';
 
 const AdminSettings = () => {
   const { settings: globalSettings, setSettings: setGlobalSettings } = useSettings();
-  
+
   // Main form state
   const [formData, setFormData] = useState({
     siteName: globalSettings.siteName || 'Dhuun',
@@ -17,26 +17,26 @@ const AdminSettings = () => {
     commissionRate: globalSettings.commissionRate || 10,
     featuredBeatsLimit: globalSettings.featuredBeatsLimit || 8,
     maintenanceMode: globalSettings.maintenanceMode || false,
-    
+
     // About section
     aboutTitle: globalSettings.aboutSection?.title || '',
     aboutDescription: globalSettings.aboutSection?.description || '',
     aboutImage: globalSettings.aboutSection?.image || '',
   });
-  
+
   // Separate state for testimonials as it's an array
   const [testimonials, setTestimonials] = useState(globalSettings.testimonials || []);
-  
+
   // File upload states
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState(globalSettings.logoUrl || '');
   const [aboutImageFile, setAboutImageFile] = useState(null);
-  
+
   // UI states
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
-  
+
   // Update form data when global settings change
   useEffect(() => {
     setFormData({
@@ -47,12 +47,12 @@ const AdminSettings = () => {
       commissionRate: globalSettings.commissionRate || 10,
       featuredBeatsLimit: globalSettings.featuredBeatsLimit || 8,
       maintenanceMode: globalSettings.maintenanceMode || false,
-      
+
       aboutTitle: globalSettings.aboutSection?.title || '',
       aboutDescription: globalSettings.aboutSection?.description || '',
       aboutImage: globalSettings.aboutSection?.image || '',
     });
-    
+
     setTestimonials(globalSettings.testimonials || []);
     setLogoPreview(globalSettings.logoUrl || '');
   }, [globalSettings]);
@@ -60,7 +60,7 @@ const AdminSettings = () => {
   // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    
+
     setFormData({
       ...formData,
       [name]: type === 'checkbox' ? checked : value
@@ -75,7 +75,7 @@ const AdminSettings = () => {
       setLogoPreview(URL.createObjectURL(file));
     }
   };
-  
+
   // Handle about image file selection
   const handleAboutImageChange = (e) => {
     const file = e.target.files[0];
@@ -88,7 +88,7 @@ const AdminSettings = () => {
       });
     }
   };
-  
+
   // Handle testimonial input change
   const handleTestimonialChange = (index, field, value) => {
     const updatedTestimonials = [...testimonials];
@@ -98,12 +98,12 @@ const AdminSettings = () => {
     };
     setTestimonials(updatedTestimonials);
   };
-  
+
   // Add new testimonial
   const addTestimonial = () => {
     setTestimonials([...testimonials, { name: '', message: '', avatar: '' }]);
   };
-  
+
   // Remove testimonial
   const removeTestimonial = (index) => {
     setTestimonials(testimonials.filter((_, i) => i !== index));
@@ -115,44 +115,51 @@ const AdminSettings = () => {
     setLoading(true);
     setError(null);
     setSuccessMessage('');
-    
+
     try {
       // First, handle file uploads if needed
       let logoUrl = globalSettings.logoUrl;
       let aboutImageUrl = formData.aboutImage;
-      
+
       // Upload logo if a new one was selected
       if (logoFile) {
         const logoFormData = new FormData();
         logoFormData.append('logo', logoFile);
-        
+
         const logoResponse = await API.put('/api/admin/settings/logo', logoFormData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
-        
+
         if (logoResponse.data && logoResponse.data.success) {
           logoUrl = logoResponse.data.logoUrl;
+
+          // Update the logoUrl in global settings immediately
+          setGlobalSettings({
+            ...globalSettings,
+            logoUrl: logoResponse.data.logoUrl
+          });
+
         } else {
           throw new Error('Failed to upload logo');
         }
       }
-      
+
       // Upload about image if a new one was selected
       if (aboutImageFile) {
         const imageFormData = new FormData();
         imageFormData.append('image', aboutImageFile);
-        
+
         const imageResponse = await API.post('/api/admin/upload', imageFormData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
-        
+
         if (imageResponse.data && imageResponse.data.url) {
           aboutImageUrl = imageResponse.data.url;
         } else {
           throw new Error('Failed to upload about image');
         }
       }
-      
+
       // Prepare complete settings object
       const updatedSettings = {
         siteName: formData.siteName,
@@ -170,21 +177,21 @@ const AdminSettings = () => {
         },
         testimonials: testimonials
       };
-      
+
       // Make API call to save all settings at once
       const response = await API.put('/api/admin/settings', updatedSettings);
-      
+
       if (response.data && response.data.success) {
         // Update global settings
         setGlobalSettings({
           ...globalSettings,
           ...updatedSettings
         });
-        
+
         // Clear file states
         setLogoFile(null);
         setAboutImageFile(null);
-        
+
         // Show success message
         setSuccessMessage('All settings updated successfully!');
         setTimeout(() => setSuccessMessage(''), 3000);
@@ -247,7 +254,7 @@ const AdminSettings = () => {
               required
             />
           </div>
-          
+
           <div className={styles.formGroup}>
             <label htmlFor="maxUploadSizeMB">Max Upload Size (MB)</label>
             <input
@@ -295,7 +302,7 @@ const AdminSettings = () => {
               Maximum number of beats to show in featured sections
             </p>
           </div>
-          
+
           <div className={styles.formGroup}>
             <div className={styles.checkboxControl}>
               <input
@@ -316,23 +323,23 @@ const AdminSettings = () => {
         {/* Logo Section */}
         <div className={styles.formSection}>
           <h3>Site Logo</h3>
-          
+
           <div className={styles.logoPreviewContainer}>
             {logoPreview && (
-              <img 
-                src={logoPreview} 
-                alt="Site Logo" 
-                className={styles.logoPreview} 
+              <img
+                src={logoPreview}
+                alt="Site Logo"
+                className={styles.logoPreview}
               />
             )}
-            
+
             {!logoPreview && (
               <div className={styles.noLogo}>
                 <FaImage /> No logo uploaded
               </div>
             )}
           </div>
-          
+
           <div className={styles.formGroup}>
             <label htmlFor="logoUpload">Upload Logo</label>
             <input
@@ -348,7 +355,7 @@ const AdminSettings = () => {
         {/* About Section */}
         <div className={styles.formSection}>
           <h3>About Section</h3>
-          
+
           <div className={styles.formGroup}>
             <label htmlFor="aboutTitle">Title</label>
             <input
@@ -360,7 +367,7 @@ const AdminSettings = () => {
               placeholder="About section title"
             />
           </div>
-          
+
           <div className={styles.formGroup}>
             <label htmlFor="aboutDescription">Description</label>
             <textarea
@@ -372,16 +379,16 @@ const AdminSettings = () => {
               placeholder="About section description"
             ></textarea>
           </div>
-          
+
           <div className={styles.formGroup}>
             <label htmlFor="aboutImage">Image</label>
-            
+
             {formData.aboutImage && (
               <div className={styles.imagePreview}>
                 <img src={formData.aboutImage} alt="About section" />
               </div>
             )}
-            
+
             <input
               type="file"
               id="aboutImage"
@@ -395,7 +402,7 @@ const AdminSettings = () => {
         {/* Testimonials Section */}
         <div className={styles.formSection}>
           <h3>Testimonials</h3>
-          
+
           {testimonials.map((testimonial, index) => (
             <div key={index} className={styles.testimonialItem}>
               <div className={styles.testimonialHeader}>
@@ -408,7 +415,7 @@ const AdminSettings = () => {
                   <FaTrash /> Remove
                 </button>
               </div>
-              
+
               <div className={styles.formGroup}>
                 <label htmlFor={`testimonialName${index}`}>Name</label>
                 <input
@@ -419,7 +426,7 @@ const AdminSettings = () => {
                   placeholder="Testimonial author"
                 />
               </div>
-              
+
               <div className={styles.formGroup}>
                 <label htmlFor={`testimonialMessage${index}`}>Message</label>
                 <textarea
@@ -430,11 +437,11 @@ const AdminSettings = () => {
                   placeholder="Testimonial message"
                 ></textarea>
               </div>
-              
+
               {/* Add avatar upload functionality if needed */}
             </div>
           ))}
-          
+
           <button
             type="button"
             onClick={addTestimonial}
@@ -464,7 +471,7 @@ const AdminSettings = () => {
         </div>
       </form>
     </div>
-  );  
+  );
 };
 
 export default AdminSettings;

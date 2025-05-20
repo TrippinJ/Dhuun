@@ -15,6 +15,20 @@
   --border-gray: #333333;       /* Borders and dividers */
 }
 
+::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+}
+
+
+html, body, #root, .App, div {
+  -ms-overflow-style: none !important; 
+  scrollbar-width: none !important;  
+}
+
+.scrollable-content {
+  overflow-y: auto;
+}
 
 * {
   margin: 0;
@@ -41,6 +55,7 @@ body {
   background-color: var(--primary-dark); /* Updated background color */
   color: var(--light-text); /* Updated text color */
 }
+
 
 /* Common buttons that might be used across multiple pages */
 .primary-button {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "../css/NavbarBeatExplore.module.css";
-import Logo from "../Assets/DHUUN.png";
+import Logo from "../Assets/DHUUN.png"
 import { FaShoppingCart, FaUserCircle, FaHeart, FaSignOutAlt, FaCog, FaCrown, FaDownload } from 'react-icons/fa';
 import { useSettings } from '../context/SettingsContext';
 import API from "../api/api";
@@ -241,7 +241,11 @@ const NavbarBeatExplore = () => {
   return (
     <nav className={styles.navbar}>
       <div className={styles.navLogo}>
-        <img src={settings.logoUrl || '/DHUUN.png'} alt="Dhuun Logo" onClick={() => navigate("/")} />
+        <img src={settings.logoUrl || Logo} alt="Dhuun Logo" onClick={() => navigate("/")}
+          onError={(e) => {
+            console.error('Logo failed to load:', e.target.src);
+            e.target.src = 'Logo';
+          }} />
       </div>
 
       <div className={styles.navLinks}>
