@@ -746,12 +746,29 @@ export const toggleFeaturedStatus = async (req, res) => {
 
     // Toggle featured status
     beat.isFeatured = !beat.isFeatured;
+     // Check isPublished status - this is critical!
+    console.log(`Beat ${id} - Title: "${beat.title}" - Publishing status check:`);
+    console.log(`- isFeatured will be: ${beat.isFeatured}`);
+    console.log(`- isPublished is: ${beat.isPublished}`);
+    console.log(`- isExclusiveSold is: ${beat.isExclusiveSold}`);
+    
+    // If not published, there might be a problem with featured beats display
+    if (!beat.isPublished) {
+      console.log(`WARNING: Beat is being featured, but isPublished=false!`);
+      console.log(`This beat won't appear in featured beat queries due to isPublished condition`);
+    }
     await beat.save();
 
     res.json({
       success: true,
       message: `Beat ${beat.isFeatured ? 'featured' : 'unfeatured'} successfully`,
-      isFeatured: beat.isFeatured
+      isFeatured: beat.isFeatured,
+      isPublished: beat.isPublished,
+      isExclusiveSold: beat.isExclusiveSold,
+      note: beat.isPublished ? 
+        "Beat will appear in featured section" : 
+        "Beat won't appear in featured section because isPublished=false"
+
     });
   } catch (error) {
     console.error('Error toggling featured status:', error);

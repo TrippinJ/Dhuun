@@ -1,38 +1,37 @@
 import express from 'express';
 import Settings from '../models/settings.js';
 
-
 const router = express.Router();
-// At the start of the route handler
-console.log('Settings request received');
+
 // Public endpoint - no authentication required
 router.get('/public', async (req, res) => {
   try {
-    // Find settings but only return non-sensitive fields
+    // Simple approach that avoids using any variables before they're defined
     const settings = await Settings.findOne();
-    // Before sending the response
-    console.log('Returning settings:', publicSettings)
-    // If no settings exist, return defaults
+    
     if (!settings) {
-      return res.json({
+      // Return default settings if none are found
+      return res.json({ 
         settings: {
           siteName: 'Dhuun',
-          logoUrl: '/DHUUN.png'
+          logoUrl: '/DHUUN.png',
+          siteDescription: 'A marketplace for producers and artists to buy and sell beats'
         }
       });
     }
-
-    // Return only safe fields
-    const publicSettings = {
-      siteName: settings.siteName,
-      logoUrl: settings.logoUrl,
-      siteDescription: settings.siteDescription
-    };
-
-    res.json({ settings: publicSettings });
+    
+    // Return filtered settings
+    return res.json({ 
+      settings: {
+        siteName: settings.siteName || 'Dhuun',
+        logoUrl: settings.logoUrl || '/DHUUN.png',
+        siteDescription: settings.siteDescription || 'A marketplace for producers and artists'
+      }
+    });
+    
   } catch (error) {
     console.error('Error fetching public settings:', error);
-    res.status(500).json({ message: 'Server error' });
+    return res.status(500).json({ message: 'Server error' });
   }
 });
 

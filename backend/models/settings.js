@@ -13,6 +13,10 @@ const SettingsSchema = new mongoose.Schema({
     type: String,
     default: 'admin@dhuun.com'
   },
+  logoUrl: {
+    type: String,
+    default: '/DHUUN.png'
+  },
   maxUploadSizeMB: {
     type: Number,
     default: 20
@@ -29,6 +33,19 @@ const SettingsSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  aboutSection: {
+    title: String,
+    description: String,
+    image: String
+  },
+  testimonials: [
+    {
+      name: String,
+      text: String,
+      image: String,
+      rating: Number
+    }
+  ],
   lastUpdated: {
     type: Date,
     default: Date.now
