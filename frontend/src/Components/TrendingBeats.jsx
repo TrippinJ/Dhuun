@@ -55,7 +55,7 @@ const TrendingBeats = () => {
             _id: "sample1",
             title: "Never Give Up",
             producer: { name: "TrippinJ", verified: true },
-            coverImage: "https://via.placeholder.com/300x300",
+            coverImage: "/default-cover.jpg",
             audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
             price: 19.99
           },
@@ -63,7 +63,7 @@ const TrendingBeats = () => {
             _id: "sample2",
             title: "Trap Nation",
             producer: { name: "Beat Master", verified: false },
-            coverImage: "https://via.placeholder.com/300x300",
+            coverImage: "/default-cover.jpg",
             audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
             price: 24.99
           }
@@ -81,7 +81,7 @@ const TrendingBeats = () => {
             _id: "sample1",
             title: "Summer Vibes",
             producer: { name: "DJ Beats", verified: true },
-            coverImage: "https://via.placeholder.com/300x300",
+            coverImage: "/default-cover.jpg",
             audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
             price: 19.99
           },
@@ -89,7 +89,7 @@ const TrendingBeats = () => {
             _id: "sample2",
             title: "Trap Nation",
             producer: { name: "Beat Master", verified: false },
-            coverImage: "https://via.placeholder.com/300x300",
+            coverImage: "/default-cover.jpg",
             audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
             price: 24.99
           }
@@ -212,12 +212,12 @@ const TrendingBeats = () => {
               <div key={beat._id} className={styles.beatCard}>
                 <div className={styles.imageContainer}>
                   <img 
-                    src={beat.coverImage || "https://via.placeholder.com/300x300"} 
+                    src={beat.coverImage || "/default-cover.jpg"} 
                     alt={beat.title} 
                     className={styles.beatImage}
                     onError={(e) => {
                       console.log("Image error, using fallback");
-                      e.target.src = "https://via.placeholder.com/300x300";
+                      e.target.src = "/default-cover.jpg";
                     }}
                   />
                   <div className={styles.imageOverlay}>

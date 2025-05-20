@@ -7,7 +7,7 @@
   
   .heroSection {
     background-image: linear-gradient(to right, rgba(123, 44, 191, 0.8), rgba(18, 18, 18, 0.9)),
-                      url('https://via.placeholder.com/1920x400');
+                      url('/default-cover.jpg');
     background-size: cover;
     background-position: center;
     padding: 80px 40px;

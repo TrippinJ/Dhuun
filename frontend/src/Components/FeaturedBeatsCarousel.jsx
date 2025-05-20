@@ -17,7 +17,7 @@ const FeaturedBeatsCarousel = () => {
       id: 1,
       title: "Summer Vibes",
       producer: "DJ Beats",
-      image: "https://via.placeholder.com/300x160",
+      image: "/default-cover.jpg",
       audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
       price: 19.99
     },
@@ -25,7 +25,7 @@ const FeaturedBeatsCarousel = () => {
       id: 2,
       title: "Trap Nation",
       producer: "Beat Maestro",
-      image: "https://via.placeholder.com/300x160",
+      image: "/default-cover.jpg",
       audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
       price: 24.99
     },
@@ -33,7 +33,7 @@ const FeaturedBeatsCarousel = () => {
       id: 3,
       title: "Lo-Fi Dreams",
       producer: "Chill Wave",
-      image: "https://via.placeholder.com/300x160",
+      image: "/default-cover.jpg",
       audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
       price: 14.99
     }
@@ -212,7 +212,7 @@ const FeaturedBeatsCarousel = () => {
                     alt={beat.title} 
                     onError={(e) => {
                       console.log("Image error, using fallback");
-                      e.target.src = "https://via.placeholder.com/300x160";
+                      e.target.src = "/default-cover.jpg";
                     }}
                   />
                   <button 

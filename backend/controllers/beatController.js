@@ -520,7 +520,7 @@ export const getTrendingBeats = async (req, res) => {
         _id: "sample1",
         title: "Summer Vibes",
         producer: { name: "DJ Beats", _id: "producer1" },
-        coverImage: "https://via.placeholder.com/300x300",
+        coverImage: "/default-cover.jpg",
         price: 19.99,
         plays: 1200
       },
@@ -528,7 +528,7 @@ export const getTrendingBeats = async (req, res) => {
         _id: "sample2",
         title: "Trap Nation",
         producer: { name: "Beat Master", _id: "producer2" },
-        coverImage: "https://via.placeholder.com/300x300",
+        coverImage: "/default-cover.jpg",
         price: 24.99,
         plays: 980
       },
@@ -536,7 +536,7 @@ export const getTrendingBeats = async (req, res) => {
         _id: "sample3",
         title: "Chill Lofi",
         producer: { name: "Lofi Guy", _id: "producer3" },
-        coverImage: "https://via.placeholder.com/300x300",
+        coverImage: "/default-cover.jpg",
         price: 14.99,
         plays: 870
       }

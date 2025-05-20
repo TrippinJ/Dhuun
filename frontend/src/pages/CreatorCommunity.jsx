@@ -33,7 +33,7 @@ const CreatorCommunity = () => {
         title: "Mixing Vocals Like a Pro",
         instructor: "DJ Mixer",
         category: "Mixing & Mastering",
-        image: "https://via.placeholder.com/300x200",
+        image: "/default-cover.jpg",
         previewAudio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
         duration: "1h 45m",
         level: "Intermediate"
@@ -43,7 +43,7 @@ const CreatorCommunity = () => {
         title: "Beat Production Fundamentals",
         instructor: "Beat Master",
         category: "Beat Making",
-        image: "https://via.placeholder.com/300x200",
+        image: "/default-cover.jpg",
         previewAudio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
         duration: "2h 30m",
         level: "Beginner"
@@ -53,7 +53,7 @@ const CreatorCommunity = () => {
         title: "Music Theory for Producers",
         instructor: "Theory Expert",
         category: "Music Theory",
-        image: "https://via.placeholder.com/300x200",
+        image: "/default-cover.jpg",
         previewAudio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
         duration: "3h 15m",
         level: "Intermediate"
@@ -63,7 +63,7 @@ const CreatorCommunity = () => {
         title: "Trap Beat Mastery",
         instructor: "Trap King",
         category: "Beat Making",
-        image: "https://via.placeholder.com/300x200",
+        image: "/default-cover.jpg",
         previewAudio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
         duration: "2h 10m",
         level: "Advanced"
@@ -73,7 +73,7 @@ const CreatorCommunity = () => {
         title: "Auto-Tune & Vocal Effects",
         instructor: "Voice Master",
         category: "Vocal Production",
-        image: "https://via.placeholder.com/300x200",
+        image: "/default-cover.jpg",
         previewAudio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
         duration: "1h 30m",
         level: "Intermediate"
@@ -83,7 +83,7 @@ const CreatorCommunity = () => {
         title: "Music Licensing 101",
         instructor: "Legal Eagle",
         category: "Music Business",
-        image: "https://via.placeholder.com/300x200",
+        image: "/default-cover.jpg",
         previewAudio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3",
         duration: "1h 15m",
         level: "Beginner"

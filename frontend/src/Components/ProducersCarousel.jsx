@@ -37,7 +37,7 @@ const ProducersCarousel = () => {
           {
             id: 1,
             name: "DJ Beats",
-            image: "https://via.placeholder.com/150",
+            image: "/default-cover.jpg",
             verified: true,
             followers: "12.5K",
             beats: 48
@@ -45,7 +45,7 @@ const ProducersCarousel = () => {
           {
             id: 2,
             name: "BeatMaster Pro",
-            image: "https://via.placeholder.com/150",
+            image: "/default-cover.jpg",
             verified: true,
             followers: "45K",
             beats: 124
@@ -53,7 +53,7 @@ const ProducersCarousel = () => {
           {
             id: 3,
             name: "Melody Maker",
-            image: "https://via.placeholder.com/150",
+            image: "/default-cover.jpg",
             verified: false,
             followers: "8.2K",
             beats: 37
@@ -150,7 +150,7 @@ const ProducersCarousel = () => {
               >
                 <div className={styles.producerImageContainer}>
                   <img 
-                    src={producer.image || producer.avatar || "https://via.placeholder.com/150"} 
+                    src={producer.image || producer.avatar || "/default-cover.jpg"} 
                     alt={producer.name} 
                     className={styles.producerImage} 
                   />

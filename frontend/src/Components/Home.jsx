@@ -37,7 +37,7 @@ const Home = () => {
             // Ensure required properties exist
             _id: beat._id || beat.id || `temp-${Math.random()}`,
             audioFile: beat.audioFile || beat.audioUrl || "",
-            coverImage: beat.coverImage || "https://via.placeholder.com/1200x600",
+            coverImage: beat.coverImage || "/default-cover.jpg",
             producer: beat.producer || { name: "Unknown Producer" }
           }));
 
@@ -54,7 +54,7 @@ const Home = () => {
                 ...beat,
                 _id: beat._id || beat.id || `temp-${Math.random()}`,
                 audioFile: beat.audioFile || beat.audioUrl || "",
-                coverImage: beat.coverImage || "https://via.placeholder.com/1200x600",
+                coverImage: beat.coverImage || "/default-cover.jpg",
                 producer: beat.producer || { name: "Unknown Producer" }
               }));
 
@@ -73,7 +73,7 @@ const Home = () => {
               title: "Summer Vibes",
               producer: { name: "DJ Beats", verified: true },
               genre: "Trap",
-              coverImage: "https://via.placeholder.com/1200x600",
+              coverImage: "/default-cover.jpg",
               audioFile: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
               price: 19.99,
               plays: 1200
@@ -278,7 +278,7 @@ const Home = () => {
               <div className="hero-carousel">
                 <div
                   className="hero-carousel-slide"
-                  style={{ backgroundImage: `url(${heroBeats[currentBeatIndex].coverImage || "https://via.placeholder.com/1200x600"})` }}
+                  style={{ backgroundImage: `url(${heroBeats[currentBeatIndex].coverImage || "/default-cover.jpg"})` }}
                 >
                   <div className="hero-carousel-content">
                     <button
