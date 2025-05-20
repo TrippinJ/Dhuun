@@ -1,72 +1,50 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import Logo from "../Assets/DHUUN.png";
-import { BsCart2 } from "react-icons/bs";
-import { FaUser, FaHeart, FaUserCircle, FaCrown, FaSignOutAlt, FaCog } from "react-icons/fa";
-import { HiOutlineBars3 } from "react-icons/hi2";
-import Box from "@mui/material/Box";
-import Drawer from "@mui/material/Drawer";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import ListItemText from "@mui/material/ListItemText";
-import HomeIcon from "@mui/icons-material/Home";
-import StoreIcon from "@mui/icons-material/Store";
-import SellIcon from "@mui/icons-material/Sell";
-import PeopleIcon from "@mui/icons-material/People";
-import LoginIcon from "@mui/icons-material/Login";
-import ShoppingCartRoundedIcon from "@mui/icons-material/ShoppingCartRounded";
-import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
-import FavoriteIcon from "@mui/icons-material/Favorite";
-import DownloadIcon from "@mui/icons-material/Download";
-import { styled } from '@mui/material/styles';
-import "../css/Navbar.css";
+import styles from "../css/NavbarBeatExplore.module.css";
+import Logo from "../Assets/DHUUN.png"
+import { FaShoppingCart, FaUserCircle, FaHeart, FaSignOutAlt, FaCog, FaCrown, FaDownload } from 'react-icons/fa';
+import { useSettings } from '../context/SettingsContext';
+import API from "../api/api";
 
-// Custom styled components for the sidebar menu
-const StyledListItemButton = styled(ListItemButton)({
-  padding: '16px',
-  '&:hover': {
-    backgroundColor: 'rgba(0, 0, 0, 0.04)',
-  },
-});
-
-const StyledListItemIcon = styled(ListItemIcon)({
-  minWidth: '40px',
-  color: '#555',
-});
-
-const Navbar = () => {
-  const [openMenu, setOpenMenu] = useState(false);
+const NavbarBeatExplore = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userInfo, setUserInfo] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [cartCount, setCartCount] = useState(0);
-  const [wishlistCount, setWishlistCount] = useState(0);
+  const [userName, setUserName] = useState("User");
+  const [userAvatar, setUserAvatar] = useState(null);
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
-  const [userName, setUserName, ] = useState('');
-  const [userAvatar, setUserAvatar] = useState('');
+  const [cartCount, setCartCount] = useState(0);
+  const [wishlistCount, setWishlistCount] = useState(0);
+  const { settings } = useSettings();
+  const [userRole, setUserRole] = useState(null);
 
-  // Check if user is logged in and get user info
+  // Check if user is logged in
   useEffect(() => {
     const token = localStorage.getItem("token");
     const user = localStorage.getItem("user");
 
-    if (token && user) {
+    if (token) {
       setIsLoggedIn(true);
-      try {
-        const userData = JSON.parse(user);
-        setUserInfo(userData);
-      } catch (error) {
-        console.error("Error parsing user data:", error);
+
+      // Try to get user name, avatar and role from localStorage
+      if (user) {
+        try {
+          const userData = JSON.parse(user);
+          setUserName(userData.username || userData.name || "User");
+          setUserRole(userData.role || "buyer"); // Set default role as buyer
+          if (userData.avatar) {
+            setUserAvatar(userData.avatar);
+          }
+        } catch (error) {
+          console.error("Error parsing user data", error);
+        }
       }
     } else {
       setIsLoggedIn(false);
     }
   }, []);
 
-  // Get cart count
+  // Update cart count
   useEffect(() => {
     const updateCartCount = () => {
       try {
@@ -78,6 +56,7 @@ const Navbar = () => {
       }
     };
 
+    // Update on mount
     updateCartCount();
 
     // Add event listener for storage changes
@@ -92,7 +71,7 @@ const Navbar = () => {
     };
   }, []);
 
-  // Get wishlist count
+  // Update wishlist count
   useEffect(() => {
     const updateWishlistCount = () => {
       try {
@@ -104,6 +83,7 @@ const Navbar = () => {
       }
     };
 
+    // Update on mount
     updateWishlistCount();
 
     // Add event listener for storage changes
@@ -114,7 +94,7 @@ const Navbar = () => {
     };
   }, []);
 
-  // Handle clicks outside dropdown to close it
+  // Handle clicks outside the dropdown to close it
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -123,43 +103,86 @@ const Navbar = () => {
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
+  // Toggle dropdown
+  const toggleDropdown = () => {
+    setShowDropdown(!showDropdown);
+  };
+
+  // Handle logout
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setIsLoggedIn(false);
     setShowDropdown(false);
-    navigate("/");
+    navigate("/login");
   };
 
-  const [userRole, setUserRole] = useState(null);
+  const refreshUserData = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setIsLoggedIn(false);
+        return;
+      }
 
-  // Update the useEffect where you check if user is logged in
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const user = localStorage.getItem("user");
-
-    if (token) {
-      setIsLoggedIn(true);
-
-      // Try to get user name, avatar and role from localStorage
-      if (user) {
+      // Get user from localStorage first (for immediate display)
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
         try {
-          const userData = JSON.parse(user);
-          setUserName(userData.fullname || userData.name || "User");
-          setUserRole(userData.role || "buyer"); // Set default role as buyer
+          const userData = JSON.parse(storedUser);
+          setUserName(userData.username || userData.name || "User");
+          setUserRole(userData.role || "buyer");
           if (userData.avatar) {
             setUserAvatar(userData.avatar);
           }
         } catch (error) {
-          console.error("Error parsing user data", error);
+          console.error("Error parsing stored user data", error);
         }
       }
-    } else {
-      setIsLoggedIn(false);
+
+      // Then fetch fresh data from server
+      const response = await API.get("/api/auth/me", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data) {
+        // Update state with fresh data
+        setUserName(response.data.username || response.data.name || "User");
+        setUserRole(response.data.role || "buyer");
+
+        if (response.data.avatar) {
+          setUserAvatar(response.data.avatar);
+        }
+
+        // Update localStorage with latest data
+        localStorage.setItem("user", JSON.stringify(response.data));
+      }
+    } catch (error) {
+      console.error("Error refreshing user data:", error);
+      // If 401 error, token might be expired
+      if (error.response?.status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        setIsLoggedIn(false);
+      }
     }
+  };
+
+  // Use this in your existing useEffect
+  useEffect(() => {
+    refreshUserData();
+
+    // Create a window event listener for profile updates
+    window.addEventListener("profileUpdated", refreshUserData);
+
+    return () => {
+      window.removeEventListener("profileUpdated", refreshUserData);
+    };
   }, []);
 
   // Updated function to handle dashboard navigation based on role
@@ -170,389 +193,126 @@ const Navbar = () => {
       navigate("/dashboard");
     } else {
       // For buyers or unspecified roles
-      navigate("/dashboard/purchases");
+      navigate("/dashboard");
     }
   };
-  // Menu items - used for both navbar and sidebar
-  const menuItems = [
-    {
-      text: "Buy Beats",
-      route: "/BeatExplorePage",
-      icon: <StoreIcon />
-    },
-    {
-      text: "Sell Beats",
-      route: "/login?role=seller",
-      icon: <SellIcon />
-    },
-    {
-      text: "Creator Community",
-      route: "/creator-community",
-      icon: <PeopleIcon />
-    }
-  ];
 
-  // User menu items (when logged in)
-  const userMenuItems = [
-    {
-      text: "Dashboard",
-      icon: <FaCog />,
-      route: navigateToDashboard
-    },
-    {
-      text: "Upgrade Plan",
-      icon: <FaCrown />,
-      route: "/subscription"
-    },
-    {
-      text: "Favorites",
-      icon: <FaHeart />,
-      route: "/favorites"
-    },
-    {
-      text: "Purchased",
-      icon: <DownloadIcon />,
-      route: "/dashboard"
-    },
+  // User menu items - dynamically generated based on role
+  const getUserMenuItems = () => {
+    const baseItems = [
+      {
+        text: "Dashboard",
+        icon: <FaCog className={styles.dropdownIcon} />,
+        onClick: navigateToDashboard
+      },
+      {
+        text: "Wishlist",
+        icon: <FaHeart className={styles.dropdownIcon} />,
+        onClick: () => navigate("/favorites")
+      },
+      {
+        text: "Purchased",
+        icon: <FaDownload className={styles.dropdownIcon} />,
+        onClick: () => navigate("/dashboard/purchased")
+      },
+      {
+        text: "Logout",
+        icon: <FaSignOutAlt className={styles.dropdownIcon} />,
+        onClick: handleLogout
+      }
+    ];
 
-    {
-      text: "Logout",
-      icon: <FaSignOutAlt />,
-      action: handleLogout
+    // Only add Upgrade Plan for seller role
+    if (userRole === "seller") {
+      return [
+        baseItems[0], // Dashboard
+        {
+          text: "Upgrade Plan",
+          icon: <FaCrown className={styles.dropdownIcon} />,
+          onClick: () => navigate("/subscription")
+        },
+        ...baseItems.slice(1) // Rest of the items
+      ];
     }
-  ];
+
+    return baseItems;
+  };
 
   return (
-    <nav className="navbar">
-      {/* Logo */}
-      <div className="nav-logo-container">
-        <img
-          src={Logo}
-          alt="Dhuun Logo"
-          onClick={() => navigate("/")}
-          style={{ cursor: "pointer", width: "100px", height: "auto" }}
-        />
+    <nav className={styles.navbar}>
+      <div className={styles.navLogo}>
+        <img src={settings.logoUrl || Logo} alt="Dhuun Logo" onClick={() => navigate("/")}
+          onError={(e) => {
+            console.error('Logo failed to load:', e.target.src);
+            e.target.src = Logo;
+          }} />
       </div>
 
-      {/* Desktop Links */}
-      <div className="navbar-links-container">
-        {menuItems.map((item, index) => (
-          <a
-            key={index}
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              navigate(item.route);
-            }}
-          >
-            {item.text}
-          </a>
-        ))}
+      <div className={styles.navLinks}>
+        <a href="#" onClick={(e) => { e.preventDefault(); navigate("/BeatExplorePage"); }} className={styles.navLink}>Explore Beats</a>
+        <a href="#" onClick={(e) => { e.preventDefault(); navigate("/chooserole"); }} className={styles.navLink}>Sell Beats</a>
+        <a href="#" onClick={(e) => { e.preventDefault(); navigate("/creator-community"); }} className={styles.navLink}>Community</a>
 
+        {/* Wishlist link */}
+        <a href="#" onClick={(e) => { e.preventDefault(); navigate("/favorites"); }} className={styles.navLink}>
+          <div className={styles.cartIconContainer}>
+            <FaHeart />
+            {wishlistCount > 0 && <span className={styles.cartBadge}>{wishlistCount}</span>}
+          </div>
+          Wishlist
+        </a>
+
+        {/* Cart link */}
+        <a href="#" onClick={(e) => { e.preventDefault(); navigate("/cart"); }} className={styles.navLink}>
+          <div className={styles.cartIconContainer}>
+            <FaShoppingCart />
+            {cartCount > 0 && <span className={styles.cartBadge}>{cartCount}</span>}
+          </div>
+          Cart
+        </a>
+      </div>
+
+      <div className={styles.navActions}>
         {isLoggedIn ? (
-          <>
-            {/* Wishlist Icon */}
-            <a
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                navigate("/favorites");
-              }}
-            >
-              <div className="icon-with-badge">
-                <FaHeart className="navbar-icon" />
-                {wishlistCount > 0 && <span className="badge">{wishlistCount}</span>}
-              </div>
-            </a>
-
-            {/* Cart Icon */}
-            <a
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                navigate("/cart");
-              }}
-            >
-              <div className="icon-with-badge">
-                <BsCart2 className="navbar-cart-icon" />
-                {cartCount > 0 && <span className="badge">{cartCount}</span>}
-              </div>
-            </a>
-
-            {/* User Profile Dropdown */}
-            <div className="profile-dropdown" ref={dropdownRef}>
-              <div
-                className="profile-trigger"
-                onClick={() => setShowDropdown(!showDropdown)}
-              >
-                {userInfo?.avatar ? (
-                  <img
-                    src={userInfo.avatar}
-                    alt={userInfo.name || "User"}
-                    className="avatar-img"
-                  />
-                ) : (
-                  <FaUserCircle className="avatar-icon" />
-                )}
-                <span className="username">{userInfo?.name || "User"}</span>
-              </div>
-
-              {showDropdown && (
-                <div className="dropdown-menu">
-                  {userMenuItems.map((item, index) => (
-                    <div
-                      key={index}
-                      className="dropdown-item"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        if (item.action) {
-                          item.action();
-                        } else {
-                          navigate(item.route);
-                          setShowDropdown(false);
-                        }
-                      }}
-                    >
-                      <span className="dropdown-icon">{item.icon}</span>
-                      <span>{item.text}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </>
-        ) : (
-          <>
-            <a
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                navigate("/login");
-              }}
-            >
-              Log In
-            </a>
-
+          <div className={styles.profileContainer} ref={dropdownRef}>
             <button
-              className="primary-button"
-              onClick={() => navigate("/chooserole")}
+              className={styles.profileButton}
+              onClick={toggleDropdown}
             >
-              Start Your Journey
+              {userAvatar ? (
+                <img src={userAvatar} alt={userName} className={styles.profileAvatar} />
+              ) : (
+                <FaUserCircle className={styles.profileIcon} />
+              )}
+              {userName}
             </button>
-          </>
+
+            {showDropdown && (
+              <div className={styles.dropdown}>
+                {getUserMenuItems().map((item, index) => (
+                  <button
+                    key={index}
+                    className={styles.dropdownItem}
+                    onClick={item.onClick}
+                  >
+                    {item.icon}
+                    {item.text}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <button
+            className={styles.loginButton}
+            onClick={() => navigate("/login")}
+          >
+            Login
+          </button>
         )}
       </div>
-
-      {/* Hamburger Menu Icon for Mobile */}
-      <div className="navbar-menu-container">
-        <HiOutlineBars3 onClick={() => setOpenMenu(true)} />
-      </div>
-
-      {/* Sidebar Drawer for Mobile */}
-      <Drawer
-        anchor="right"
-        open={openMenu}
-        onClose={() => setOpenMenu(false)}
-      >
-        <Box
-          sx={{
-            width: 250,
-            height: "100%",
-            backgroundColor: "#fff",
-            paddingTop: "20px"
-          }}
-          role="presentation"
-        >
-          <List sx={{ width: '100%' }}>
-            {/* Add Home as first item in sidebar */}
-            <ListItem disablePadding>
-              <StyledListItemButton
-                onClick={() => {
-                  navigate("/");
-                  setOpenMenu(false);
-                }}
-              >
-                <StyledListItemIcon>
-                  <HomeIcon />
-                </StyledListItemIcon>
-                <ListItemText
-                  primary="Home"
-                  primaryTypographyProps={{
-                    style: {
-                      fontWeight: 500,
-                      fontSize: '1rem',
-                      color: '#333'
-                    }
-                  }}
-                />
-              </StyledListItemButton>
-            </ListItem>
-
-            {/* All regular menu items */}
-            {menuItems.map((item, index) => (
-              <ListItem key={index} disablePadding>
-                <StyledListItemButton
-                  onClick={() => {
-                    navigate(item.route);
-                    setOpenMenu(false);
-                  }}
-                >
-                  <StyledListItemIcon>
-                    {item.icon}
-                  </StyledListItemIcon>
-                  <ListItemText
-                    primary={item.text}
-                    primaryTypographyProps={{
-                      style: {
-                        fontWeight: 500,
-                        fontSize: '1rem',
-                        color: '#333'
-                      }
-                    }}
-                  />
-                </StyledListItemButton>
-              </ListItem>
-            ))}
-
-            {/* Add wishlist item */}
-            <ListItem disablePadding>
-              <StyledListItemButton
-                onClick={() => {
-                  navigate("/favorites");
-                  setOpenMenu(false);
-                }}
-              >
-                <StyledListItemIcon>
-                  <FavoriteIcon />
-                </StyledListItemIcon>
-                <ListItemText
-                  primary="Wishlist"
-                  primaryTypographyProps={{
-                    style: {
-                      fontWeight: 500,
-                      fontSize: '1rem',
-                      color: '#333'
-                    }
-                  }}
-                />
-              </StyledListItemButton>
-            </ListItem>
-
-            {/* Add cart item */}
-            <ListItem disablePadding>
-              <StyledListItemButton
-                onClick={() => {
-                  navigate("/cart");
-                  setOpenMenu(false);
-                }}
-              >
-                <StyledListItemIcon>
-                  <ShoppingCartRoundedIcon />
-                </StyledListItemIcon>
-                <ListItemText
-                  primary="Cart"
-                  primaryTypographyProps={{
-                    style: {
-                      fontWeight: 500,
-                      fontSize: '1rem',
-                      color: '#333'
-                    }
-                  }}
-                />
-              </StyledListItemButton>
-            </ListItem>
-
-            {/* Conditionally add user menu items if logged in */}
-            {isLoggedIn ? (
-              userMenuItems.map((item, index) => (
-                <ListItem key={`user-${index}`} disablePadding>
-                  <StyledListItemButton
-                    onClick={() => {
-                      if (item.action) {
-                        item.action();
-                      } else {
-                        navigate(item.route);
-                      }
-                      setOpenMenu(false);
-                    }}
-                  >
-                    <StyledListItemIcon>
-                      {item.icon}
-                    </StyledListItemIcon>
-                    <ListItemText
-                      primary={item.text}
-                      primaryTypographyProps={{
-                        style: {
-                          fontWeight: 500,
-                          fontSize: '1rem',
-                          color: '#333'
-                        }
-                      }}
-                    />
-                  </StyledListItemButton>
-                </ListItem>
-              ))
-            ) : (
-              <ListItem disablePadding>
-                <StyledListItemButton
-                  onClick={() => {
-                    navigate("/login");
-                    setOpenMenu(false);
-                  }}
-                >
-                  <StyledListItemIcon>
-                    <LoginIcon />
-                  </StyledListItemIcon>
-                  <ListItemText
-                    primary="Login"
-                    primaryTypographyProps={{
-                      style: {
-                        fontWeight: 500,
-                        fontSize: '1rem',
-                        color: '#333'
-                      }
-                    }}
-                  />
-                </StyledListItemButton>
-              </ListItem>
-            )}
-
-            {/* Add "Start Your Journey" button if not logged in */}
-            {!isLoggedIn && (
-              <ListItem disablePadding>
-                <StyledListItemButton
-                  onClick={() => {
-                    navigate("/chooserole");
-                    setOpenMenu(false);
-                  }}
-                  sx={{
-                    marginTop: '8px',
-                    '&:hover': {
-                      backgroundColor: 'rgba(123, 44, 191, 0.1)',
-                    }
-                  }}
-                >
-                  <StyledListItemIcon>
-                    <RocketLaunchIcon />
-                  </StyledListItemIcon>
-                  <ListItemText
-                    primary="Start Your Journey"
-                    primaryTypographyProps={{
-                      style: {
-                        fontWeight: 600,
-                        fontSize: '1rem',
-                        color: '#7B2CBF'
-                      }
-                    }}
-                  />
-                </StyledListItemButton>
-              </ListItem>
-            )}
-          </List>
-        </Box>
-      </Drawer>
     </nav>
   );
 };
 
-export default Navbar;
+export default NavbarBeatExplore;
