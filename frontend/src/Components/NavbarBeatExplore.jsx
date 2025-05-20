@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "../css/NavbarBeatExplore.module.css";
-import Logo from "../Assets/DHUUN.png";
+import Logo from "../Assets/DHUUN.png"
 import { FaShoppingCart, FaUserCircle, FaHeart, FaSignOutAlt, FaCog, FaCrown, FaDownload } from 'react-icons/fa';
 import { useSettings } from '../context/SettingsContext';
 import API from "../api/api";
@@ -202,22 +202,22 @@ const NavbarBeatExplore = () => {
     const baseItems = [
       {
         text: "Dashboard",
-        icon: <FaCog />,
+        icon: <FaCog className={styles.dropdownIcon} />,
         onClick: navigateToDashboard
       },
       {
         text: "Wishlist",
-        icon: <FaHeart />,
+        icon: <FaHeart className={styles.dropdownIcon} />,
         onClick: () => navigate("/favorites")
       },
       {
         text: "Purchased",
-        icon: <FaDownload />,
+        icon: <FaDownload className={styles.dropdownIcon} />,
         onClick: () => navigate("/dashboard/purchased")
       },
       {
         text: "Logout",
-        icon: <FaSignOutAlt />,
+        icon: <FaSignOutAlt className={styles.dropdownIcon} />,
         onClick: handleLogout
       }
     ];
@@ -228,7 +228,7 @@ const NavbarBeatExplore = () => {
         baseItems[0], // Dashboard
         {
           text: "Upgrade Plan",
-          icon: <FaCrown />,
+          icon: <FaCrown className={styles.dropdownIcon} />,
           onClick: () => navigate("/subscription")
         },
         ...baseItems.slice(1) // Rest of the items
@@ -240,28 +240,19 @@ const NavbarBeatExplore = () => {
 
   return (
     <nav className={styles.navbar}>
-      <div className={styles.logoContainer}>
-        <img 
-          src={settings.logoUrl || Logo} 
-          alt="Dhuun Logo" 
-          onClick={() => navigate("/")}
+      <div className={styles.navLogo}>
+        <img src={settings.logoUrl || Logo} alt="Dhuun Logo" onClick={() => navigate("/")}
+        style={{ cursor: "pointer", width: "100px", height: "auto" }}
           onError={(e) => {
             console.error('Logo failed to load:', e.target.src);
             e.target.src = Logo;
-          }} 
-        />
+          }} />
       </div>
 
       <div className={styles.navLinks}>
-        <a href="#" onClick={(e) => { e.preventDefault(); navigate("/BeatExplorePage"); }} className={styles.navLink}>
-          Explore Beats
-        </a>
-        <a href="#" onClick={(e) => { e.preventDefault(); navigate("/chooserole"); }} className={styles.navLink}>
-          Sell Beats
-        </a>
-        <a href="#" onClick={(e) => { e.preventDefault(); navigate("/creator-community"); }} className={styles.navLink}>
-          Community
-        </a>
+        <a href="#" onClick={(e) => { e.preventDefault(); navigate("/BeatExplorePage"); }} className={styles.navLink}>Explore Beats</a>
+        <a href="#" onClick={(e) => { e.preventDefault(); navigate("/chooserole"); }} className={styles.navLink}>Sell Beats</a>
+        <a href="#" onClick={(e) => { e.preventDefault(); navigate("/creator-community"); }} className={styles.navLink}>Community</a>
 
         {/* Wishlist link */}
         <a href="#" onClick={(e) => { e.preventDefault(); navigate("/favorites"); }} className={styles.navLink}>
@@ -285,7 +276,10 @@ const NavbarBeatExplore = () => {
       <div className={styles.navActions}>
         {isLoggedIn ? (
           <div className={styles.profileContainer} ref={dropdownRef}>
-            <button className={styles.profileButton} onClick={toggleDropdown}>
+            <button
+              className={styles.profileButton}
+              onClick={toggleDropdown}
+            >
               {userAvatar ? (
                 <img src={userAvatar} alt={userName} className={styles.profileAvatar} />
               ) : (
@@ -297,8 +291,12 @@ const NavbarBeatExplore = () => {
             {showDropdown && (
               <div className={styles.dropdown}>
                 {getUserMenuItems().map((item, index) => (
-                  <button key={index} className={styles.dropdownItem} onClick={item.onClick}>
-                    <span className={styles.dropdownIcon}>{item.icon}</span>
+                  <button
+                    key={index}
+                    className={styles.dropdownItem}
+                    onClick={item.onClick}
+                  >
+                    {item.icon}
                     {item.text}
                   </button>
                 ))}
@@ -306,7 +304,10 @@ const NavbarBeatExplore = () => {
             )}
           </div>
         ) : (
-          <button className={styles.loginButton} onClick={() => navigate("/login")}>
+          <button
+            className={styles.loginButton}
+            onClick={() => navigate("/login")}
+          >
             Login
           </button>
         )}
