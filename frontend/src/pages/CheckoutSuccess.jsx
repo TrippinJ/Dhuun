@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import styles from "../css/CheckoutSuccess.module.css";
 import { FaDownload, FaArrowRight, FaHome, FaInbox, FaCheck, FaTimes } from "react-icons/fa";
 import NavbarBeatExplore from '../Components/NavbarBeatExplore';
+import ReviewForm from '../Components/ReviewForm';
 import API from "../api/api";
 
 const CheckoutSuccess = () => {
@@ -14,15 +15,51 @@ const CheckoutSuccess = () => {
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [verifyingPayment, setVerifyingPayment] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
-  
+
   // Confetti effect state
   const [showConfetti, setShowConfetti] = useState(false);
-  
+
   // Get cart items for display
   const [cartItems, setCartItems] = useState([]);
-  
-  // Add this ref to track if payment has been processed
+
+  // ref to track if payment has been processed
   const hasProcessedPayment = useRef(false);
+
+  // state for managing reviews
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [selectedBeatToReview, setSelectedBeatToReview] = useState(null);
+  const [reviewedBeats, setReviewedBeats] = useState([]);
+
+  // Handler for the "Write a Review" button
+  const handleReviewClick = (beat) => {
+    setSelectedBeatToReview(beat);
+    setShowReviewForm(true);
+
+    // Scroll to the review form
+    setTimeout(() => {
+      window.scrollTo({
+        top: document.getElementById('review-section').offsetTop,
+        behavior: 'smooth'
+      });
+    }, 100);
+  };
+
+  // Handler for when a review is submitted
+  const handleReviewSubmitted = (review) => {
+    // Add the beat ID to the list of reviewed beats
+    setReviewedBeats([...reviewedBeats, review.beat]);
+
+    // Hide the form after a short delay
+    setTimeout(() => {
+      setShowReviewForm(false);
+      setSelectedBeatToReview(null);
+    }, 3000);
+  };
+
+  // Add this before your return statement in the component
+  const isAlreadyReviewed = (beatId) => {
+    return reviewedBeats.includes(beatId);
+  };
 
   useEffect(() => {
     const items = JSON.parse(localStorage.getItem("cart") || "[]");
@@ -108,9 +145,9 @@ const CheckoutSuccess = () => {
         { sessionId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      
+
       console.log("Stripe session verification response:", verifyResponse.data);
-      
+
       if (verifyResponse.data.success && verifyResponse.data.status === 'paid') {
         // Create order
         const orderData = {
@@ -178,7 +215,7 @@ const CheckoutSuccess = () => {
 
         // Check for Stripe return (look for session_id)
         const stripeSessionId = localStorage.getItem("stripeSessionId");
-        
+
         // Only proceed if we have a payment identifier
         if (!returnedPidx && !stripeSessionId) {
           setLoading(false);
@@ -338,6 +375,17 @@ const CheckoutSuccess = () => {
                       <p className={styles.itemPrice}>
                         ${(item.licensePrice || item.price).toFixed(2)}
                       </p>
+
+                      {paymentStatus === "Completed" && (
+                        <button
+                          className={styles.reviewButton}
+                          onClick={() => handleReviewClick(item)}
+                          disabled={isAlreadyReviewed(item._id) || showReviewForm}
+                        >
+                          {isAlreadyReviewed(item._id) ? 'Reviewed' : 'Write a Review'}
+                        </button>
+                      )}
+
                     </div>
                   </div>
                 ))}
@@ -351,6 +399,20 @@ const CheckoutSuccess = () => {
                   ).toFixed(2)}
                 </span>
               </div>
+            </div>
+          )}
+
+
+          {/* Review Section */}
+          {paymentStatus === "Completed" && (
+            <div id="review-section" className={styles.reviewSection}>
+              {showReviewForm && selectedBeatToReview && orderDetails && (
+                <ReviewForm
+                  beat={selectedBeatToReview}
+                  orderId={orderDetails.orderId || orderDetails._id}
+                  onReviewSubmitted={handleReviewSubmitted}
+                />
+              )}
             </div>
           )}
 

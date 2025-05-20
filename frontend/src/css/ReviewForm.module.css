@@ -1,0 +1,152 @@
+
+.reviewFormContainer {
+  background-color: #1E1E1E;
+  border-radius: 10px;
+  padding: 20px;
+  margin-top: 30px;
+  border: 1px solid #333;
+}
+
+.reviewFormTitle {
+  color: #fff;
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.reviewForm {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.beatInfo {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 10px;
+}
+
+.beatCover {
+  width: 60px;
+  height: 60px;
+  border-radius: 5px;
+  object-fit: cover;
+}
+
+.beatDetails {
+  flex: 1;
+}
+
+.beatDetails h4 {
+  margin: 0;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.beatDetails p {
+  margin: 5px 0 0;
+  color: #aaa;
+  font-size: 0.9rem;
+}
+
+.ratingContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ratingContainer label {
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.starsContainer {
+  display: flex;
+  gap: 5px;
+}
+
+.starIcon {
+  color: #7B2CBF;
+  font-size: 2rem;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.starIcon:hover {
+  transform: scale(1.1);
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.formGroup label {
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+.titleInput, .reviewTextarea {
+  background-color: #2A2A2A;
+  border: 1px solid #444;
+  border-radius: 5px;
+  padding: 10px;
+  color: #fff;
+  font-size: 0.9rem;
+  width: 100%;
+}
+
+.titleInput:focus, .reviewTextarea:focus {
+  outline: none;
+  border-color: #7B2CBF;
+}
+
+.errorMessage {
+  color: #FF1A1A;
+  font-size: 0.9rem;
+  margin-top: 5px;
+}
+
+.successMessage {
+  color: #1DB954;
+  background-color: rgba(29, 185, 84, 0.1);
+  border: 1px solid rgba(29, 185, 84, 0.3);
+  border-radius: 5px;
+  padding: 15px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.submitButton {
+  background-color: #7B2CBF;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 10px;
+}
+
+.submitButton:hover {
+  background-color: #8E44AD;
+}
+
+.submitButton:disabled {
+  background-color: #555;
+  cursor: not-allowed;
+}
+
+@media (max-width: 576px) {
+  .reviewFormContainer {
+    padding: 15px;
+  }
+  
+  .starIcon {
+    font-size: 1.5rem;
+  }
+}

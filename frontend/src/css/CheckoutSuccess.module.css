@@ -28,9 +28,43 @@
   animation: fadeIn 0.8s ease;
 }
 
+.reviewButton {
+  background-color: #333;
+  color: white;
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background-color 0.2s;
+}
+
+.reviewButton:hover {
+  background-color: #7B2CBF;
+  border-color: #7B2CBF;
+}
+
+.reviewButton:disabled {
+  background-color: #444;
+  color: #888;
+  cursor: not-allowed;
+}
+
+.reviewSection {
+  margin-top: 20px;
+}
+
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .successIcon {
@@ -48,8 +82,13 @@
 }
 
 @keyframes scaleIn {
-  from { transform: scale(0); }
-  to { transform: scale(1); }
+  from {
+    transform: scale(0);
+  }
+
+  to {
+    transform: scale(1);
+  }
 }
 
 .successCard h1 {
@@ -275,6 +314,7 @@
     transform: translateY(0) rotate(0deg);
     opacity: 1;
   }
+
   100% {
     transform: translateY(100vh) rotate(360deg);
     opacity: 0;
@@ -286,22 +326,22 @@
   .successCard {
     padding: 30px 20px;
   }
-  
+
   .successIcon {
     width: 60px;
     height: 60px;
     font-size: 30px;
   }
-  
+
   .successCard h1 {
     font-size: 1.5rem;
   }
-  
+
   .actionButtons {
     flex-direction: column;
     gap: 10px;
   }
-  
+
   .actionButton {
     width: 100%;
   }
@@ -311,13 +351,13 @@
   .successContent {
     padding: 40px 15px;
   }
-  
+
   .detailsRow {
     flex-direction: column;
     text-align: left;
     margin-bottom: 15px;
   }
-  
+
   .detailsRow span:first-child {
     font-weight: bold;
     margin-bottom: 3px;

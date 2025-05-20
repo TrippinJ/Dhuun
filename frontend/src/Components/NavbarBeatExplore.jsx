@@ -244,7 +244,7 @@ const NavbarBeatExplore = () => {
         <img src={settings.logoUrl || Logo} alt="Dhuun Logo" onClick={() => navigate("/")}
           onError={(e) => {
             console.error('Logo failed to load:', e.target.src);
-            e.target.src = 'Logo';
+            e.target.src = Logo;
           }} />
       </div>
 
