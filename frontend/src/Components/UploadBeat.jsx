@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext'; // Added AuthContext import
 const UploadBeat = ({ onUploadComplete }) => {
   // Using AuthContext instead of direct localStorage access
   const { isLoggedIn, user } = useAuth();
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [beatData, setBeatData] = useState({
     title: "",
@@ -22,9 +22,27 @@ const UploadBeat = ({ onUploadComplete }) => {
 
   // Add license types
   const [licenseTypes, setLicenseTypes] = useState([
-    { type: "basic", name: "Basic License", price: "4.99", selected: true },
-    { type: "premium", name: "Premium License", price: "9.99", selected: true },
-    { type: "exclusive", name: "Exclusive License", price: "49.99", selected: true }
+    {
+      type: "basic", name: "Basic License", price: "4.99", selected: true, features: [
+        "MP3 File",
+        "No royalties",
+        "Must credit producer"
+      ]
+    },
+    {
+      type: "premium", name: "Premium License", price: "9.99", selected: true, features: [
+        "WAV + MP3 Files",
+        "No royalties",
+        "Must credit producer"
+      ]
+    },
+    {
+      type: "exclusive", name: "Exclusive License", price: "49.99", selected: true, features: [
+        "WAV + MP3 + Stems",
+        "Full ownership",
+        "Beat removed from store"
+      ]
+    }
   ]);
 
   const [audioFile, setAudioFile] = useState(null);
@@ -806,7 +824,7 @@ const UploadBeat = ({ onUploadComplete }) => {
 
                 <div className={styles.licenseContent}>
                   <div className={styles.licensePrice}>
-                    <label>Price ($)</label>
+                    <label>Price (Rs )</label>
                     <input
                       type="number"
                       value={license.price}
@@ -820,7 +838,21 @@ const UploadBeat = ({ onUploadComplete }) => {
                       <div className={styles.fieldError}>{validationErrors[`licensePrice${index}`]}</div>
                     )}
                   </div>
+                  {license.features && (
+                    <div className={styles.licenseFeatures}>
+                      <h5>What's Included:</h5>
+                      <ul className={styles.featuresList}>
+                        {license.features.map((feature, featureIndex) => (
+                          <li key={featureIndex} className={styles.featureItem}>
+                            <span className={styles.featureIcon}>✓</span>
+                            <span>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
+
               </div>
             ))}
           </div>
