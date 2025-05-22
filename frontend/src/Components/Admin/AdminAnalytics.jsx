@@ -171,7 +171,7 @@ const AdminAnalytics = () => {
           </div>
           <div className={styles.statInfo}>
             <h3>Total Revenue</h3>
-            <div className={styles.statValue}>${stats.totalRevenue.toFixed(2)}</div>
+            <div className={styles.statValue}>Rs {stats.totalRevenue.toFixed(2)}</div>
             <div className={`${styles.statChange} ${stats.revenuePercentage > 0 ? styles.positive : styles.negative}`}>
               {stats.revenuePercentage > 0 ? <FaArrowUp /> : <FaArrowDown />}
               <span>{Math.abs(stats.revenuePercentage)}% {timeRange}</span>

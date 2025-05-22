@@ -1,6 +1,7 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useLocation } from "react-router-dom";
 
 const PrivateRoute = ({ children, adminOnly = false }) => {
   const { isLoggedIn, loading, user } = useAuth();

@@ -4,45 +4,18 @@ import styles from "../css/NavbarBeatExplore.module.css";
 import Logo from "../Assets/DHUUN.png"
 import { FaShoppingCart, FaUserCircle, FaHeart, FaSignOutAlt, FaCog, FaCrown, FaDownload } from 'react-icons/fa';
 import { useSettings } from '../context/SettingsContext';
-import API from "../api/api";
+import { useAuth } from '../context/AuthContext'; // Add this import
 
 const NavbarBeatExplore = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [userName, setUserName] = useState("User");
-  const [userAvatar, setUserAvatar] = useState(null);
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
   const { settings } = useSettings();
-  const [userRole, setUserRole] = useState(null);
-
-  // Check if user is logged in
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const user = localStorage.getItem("user");
-
-    if (token) {
-      setIsLoggedIn(true);
-
-      // Try to get user name, avatar and role from localStorage
-      if (user) {
-        try {
-          const userData = JSON.parse(user);
-          setUserName(userData.username || userData.name || "User");
-          setUserRole(userData.role || "buyer"); // Set default role as buyer
-          if (userData.avatar) {
-            setUserAvatar(userData.avatar);
-          }
-        } catch (error) {
-          console.error("Error parsing user data", error);
-        }
-      }
-    } else {
-      setIsLoggedIn(false);
-    }
-  }, []);
+  
+  // Replace manual auth state with AuthContext
+  const { user, isLoggedIn, logout } = useAuth();
 
   // Update cart count
   useEffect(() => {
@@ -113,83 +86,20 @@ const NavbarBeatExplore = () => {
     setShowDropdown(!showDropdown);
   };
 
-  // Handle logout
+  // Handle logout using AuthContext's logout function
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setIsLoggedIn(false);
+    logout(); // Using AuthContext's logout function
     setShowDropdown(false);
     navigate("/login");
   };
 
-  const refreshUserData = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setIsLoggedIn(false);
-        return;
-      }
-
-      // Get user from localStorage first (for immediate display)
-      const storedUser = localStorage.getItem("user");
-      if (storedUser) {
-        try {
-          const userData = JSON.parse(storedUser);
-          setUserName(userData.username || userData.name || "User");
-          setUserRole(userData.role || "buyer");
-          if (userData.avatar) {
-            setUserAvatar(userData.avatar);
-          }
-        } catch (error) {
-          console.error("Error parsing stored user data", error);
-        }
-      }
-
-      // Then fetch fresh data from server
-      const response = await API.get("/api/auth/me", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (response.data) {
-        // Update state with fresh data
-        setUserName(response.data.username || response.data.name || "User");
-        setUserRole(response.data.role || "buyer");
-
-        if (response.data.avatar) {
-          setUserAvatar(response.data.avatar);
-        }
-
-        // Update localStorage with latest data
-        localStorage.setItem("user", JSON.stringify(response.data));
-      }
-    } catch (error) {
-      console.error("Error refreshing user data:", error);
-      // If 401 error, token might be expired
-      if (error.response?.status === 401) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        setIsLoggedIn(false);
-      }
-    }
-  };
-
-  // Use this in your existing useEffect
-  useEffect(() => {
-    refreshUserData();
-
-    // Create a window event listener for profile updates
-    window.addEventListener("profileUpdated", refreshUserData);
-
-    return () => {
-      window.removeEventListener("profileUpdated", refreshUserData);
-    };
-  }, []);
-
   // Updated function to handle dashboard navigation based on role
   const navigateToDashboard = () => {
-    if (userRole === "admin") {
+    if (!user) return;
+    
+    if (user.role === "admin") {
       navigate("/admin/dashboard");
-    } else if (userRole === "seller") {
+    } else if (user.role === "seller") {
       navigate("/dashboard");
     } else {
       // For buyers or unspecified roles
@@ -223,7 +133,7 @@ const NavbarBeatExplore = () => {
     ];
 
     // Only add Upgrade Plan for seller role
-    if (userRole === "seller") {
+    if (user?.role === "seller") {
       return [
         baseItems[0], // Dashboard
         {
@@ -280,12 +190,12 @@ const NavbarBeatExplore = () => {
               className={styles.profileButton}
               onClick={toggleDropdown}
             >
-              {userAvatar ? (
-                <img src={userAvatar} alt={userName} className={styles.profileAvatar} />
+              {user?.avatar ? (
+                <img src={user.avatar} alt={user.name || "User"} className={styles.profileAvatar} />
               ) : (
                 <FaUserCircle className={styles.profileIcon} />
               )}
-              {userName}
+              {user?.name || user?.username || "User"}
             </button>
 
             {showDropdown && (

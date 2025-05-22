@@ -384,6 +384,94 @@ nav {
   color: var(--light-text);
 }
 
+/* Testimonial Navigation */
+.testimonial-nav-button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(123, 44, 191, 0.8);
+  color: var(--light-text);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.testimonial-nav-button:hover {
+  background-color: var(--accent-purple);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.testimonial-prev {
+  left: -60px;
+}
+
+.testimonial-next {
+  right: -60px;
+}
+
+/* Make testimonial section relative for absolute positioning */
+.testimonial-section-bottom {
+  position: relative;
+}
+
+/* Beat info styling */
+.testimonial-beat-info {
+  font-size: 0.9rem;
+  color: var(--secondary-text);
+  font-style: italic;
+  margin-top: 10px;
+}
+
+/* Testimonial Indicators */
+.testimonial-indicators {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.testimonial-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: none;
+  background-color: var(--border-gray);
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.testimonial-indicator.active {
+  background-color: var(--accent-purple);
+}
+
+.testimonial-indicator:hover {
+  background-color: var(--accent-purple);
+}
+
+/* Responsive adjustments for testimonial navigation */
+@media (max-width: 800px) {
+  .testimonial-nav-button {
+    display: none; /* Hide navigation arrows on mobile */
+  }
+  
+  .testimonial-indicators {
+    margin-top: 15px;
+  }
+  
+  .testimonial-beat-info {
+    font-size: 0.8rem;
+    margin-top: 8px;
+  }
+}
+
+
 /* Work Section Styles */
 .work-section-wrapper {
   margin-top: 15rem;

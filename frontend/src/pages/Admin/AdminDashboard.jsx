@@ -10,6 +10,7 @@ import AdminAnalytics from '../../Components/Admin/AdminAnalytics';
 import AdminSettings from '../../Components/Admin/AdminSettings';
 import AdminWithdrawals from '../../Components/Admin/AdminWithdrawals';
 import AdminDocumentVerification from '../../Components/Admin/AdminDocumentVerification';
+import AdminReviews from '../../Components/Admin/AdminReviews';
 import API from '../../api/api';
 import styles from '../../css/Admin/AdminDashboard.module.css';
 
@@ -65,6 +66,8 @@ const AdminDashboard = () => {
         return <AdminBeats />;
       case 'sales':
         return <AdminSales />;
+        case 'reviews':
+        return <AdminReviews />;
       case 'analytics':
         return <AdminAnalytics />;
       case 'settings':

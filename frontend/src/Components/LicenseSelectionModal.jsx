@@ -11,13 +11,13 @@ const LicenseSelectionModal = ({ beat, onClose, onSelectLicense }) => {
     if (beat) {
       // Try to get the license types from the beat data
       const beatLicenses = beat.licenseTypes || [];
-      
+
       // If the beat has defined license types, use those
-      if (beatLicenses.length > 0) {
+      if (beat.licenseTypes && beat.licenseTypes.length > 0) {
         setLicenseOptions(beatLicenses.map(license => ({
           type: license.type,
           name: license.name,
-          price: parseFloat(license.price),
+          price: typeof license.price === 'string' ? parseFloat(license.price) : license.price,
           description: getLicenseDescription(license.type),
           features: getLicenseFeatures(license.type)
         })));
@@ -31,13 +31,13 @@ const LicenseSelectionModal = ({ beat, onClose, onSelectLicense }) => {
             description: "Perfect for demos and mixtapes",
             features: [
               "MP3 File",
-              "No royalties", 
+              "No royalties",
               "Must credit producer"
             ]
           },
           {
             type: "premium",
-            name: "Premium License", 
+            name: "Premium License",
             price: parseFloat(beat.price || 4.99) * 2.5,
             description: "For professional releases",
             features: [
@@ -107,15 +107,15 @@ const LicenseSelectionModal = ({ beat, onClose, onSelectLicense }) => {
         <button className={styles.closeButton} onClick={onClose}>
           <FaTimes />
         </button>
-        
+
         <h2 className={styles.modalTitle}>Select Your License</h2>
         <h3 className={styles.beatTitle}>{beat.title}</h3>
         <p className={styles.artistName}>by {beat.producer?.name || "Unknown Producer"}</p>
 
         <div className={styles.licenseOptions}>
           {licenseOptions.map((license) => (
-            <div 
-              key={license.type} 
+            <div
+              key={license.type}
               className={`${styles.licenseCard} ${selectedLicense?.type === license.type ? styles.selected : ''}`}
               onClick={() => handleLicenseSelect(license)}
             >
@@ -123,9 +123,9 @@ const LicenseSelectionModal = ({ beat, onClose, onSelectLicense }) => {
                 <h4>{license.name}</h4>
                 <span className={styles.licensePrice}>Rs {license.price.toFixed(2)}</span>
               </div>
-              
+
               <p className={styles.licenseDescription}>{license.description}</p>
-              
+
               <ul className={styles.featuresList}>
                 {license.features.map((feature, index) => (
                   <li key={index}>
@@ -133,7 +133,7 @@ const LicenseSelectionModal = ({ beat, onClose, onSelectLicense }) => {
                   </li>
                 ))}
               </ul>
-              
+
               {selectedLicense?.type === license.type && (
                 <div className={styles.selectedBadge}>Selected</div>
               )}
@@ -141,7 +141,7 @@ const LicenseSelectionModal = ({ beat, onClose, onSelectLicense }) => {
           ))}
         </div>
 
-        <button 
+        <button
           className={styles.confirmButton}
           onClick={handleConfirm}
           disabled={!selectedLicense}

@@ -105,7 +105,7 @@ const AdminSales = () => {
       order.user?.email || 'Unknown',
       new Date(order.createdAt).toLocaleDateString(),
       order.items.length,
-      `Rs ${order.totalAmount.toFixed(2)}`,
+      `Rs  ${order.totalAmount.toFixed(2)}`,
       order.paymentStatus
     ]);
     
@@ -215,7 +215,7 @@ const AdminSales = () => {
               </div>
               
               <div className={styles.totalCell}>
-                ${order.totalAmount.toFixed(2)}
+                Rs{order.totalAmount.toFixed(2)}
               </div>
               
               <div className={styles.statusCell}>

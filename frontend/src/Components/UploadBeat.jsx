@@ -3,8 +3,12 @@ import API from "../api/api";
 import styles from "../css/UploadBeat.module.css";
 import { FaMusic, FaImage, FaUpload, FaTimes, FaCrop, FaCheck, FaPlay, FaPause } from "react-icons/fa";
 import Cropper from "react-easy-crop";
+import { useAuth } from '../context/AuthContext'; // Added AuthContext import
 
 const UploadBeat = ({ onUploadComplete }) => {
+  // Using AuthContext instead of direct localStorage access
+  const { isLoggedIn, user } = useAuth();
+  
   const [isLoading, setIsLoading] = useState(false);
   const [beatData, setBeatData] = useState({
     title: "",
@@ -344,8 +348,8 @@ const UploadBeat = ({ onUploadComplete }) => {
     setIsLoading(true);
 
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
+      // Check if user is logged in using AuthContext
+      if (!isLoggedIn) {
         setErrorMessage("You must be logged in to upload beats");
         setIsLoading(false);
         return;
@@ -376,18 +380,8 @@ const UploadBeat = ({ onUploadComplete }) => {
         console.log(`${key}: ${value instanceof File ? `File: ${value.name}` : value}`);
       }
 
-      console.log("Uploading beat with form data...");
-
-      // For debugging, log what we're sending
-      for (let [key, value] of formData.entries()) {
-        console.log(`${key}: ${value instanceof File ? `File: ${value.name}` : value}`);
-      }
-
-      const response = await API.post("/api/beats", formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        }
-      });
+      // Make API request (token is automatically added by the API interceptor)
+      const response = await API.post("/api/beats", formData);
 
       console.log("Beat uploaded successfully:", response.data);
       setSuccessMessage("Beat uploaded successfully!");

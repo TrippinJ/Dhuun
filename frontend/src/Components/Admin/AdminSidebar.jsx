@@ -10,7 +10,8 @@ import {
   FaTachometerAlt,
   FaSignOutAlt,
   FaMoneyBillWave,
-  FaIdCard
+  FaIdCard,
+  FaStar
 } from 'react-icons/fa';
 import styles from '../../css/Admin/AdminSidebar.module.css';
 import Logo from '../../Assets/DHUUN.png';
@@ -30,6 +31,7 @@ const AdminSidebar = ({ activeSection, setActiveSection }) => {
     { id: 'users', label: 'Users', icon: <FaUsers /> },
     { id: 'beats', label: 'Beats', icon: <FaMusic /> },
     { id: 'sales', label: 'Sales', icon: <FaShoppingCart /> },
+    { id: 'reviews', label: 'Reviews', icon: <FaStar /> },
     { id: 'verifications', label: 'Document Verification', icon: <FaIdCard /> },
     { id: 'withdrawals', label: 'Withdrawals', icon: <FaMoneyBillWave /> },
     { id: 'analytics', label: 'Analytics', icon: <FaChartLine /> },

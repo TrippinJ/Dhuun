@@ -4,11 +4,12 @@ import axios from "axios";
 import API from "../api/api";
 import styles from "../css/EditProfile.module.css";
 import { FaSave, FaUserCircle, FaUpload, FaTrash, FaExclamationTriangle } from "react-icons/fa";
-
+import { useAuth } from '../context/AuthContext';
 
 const EditProfile = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  const { user, isLoggedIn, loading: authLoading } = useAuth();
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [userProfile, setUserProfile] = useState({
     name: "",
@@ -23,46 +24,28 @@ const EditProfile = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  // Fetch user profile data when component mounts
+  // Initialize form with user data from AuthContext
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          navigate("/login");
-          return;
-        }
+    if (!isLoggedIn && !authLoading) {
+      navigate("/login");
+      return;
+    }
 
-        setLoading(true);
-        const response = await API.get("/api/auth/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+    if (user) {
+      // Update the state with user data from AuthContext
+      setUserProfile({
+        name: user.name || "",
+        username: user.username || "",
+        email: user.email || "",
+        phonenumber: user.phonenumber || "",
+        bio: user.bio || "",
+      });
 
-        console.log("Fetched user data:", response.data);
-
-        // Update the state with user data
-        setUserProfile({
-          name: response.data.name || "",
-          username: response.data.username || "",
-          email: response.data.email || "",
-          phonenumber: response.data.phonenumber || "",
-          bio: response.data.bio || "",
-        });
-
-        // If user has an avatar, set the preview
-        if (response.data.avatar) {
-          setAvatarPreview(response.data.avatar);
-        }
-
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching user profile:", error);
-        setError("Failed to load profile data. Please try again.");
-        setLoading(false);
+      // If user has an avatar, set the preview
+      if (user.avatar) {
+        setAvatarPreview(user.avatar);
       }
-    };
-
-    fetchUserProfile();
+    }
     
     // Cleanup previews on unmount
     return () => {
@@ -70,7 +53,7 @@ const EditProfile = () => {
         URL.revokeObjectURL(avatarPreview);
       }
     };
-  }, [navigate]);
+  }, [user, isLoggedIn, authLoading, navigate]);
 
   // Handle input changes
   const handleInputChange = (e) => {
@@ -119,8 +102,7 @@ const EditProfile = () => {
     setSuccessMessage("");
     
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
+      if (!isLoggedIn) {
         navigate("/login");
         return;
       }
@@ -147,6 +129,7 @@ const EditProfile = () => {
       }
 
       // Use axios directly instead of your API helper to ensure proper configuration
+      const token = localStorage.getItem("token"); // Still need token for the API call
       const apiBaseUrl = import.meta.env.VITE_APP_BACKEND_URL || "http://localhost:8080";
       const response = await axios.put(
         `${apiBaseUrl}/api/profile/update`, 
@@ -161,31 +144,31 @@ const EditProfile = () => {
 
       console.log("Profile update response:", response.data);
     
-    // After successful update
-    if (response.data.user) {
-      // Update avatar preview if available
-      if (response.data.user.avatar) {
-        setAvatarPreview(response.data.user.avatar);
+      // After successful update
+      if (response.data.user) {
+        // Update avatar preview if available
+        if (response.data.user.avatar) {
+          setAvatarPreview(response.data.user.avatar);
+        }
+        
+        // Update localStorage with all user data
+        const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+        const updatedUser = { ...currentUser, ...response.data.user };
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+        
+        // Dispatch event to notify other components
+        window.dispatchEvent(new Event("profileUpdated"));
+        
+        setSuccessMessage("Profile updated successfully!");
       }
-      
-      // Update localStorage with all user data
-      const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-      const updatedUser = { ...currentUser, ...response.data.user };
-      localStorage.setItem("user", JSON.stringify(updatedUser));
-      
-      // Dispatch event to notify other components
-      window.dispatchEvent(new Event("profileUpdated"));
-      
-      setSuccessMessage("Profile updated successfully!");
-    }
     
-  } catch (error) {
-    console.error("Error updating profile:", error);
-    setError(error.response?.data?.message || "Failed to update profile. Please try again.");
-  } finally {
-    setLoading(false);
-  }
-};
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      setError(error.response?.data?.message || "Failed to update profile. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Open delete confirmation modal
   const openDeleteModal = () => {
@@ -200,15 +183,15 @@ const EditProfile = () => {
   // Handle account deletion
   const handleDeleteAccount = async () => {
     try {
-      setDeleteLoading(true);
-      
-      const token = localStorage.getItem("token");
-      if (!token) {
+      if (!isLoggedIn) {
         navigate("/login");
         return;
       }
+
+      setDeleteLoading(true);
       
       // Call the delete account endpoint
+      const token = localStorage.getItem("token");
       const apiBaseUrl = import.meta.env.VITE_APP_BACKEND_URL || "http://localhost:8080";
       await axios.delete(
         `${apiBaseUrl}/api/auth/delete-account`, 
@@ -237,7 +220,7 @@ const EditProfile = () => {
     }
   };
 
-  if (loading && !userProfile.name) {
+  if (authLoading || (loading && !userProfile.name)) {
     return <div className={styles.loadingContainer}>Loading profile...</div>;
   }
   
