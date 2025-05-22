@@ -1,5 +1,5 @@
 // src/pages/BeatExplorePage.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/api";
 import styles from "../css/BeatExplorePage.module.css";
@@ -33,7 +33,6 @@ const BeatExplorePage = () => {
   const [priceRange, setPriceRange] = useState(100); // Default max price
   const [maxPrice, setMaxPrice] = useState(100);
   const [cartItems, setCartItems] = useState([]);
-  const [currentPage, setCurrentPage] = useState(0);
   const [displayMode, setDisplayMode] = useState("grid"); // 'row' or 'grid'
   const [audioLoading, setAudioLoading] = useState(false);
   const [selectedBeat, setSelectedBeat] = useState(null); // For the single beat modal
@@ -43,6 +42,11 @@ const BeatExplorePage = () => {
   const [selectedBeatForLicense, setSelectedBeatForLicense] = useState(null);
   const [selectedTags, setSelectedTags] = useState([]);
   const [availableTags, setAvailableTags] = useState([]);
+  const [displayedBeats, setDisplayedBeats] = useState([]);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [initialLoad, setInitialLoad] = useState(true);
+  const itemsPerLoad = 12;
 
   //Producer Profile
   const [showProducerProfile, setShowProducerProfile] = useState(false);
@@ -57,7 +61,7 @@ const BeatExplorePage = () => {
   // Use the audio context
   const { playTrack, currentTrack, isPlaying } = useAudio();
 
-  const itemsPerPage = 12; // Show 12 beats per page
+
   const navigate = useNavigate();
 
   // Available genres (you could fetch these from your API)
@@ -229,15 +233,9 @@ const BeatExplorePage = () => {
         ? prev.filter(t => t !== tag)
         : [...prev, tag]
     );
-    setCurrentPage(0); // Reset to first page
+
   };
 
-  // Get the current page of beats
-  const getPagedBeats = () => {
-    const filteredBeats = filterBeats();
-    const startIndex = currentPage * itemsPerPage;
-    return filteredBeats.slice(startIndex, startIndex + itemsPerPage);
-  };
 
   const handleProducerClick = (e, producerId) => {
     e.stopPropagation();
@@ -350,25 +348,50 @@ const BeatExplorePage = () => {
     localStorage.setItem('wishlist', JSON.stringify(updatedWishlist));
   };
 
-  // Pagination handlers
-  const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
-    window.scrollTo(0, 0); // Scroll to top when changing page
-  };
+  // ADD these new functions:
+  const loadMoreBeats = useCallback(() => {
+    if (loadingMore || !hasMore) return;
+
+    setLoadingMore(true);
+
+    // Simulate API delay (remove this in production)
+    setTimeout(() => {
+      const filteredBeats = filterBeats();
+      const currentLength = displayedBeats.length;
+      const nextBeats = filteredBeats.slice(currentLength, currentLength + itemsPerLoad);
+
+      if (nextBeats.length === 0) {
+        setHasMore(false);
+      } else {
+        setDisplayedBeats(prev => [...prev, ...nextBeats]);
+      }
+
+      setLoadingMore(false);
+    }, 500);
+  }, [beats, displayedBeats, loadingMore, hasMore, selectedGenre, keywords, priceRange, selectedTags]);
+
+  // Initial load function
+  const loadInitialBeats = useCallback(() => {
+    const filteredBeats = filterBeats();
+    const initialBeats = filteredBeats.slice(0, itemsPerLoad);
+    setDisplayedBeats(initialBeats);
+    setHasMore(filteredBeats.length > itemsPerLoad);
+    setInitialLoad(false);
+  }, [beats, selectedGenre, keywords, priceRange, selectedTags]);
 
   const handleGenreSelect = (genre) => {
     setSelectedGenre(genre);
-    setCurrentPage(0); // Reset to first page
+
   };
 
   const handlePriceChange = (e) => {
     setPriceRange(parseFloat(e.target.value));
-    setCurrentPage(0); // Reset to first page
+
   };
 
   const handleSearch = (e) => {
     e.preventDefault();
-    setCurrentPage(0); // Reset to first page
+
     // Search is already handled by the filterBeats function
   };
 
@@ -395,7 +418,31 @@ const BeatExplorePage = () => {
   const isInCart = (beatId) => {
     return cartItems.some(item => item._id === beatId);
   };
+  // Load initial beats when component mounts or filters change
+  useEffect(() => {
+    if (beats.length > 0 && !loading) {
+      loadInitialBeats();
+    }
+  }, [beats, selectedGenre, keywords, priceRange, selectedTags, loadInitialBeats]);
 
+  // Scroll detection for infinite scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      if (loadingMore || !hasMore) return;
+
+      const scrollTop = window.pageYOffset;
+      const scrollHeight = document.documentElement.scrollHeight;
+      const clientHeight = window.innerHeight;
+
+      // Load more when user is 200px from bottom
+      if (scrollTop + clientHeight >= scrollHeight - 200) {
+        loadMoreBeats();
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [loadMoreBeats, loadingMore, hasMore]);
   // UI rendering
   if (loading) {
     return (
@@ -409,9 +456,8 @@ const BeatExplorePage = () => {
     );
   }
 
-  const filteredBeats = filterBeats();
-  const pageCount = Math.ceil(filteredBeats.length / itemsPerPage);
-  const displayedBeats = getPagedBeats();
+
+
 
   return (
     <div className={styles.exploreContainer}>
@@ -470,6 +516,7 @@ const BeatExplorePage = () => {
               className={styles.priceSlider}
             />
           </div>
+
           {/* Tags filter */}
           <div className={styles.filterGroup}>
             <h3 className={styles.filterLabel}>Tags</h3>
@@ -713,57 +760,6 @@ const BeatExplorePage = () => {
         )
       }
 
-      {/* Pagination controls */}
-      {
-        pageCount > 1 && (
-          <div className={styles.pagination}>
-            <button
-              className={styles.paginationButton}
-              onClick={() => handlePageChange(Math.max(0, currentPage - 1))}
-              disabled={currentPage === 0}
-            >
-              <FaChevronLeft />
-            </button>
-
-            <div className={styles.pageNumbers}>
-              {Array.from({ length: Math.min(5, pageCount) }, (_, i) => {
-                // Logic to display 5 page numbers centered around current page
-                let pageNum = currentPage;
-                if (currentPage < 2) {
-                  pageNum = i;
-                } else if (currentPage > pageCount - 3) {
-                  pageNum = pageCount - 5 + i;
-                } else {
-                  pageNum = currentPage - 2 + i;
-                }
-
-                // Only render if page number is valid
-                if (pageNum >= 0 && pageNum < pageCount) {
-                  return (
-                    <button
-                      key={pageNum}
-                      className={`${styles.pageNumber} ${currentPage === pageNum ? styles.currentPage : ''}`}
-                      onClick={() => handlePageChange(pageNum)}
-                    >
-                      {pageNum + 1}
-                    </button>
-                  );
-                }
-                return null;
-              })}
-            </div>
-
-            <button
-              className={styles.paginationButton}
-              onClick={() => handlePageChange(Math.min(pageCount - 1, currentPage + 1))}
-              disabled={currentPage === pageCount - 1}
-            >
-              <FaChevronRight />
-            </button>
-          </div>
-        )
-      }
-
       {/* Single Beat Modal */}
       {
         selectedBeat && (
@@ -808,6 +804,21 @@ const BeatExplorePage = () => {
           />
         )
       }
+
+      {/* Infinite Scroll Loading Indicator */}
+      {loadingMore && (
+        <div className={styles.loadingMore}>
+          <div className={styles.spinner}></div>
+          <p>Loading more beats...</p>
+        </div>
+      )}
+
+      {/* No More Beats Indicator */}
+      {!hasMore && displayedBeats.length > 0 && (
+        <div className={styles.noMoreBeats}>
+          <p> You've seen all the beats! </p>
+        </div>
+      )}
     </div>
   );
 };
