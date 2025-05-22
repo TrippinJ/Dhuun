@@ -91,6 +91,28 @@ const UploadBeat = ({ onUploadComplete }) => {
     }
   };
 
+  // Handle tags input keydown
+  const handleTagsKeyDown = (e) => {
+
+    if (e.key === 'Enter') {
+      e.preventDefault();
+    }
+  };
+
+  // Add suggested tag
+  const addSuggestedTag = (tag) => {
+    const currentTags = beatData.tags ? beatData.tags.split(',').map(t => t.trim()) : [];
+
+    // Check if tag already exists
+    if (!currentTags.includes(tag)) {
+      const newTags = [...currentTags, tag].filter(t => t).join(', ');
+      setBeatData({
+        ...beatData,
+        tags: newTags
+      });
+    }
+  };
+
   // Handle license price changes
   const handleLicensePriceChange = (index, price) => {
     const updatedLicenseTypes = [...licenseTypes];
@@ -386,7 +408,7 @@ const UploadBeat = ({ onUploadComplete }) => {
       formData.append("tags", beatData.tags);
       formData.append("description", beatData.description);
       formData.append("price", beatData.price);
-      formData.append("licenseType", beatData.licenseType);
+
 
       // Append license data as JSON string
       formData.append("licenseTypes", JSON.stringify(
@@ -775,28 +797,62 @@ const UploadBeat = ({ onUploadComplete }) => {
             </div>
 
             <div className={styles.formGroup}>
-              <label htmlFor="tags">Tags</label>
+              <label>
+                Tags <span className={styles.requiredAsterisk}>*</span>
+              </label>
               <input
                 type="text"
                 id="tags"
                 name="tags"
                 value={beatData.tags}
                 onChange={handleInputChange}
-                placeholder="e.g. dark, moody, aggressive (comma separated)"
+                onKeyDown={handleTagsKeyDown}
+                placeholder="e.g. dark, moody, aggressive..... (Separated with commas)"
+                className={validationErrors.tags ? styles.errorInput : ""}
               />
-            </div>
-          </div>
+              {validationErrors.tags && (
+                <div className={styles.fieldError}>{validationErrors.tags}</div>
+              )}
+              {/* Add tags preview */}
+              {beatData.tags && (
+                <div className={styles.tagsPreview}>
+                  {beatData.tags.split(',').map((tag, index) => (
+                    tag.trim() && (
+                      <span key={index} className={styles.tagPreview}>
+                        {tag.trim()}
+                      </span>
+                    )
+                  ))}
+                </div>
+              )}
 
-          <div className={styles.formGroup}>
-            <label htmlFor="description">Description</label>
-            <textarea
-              id="description"
-              name="description"
-              value={beatData.description}
-              onChange={handleInputChange}
-              placeholder="Describe your beat (mood, inspiration, best uses, etc.)"
-              rows="4"
-            ></textarea>
+              {/* Add popular tags suggestions */}
+              <div className={styles.tagsSuggestions}>
+                <small>Popular tags:</small>
+                {['trap', 'hip hop', 'drill', 'melodic', 'dark', 'chill', 'piano', 'emotional', 'hard', 'soft'].map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => addSuggestedTag(tag)}
+                    className={styles.tagSuggestion}
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className={styles.formGroup}>
+              <label htmlFor="description">Description</label>
+              <textarea
+                id="description"
+                name="description"
+                value={beatData.description}
+                onChange={handleInputChange}
+                placeholder="Describe your beat (mood, inspiration, best uses, etc.)"
+                rows="4"
+              ></textarea>
+            </div>
           </div>
         </div>
 
@@ -852,7 +908,6 @@ const UploadBeat = ({ onUploadComplete }) => {
                     </div>
                   )}
                 </div>
-
               </div>
             ))}
           </div>

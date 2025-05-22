@@ -41,6 +41,8 @@ const BeatExplorePage = () => {
   const [wishlist, setWishlist] = useState([]);
   const [showLicenseModal, setShowLicenseModal] = useState(false);
   const [selectedBeatForLicense, setSelectedBeatForLicense] = useState(null);
+  const [selectedTags, setSelectedTags] = useState([]);
+  const [availableTags, setAvailableTags] = useState([]);
 
   //Producer Profile
   const [showProducerProfile, setShowProducerProfile] = useState(false);
@@ -166,6 +168,23 @@ const BeatExplorePage = () => {
     }
   }, []);
 
+  // UseEffect to fetch popular tags
+  useEffect(() => {
+    const fetchPopularTags = async () => {
+      try {
+        const response = await API.get('/api/beats/tags/popular');
+        if (response.data.success) {
+          setAvailableTags(response.data.data.slice(0, 20)); // Top 20 tags
+        }
+      } catch (error) {
+        console.error('Error fetching tags:', error);
+      }
+    };
+
+    fetchPopularTags();
+  }, []);
+
+
   // Set max price after beats are loaded
   useEffect(() => {
     if (beats && beats.length > 0) {
@@ -191,8 +210,26 @@ const BeatExplorePage = () => {
       // Price filter
       const priceMatch = !beat.price || beat.price <= priceRange;
 
-      return keywordMatch && genreMatch && priceMatch;
+      // Tags Filter
+      const tagsMatch = selectedTags.length === 0 ||
+        selectedTags.some(selectedTag =>
+          beat.tags?.some(beatTag =>
+            beatTag.toLowerCase().includes(selectedTag.toLowerCase())
+          )
+        );
+
+      return keywordMatch && genreMatch && priceMatch && tagsMatch;
     });
+  };
+
+  // Add tags toggle function
+  const toggleTag = (tag) => {
+    setSelectedTags(prev =>
+      prev.includes(tag)
+        ? prev.filter(t => t !== tag)
+        : [...prev, tag]
+    );
+    setCurrentPage(0); // Reset to first page
   };
 
   // Get the current page of beats
@@ -433,6 +470,36 @@ const BeatExplorePage = () => {
               className={styles.priceSlider}
             />
           </div>
+          {/* Tags filter */}
+          <div className={styles.filterGroup}>
+            <h3 className={styles.filterLabel}>Tags</h3>
+            <div className={styles.tagsFilter}>
+              {availableTags.map((tagData, index) => (
+                <button
+                  key={index}
+                  onClick={() => toggleTag(tagData.tag)}
+                  className={`${styles.tagFilterButton} ${selectedTags.includes(tagData.tag) ? styles.tagSelected : ''
+                    }`}
+                >
+                  {tagData.tag}
+                  <span className={styles.tagCount}>({tagData.count})</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Show selected tags */}
+            {selectedTags.length > 0 && (
+              <div className={styles.selectedTags}>
+                <span>Selected: </span>
+                {selectedTags.map((tag, index) => (
+                  <span key={index} className={styles.selectedTag}>
+                    {tag}
+                    <button onClick={() => toggleTag(tag)}>×</button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* View mode toggle */}
@@ -459,32 +526,125 @@ const BeatExplorePage = () => {
       {errorMessage && <div className={styles.errorMessage}>{errorMessage}</div>}
 
       {/* Grid View */}
-      {displayMode === "grid" ? (
-        <div className={styles.beatsGrid}>
-          {displayedBeats.length > 0 ? (
-            displayedBeats.map((beat) => {
-              // Check if this beat is currently playing using the audio context
-              const isThisPlaying =
-                isPlaying &&
-                currentTrack &&
-                (currentTrack._id === beat._id || currentTrack.id === beat.id);
+      {
+        displayMode === "grid" ? (
+          <div className={styles.beatsGrid}>
+            {displayedBeats.length > 0 ? (
+              displayedBeats.map((beat) => {
+                // Check if this beat is currently playing using the audio context
+                const isThisPlaying =
+                  isPlaying &&
+                  currentTrack &&
+                  (currentTrack._id === beat._id || currentTrack.id === beat.id);
 
-              return (
-                <div
-                  key={beat._id}
-                  className={styles.beatCard}
-                  onClick={() => handleBeatClick(beat)}
-                >
-                  <div className={styles.beatImageContainer}>
-                    <img
-                      src={beat.coverImage || "/default-cover.jpg"}
-                      alt={beat.title}
-                      className={styles.beatImage}
-                      onError={(e) => { e.target.src = "/default-cover.jpg" }}
-                    />
-                    <div className={styles.beatImageOverlay}>
+                return (
+                  <div
+                    key={beat._id}
+                    className={styles.beatCard}
+                    onClick={() => handleBeatClick(beat)}
+                  >
+                    <div className={styles.beatImageContainer}>
+                      <img
+                        src={beat.coverImage || "/default-cover.jpg"}
+                        alt={beat.title}
+                        className={styles.beatImage}
+                        onError={(e) => { e.target.src = "/default-cover.jpg" }}
+                      />
+                      <div className={styles.beatImageOverlay}>
+                        <button
+                          className={styles.playButton}
+                          onClick={(e) => handlePlayPreview(e, beat)}
+                        >
+                          {audioLoading && currentTrack?._id === beat._id ? (
+                            <div className={styles.loadingDots}></div>
+                          ) : isThisPlaying ? (
+                            <FaPause />
+                          ) : (
+                            <FaPlay />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className={styles.beatInfo}>
+                      <h3 className={styles.beatTitle}>{beat.title}</h3>
+                      <span
+                        className={styles.producerName}
+                        onClick={(e) => handleProducerClick(e, beat.producer._id)}
+                        style={{ cursor: 'pointer', color: '#7B2CBF' }}
+                      >
+                        {beat.producer?.name || "Unknown Producer"}
+                        {beat.producer?.verificationStatus === "approved" && <span className={styles.verifiedBadge}>✓</span>}
+                      </span>
+                      <div className={styles.beatStats}>
+                        <span className={styles.beatPrice}>Rs {beat.price?.toFixed(2) || "0.00"}</span>
+                        <span className={styles.beatGenre}>{beat.genre}</span>
+                      </div>
+                    </div>
+
+                    <div className={styles.beatActions}>
                       <button
-                        className={styles.playButton}
+                        className={`${styles.cartButton} ${isInCart(beat._id) ? styles.inCart : ''}`}
+                        onClick={(e) => handleAddToCart(e, beat)}
+                        disabled={isInCart(beat._id)}
+                      >
+                        <FaCartPlus /> {isInCart(beat._id) ? 'In Cart' : 'Add to Cart'}
+                      </button>
+
+                      <button
+                        className={`${styles.wishlistButton} ${isInWishlist(beat._id) ? styles.inWishlist : ''}`}
+                        onClick={(e) => toggleWishlist(e, beat)}
+                      >
+                        <FaHeart />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className={styles.noBeats}>
+                <FaInfoCircle className={styles.noBeatsIcon} />
+                <p>No beats match your search criteria</p>
+                <button
+                  className={styles.resetButton}
+                  onClick={() => {
+                    setKeywords("");
+                    setSelectedGenre("All Genres");
+                    setPriceRange(maxPrice);
+                    setSelectedTags([]);
+                  }}
+                >
+                  Reset Filters
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          // List View
+          <div className={styles.beatsList}>
+            {displayedBeats.length > 0 ? (
+              displayedBeats.map((beat) => {
+                // Check if this beat is currently playing using the audio context
+                const isThisPlaying =
+                  isPlaying &&
+                  currentTrack &&
+                  (currentTrack._id === beat._id || currentTrack.id === beat.id);
+
+                return (
+                  <div
+                    key={beat._id}
+                    className={styles.beatRow}
+                    onClick={() => handleBeatClick(beat)}
+                  >
+                    <div className={styles.beatRowImageContainer}>
+                      <img
+                        src={beat.coverImage || "/default-cover.jpg"}
+                        alt={beat.title}
+                        className={styles.beatRowImage}
+                        onError={(e) => { e.target.src = "/default-cover.jpg" }}
+                      />
+                      <button
+                        className={styles.rowPlayButton}
                         onClick={(e) => handlePlayPreview(e, beat)}
                       >
                         {audioLoading && currentTrack?._id === beat._id ? (
@@ -496,240 +656,158 @@ const BeatExplorePage = () => {
                         )}
                       </button>
                     </div>
-                  </div>
 
-                  <div className={styles.beatInfo}>
-                    <h3 className={styles.beatTitle}>{beat.title}</h3>
-                    <span
-                      className={styles.producerName}
-                      onClick={(e) => handleProducerClick(e, beat.producer._id)}
-                      style={{ cursor: 'pointer', color: '#7B2CBF' }}
-                    >
-                      {beat.producer?.name || "Unknown Producer"}
-                      {beat.producer?.verificationStatus === "approved" && <span className={styles.verifiedBadge}>✓</span>}
-                    </span>
-                    <div className={styles.beatStats}>
-                      <span className={styles.beatPrice}>Rs {beat.price?.toFixed(2) || "0.00"}</span>
-                      <span className={styles.beatGenre}>{beat.genre}</span>
+                    <div className={styles.beatRowInfo}>
+                      <h3 className={styles.beatRowTitle}>{beat.title}</h3>
+                      <div className={styles.beatRowProducer}>
+                        <span
+                          onClick={(e) => handleProducerClick(e, beat.producer._id)}
+                          style={{ cursor: 'pointer', color: '#7B2CBF' }}
+                        >
+                          {beat.producer?.name || "Unknown Producer"}
+                          {beat.producer?.verificationStatus === "approved" && <span className={styles.verifiedBadge}>✓</span>}
+                        </span>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className={styles.beatActions}>
-                    <button
-                      className={`${styles.cartButton} ${isInCart(beat._id) ? styles.inCart : ''}`}
-                      onClick={(e) => handleAddToCart(e, beat)}
-                      disabled={isInCart(beat._id)}
-                    >
-                      <FaCartPlus /> {isInCart(beat._id) ? 'In Cart' : 'Add to Cart'}
-                    </button>
+                    <div className={styles.beatRowGenre}>{beat.genre}</div>
 
-                    <button
-                      className={`${styles.wishlistButton} ${isInWishlist(beat._id) ? styles.inWishlist : ''}`}
-                      onClick={(e) => toggleWishlist(e, beat)}
-                    >
-                      <FaHeart />
-                    </button>
-                  </div>
-                </div>
-              );
-            })
-          ) : (
-            <div className={styles.noBeats}>
-              <FaInfoCircle className={styles.noBeatsIcon} />
-              <p>No beats match your search criteria</p>
-              <button
-                className={styles.resetButton}
-                onClick={() => {
-                  setKeywords("");
-                  setSelectedGenre("All Genres");
-                  setPriceRange(maxPrice);
-                }}
-              >
-                Reset Filters
-              </button>
-            </div>
-          )}
-        </div>
-      ) : (
-        // List View
-        <div className={styles.beatsList}>
-          {displayedBeats.length > 0 ? (
-            displayedBeats.map((beat) => {
-              // Check if this beat is currently playing using the audio context
-              const isThisPlaying =
-                isPlaying &&
-                currentTrack &&
-                (currentTrack._id === beat._id || currentTrack.id === beat.id);
+                    <div className={styles.beatRowPrice}>Rs {beat.price?.toFixed(2) || "0.00"}</div>
 
-              return (
-                <div
-                  key={beat._id}
-                  className={styles.beatRow}
-                  onClick={() => handleBeatClick(beat)}
-                >
-                  <div className={styles.beatRowImageContainer}>
-                    <img
-                      src={beat.coverImage || "/default-cover.jpg"}
-                      alt={beat.title}
-                      className={styles.beatRowImage}
-                      onError={(e) => { e.target.src = "/default-cover.jpg" }}
-                    />
-                    <button
-                      className={styles.rowPlayButton}
-                      onClick={(e) => handlePlayPreview(e, beat)}
-                    >
-                      {audioLoading && currentTrack?._id === beat._id ? (
-                        <div className={styles.loadingDots}></div>
-                      ) : isThisPlaying ? (
-                        <FaPause />
-                      ) : (
-                        <FaPlay />
-                      )}
-                    </button>
-                  </div>
-
-                  <div className={styles.beatRowInfo}>
-                    <h3 className={styles.beatRowTitle}>{beat.title}</h3>
-                    <div className={styles.beatRowProducer}>
-                      <span
-                        onClick={(e) => handleProducerClick(e, beat.producer._id)}
-                        style={{ cursor: 'pointer', color: '#7B2CBF' }}
+                    <div className={styles.beatRowActions}>
+                      <button
+                        className={`${styles.rowCartButton} ${isInCart(beat._id) ? styles.inCart : ''}`}
+                        onClick={(e) => handleAddToCart(e, beat)}
+                        disabled={isInCart(beat._id)}
                       >
-                        {beat.producer?.name || "Unknown Producer"}
-                        {beat.producer?.verificationStatus === "approved" && <span className={styles.verifiedBadge}>✓</span>}
-                      </span>
+                        <FaCartPlus />
+                      </button>
+
+                      <button
+                        className={`${styles.rowWishlistButton} ${isInWishlist(beat._id) ? styles.inWishlist : ''}`}
+                        onClick={(e) => toggleWishlist(e, beat)}
+                      >
+                        <FaHeart />
+                      </button>
                     </div>
                   </div>
-
-                  <div className={styles.beatRowGenre}>{beat.genre}</div>
-
-                  <div className={styles.beatRowPrice}>Rs {beat.price?.toFixed(2) || "0.00"}</div>
-
-                  <div className={styles.beatRowActions}>
-                    <button
-                      className={`${styles.rowCartButton} ${isInCart(beat._id) ? styles.inCart : ''}`}
-                      onClick={(e) => handleAddToCart(e, beat)}
-                      disabled={isInCart(beat._id)}
-                    >
-                      <FaCartPlus />
-                    </button>
-
-                    <button
-                      className={`${styles.rowWishlistButton} ${isInWishlist(beat._id) ? styles.inWishlist : ''}`}
-                      onClick={(e) => toggleWishlist(e, beat)}
-                    >
-                      <FaHeart />
-                    </button>
-                  </div>
-                </div>
-              );
-            })
-          ) : (
-            <div className={styles.noBeats}>
-              <FaInfoCircle className={styles.noBeatsIcon} />
-              <p>No beats match your search criteria</p>
-              <button
-                className={styles.resetButton}
-                onClick={() => {
-                  setKeywords("");
-                  setSelectedGenre("All Genres");
-                  setPriceRange(maxPrice);
-                }}
-              >
-                Reset Filters
-              </button>
-            </div>
-          )}
-        </div>
-      )}
+                );
+              })
+            ) : (
+              <div className={styles.noBeats}>
+                <FaInfoCircle className={styles.noBeatsIcon} />
+                <p>No beats match your search criteria</p>
+                <button
+                  className={styles.resetButton}
+                  onClick={() => {
+                    setKeywords("");
+                    setSelectedGenre("All Genres");
+                    setPriceRange(maxPrice);
+                  }}
+                >
+                  Reset Filters
+                </button>
+              </div>
+            )}
+          </div>
+        )
+      }
 
       {/* Pagination controls */}
-      {pageCount > 1 && (
-        <div className={styles.pagination}>
-          <button
-            className={styles.paginationButton}
-            onClick={() => handlePageChange(Math.max(0, currentPage - 1))}
-            disabled={currentPage === 0}
-          >
-            <FaChevronLeft />
-          </button>
+      {
+        pageCount > 1 && (
+          <div className={styles.pagination}>
+            <button
+              className={styles.paginationButton}
+              onClick={() => handlePageChange(Math.max(0, currentPage - 1))}
+              disabled={currentPage === 0}
+            >
+              <FaChevronLeft />
+            </button>
 
-          <div className={styles.pageNumbers}>
-            {Array.from({ length: Math.min(5, pageCount) }, (_, i) => {
-              // Logic to display 5 page numbers centered around current page
-              let pageNum = currentPage;
-              if (currentPage < 2) {
-                pageNum = i;
-              } else if (currentPage > pageCount - 3) {
-                pageNum = pageCount - 5 + i;
-              } else {
-                pageNum = currentPage - 2 + i;
-              }
+            <div className={styles.pageNumbers}>
+              {Array.from({ length: Math.min(5, pageCount) }, (_, i) => {
+                // Logic to display 5 page numbers centered around current page
+                let pageNum = currentPage;
+                if (currentPage < 2) {
+                  pageNum = i;
+                } else if (currentPage > pageCount - 3) {
+                  pageNum = pageCount - 5 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
 
-              // Only render if page number is valid
-              if (pageNum >= 0 && pageNum < pageCount) {
-                return (
-                  <button
-                    key={pageNum}
-                    className={`${styles.pageNumber} ${currentPage === pageNum ? styles.currentPage : ''}`}
-                    onClick={() => handlePageChange(pageNum)}
-                  >
-                    {pageNum + 1}
-                  </button>
-                );
-              }
-              return null;
-            })}
+                // Only render if page number is valid
+                if (pageNum >= 0 && pageNum < pageCount) {
+                  return (
+                    <button
+                      key={pageNum}
+                      className={`${styles.pageNumber} ${currentPage === pageNum ? styles.currentPage : ''}`}
+                      onClick={() => handlePageChange(pageNum)}
+                    >
+                      {pageNum + 1}
+                    </button>
+                  );
+                }
+                return null;
+              })}
+            </div>
+
+            <button
+              className={styles.paginationButton}
+              onClick={() => handlePageChange(Math.min(pageCount - 1, currentPage + 1))}
+              disabled={currentPage === pageCount - 1}
+            >
+              <FaChevronRight />
+            </button>
           </div>
-
-          <button
-            className={styles.paginationButton}
-            onClick={() => handlePageChange(Math.min(pageCount - 1, currentPage + 1))}
-            disabled={currentPage === pageCount - 1}
-          >
-            <FaChevronRight />
-          </button>
-        </div>
-      )}
+        )
+      }
 
       {/* Single Beat Modal */}
-      {selectedBeat && (
-        <SingleBeatModal
-          beat={selectedBeat}
-          isOpen={!!selectedBeat}
-          onClose={handleCloseModal}
-          onAddToCart={(beat) => handleAddToCart({ stopPropagation: () => { } }, beat)}
-          onToggleWishlist={(beat) => toggleWishlist({ stopPropagation: () => { } }, beat)}
-          isInCart={isInCart(selectedBeat._id)}
-          isInWishlist={isInWishlist(selectedBeat._id)}
-          isPlaying={currentTrack?._id === selectedBeat._id && isPlaying}
-          onPlayPause={(e) => handlePlayPreview(e, selectedBeat)}
-          isLoading={audioLoading && currentTrack?._id === selectedBeat._id}
-        />
-      )}
+      {
+        selectedBeat && (
+          <SingleBeatModal
+            beat={selectedBeat}
+            isOpen={!!selectedBeat}
+            onClose={handleCloseModal}
+            onAddToCart={(beat) => handleAddToCart({ stopPropagation: () => { } }, beat)}
+            onToggleWishlist={(beat) => toggleWishlist({ stopPropagation: () => { } }, beat)}
+            isInCart={isInCart(selectedBeat._id)}
+            isInWishlist={isInWishlist(selectedBeat._id)}
+            isPlaying={currentTrack?._id === selectedBeat._id && isPlaying}
+            onPlayPause={(e) => handlePlayPreview(e, selectedBeat)}
+            isLoading={audioLoading && currentTrack?._id === selectedBeat._id}
+          />
+        )
+      }
 
       {/* License Selection Modal */}
-      {showLicenseModal && selectedBeatForLicense && (
-        <LicenseSelectionModal
-          beat={selectedBeatForLicense}
-          onClose={() => {
-            setShowLicenseModal(false);
-            setSelectedBeatForLicense(null);
-          }}
-          onSelectLicense={handleLicenseSelect}
-        />
-      )}
+      {
+        showLicenseModal && selectedBeatForLicense && (
+          <LicenseSelectionModal
+            beat={selectedBeatForLicense}
+            onClose={() => {
+              setShowLicenseModal(false);
+              setSelectedBeatForLicense(null);
+            }}
+            onSelectLicense={handleLicenseSelect}
+          />
+        )
+      }
 
-      {showProducerProfile && selectedProducerId && (
-        <ProducerProfile
-          producerId={selectedProducerId}
-          isOpen={showProducerProfile}
-          onClose={() => {
-            setShowProducerProfile(false);
-            setSelectedProducerId(null);
-          }}
-        />
-      )}
+      {
+        showProducerProfile && selectedProducerId && (
+          <ProducerProfile
+            producerId={selectedProducerId}
+            isOpen={showProducerProfile}
+            onClose={() => {
+              setShowProducerProfile(false);
+              setSelectedProducerId(null);
+            }}
+          />
+        )
+      }
     </div>
   );
 };

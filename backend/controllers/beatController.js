@@ -21,8 +21,8 @@ export const createBeat = async (req, res) => {
     }
 
     // Get file information
-    const audioFile = req.files.audio[0];
-    const imageFile = req.files.coverImage[0];
+    const audioFile = Array.isArray(req.files.audio) ? req.files.audio[0] : req.files.audio;
+    const imageFile = Array.isArray(req.files.coverImage) ? req.files.coverImage[0] : req.files.coverImage;
 
     // Upload files to Cloudinary
     console.log(`⏳ Uploading audio file: ${audioFile.path}`);
@@ -106,6 +106,7 @@ export const getAllBeats = async (req, res) => {
       sortBy = 'createdAt',
       sortOrder = 'desc',
       search,
+      tags,
       limit = 20,
       page = 1
     } = req.query;
@@ -116,8 +117,8 @@ export const getAllBeats = async (req, res) => {
       isExclusiveSold: { $ne: true }
     };
 
-    if (genre) {
-      filter.genre = genre;
+    if (genre && genre !== 'All Genres') {
+      filter.genre = new RegExp(genre, 'i');
     }
 
     if (minPrice !== undefined || maxPrice !== undefined) {
@@ -126,9 +127,21 @@ export const getAllBeats = async (req, res) => {
       if (maxPrice !== undefined) filter.price.$lte = parseFloat(maxPrice);
     }
 
-    // Add text search if provided
+    // Search functionality
     if (search) {
-      filter.$text = { $search: search };
+      const searchRegex = new RegExp(search, 'i');
+      filter.$or = [
+        { title: searchRegex },
+        { tags: { $in: [searchRegex] } }, // Search in tags array
+        { 'producer.name': searchRegex },
+        { description: searchRegex }
+      ];
+    }
+
+    // Tags filter
+    if (tags) {
+      const tagArray = Array.isArray(tags) ? tags : tags.split(',').map(tag => tag.trim());
+      filter.tags = { $in: tagArray.map(tag => new RegExp(tag, 'i')) };
     }
 
     // Calculate pagination
@@ -142,7 +155,7 @@ export const getAllBeats = async (req, res) => {
     const beats = await Beat.find(filter)
       .populate({
         path: 'producer',
-        select: 'name username verified' 
+        select: 'name username verified verificationStatus'
       })
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -588,3 +601,58 @@ export const toggleFeaturedStatus = async (req, res) => {
   }
 };
 
+/**
+ * Get popular tags for suggestions
+ * @route GET /api/beats/tags/popular
+ * @access Public
+ */
+export const getPopularTags = async (req, res) => {
+  try {
+    // Aggregate to get most used tags
+    const popularTags = await Beat.aggregate([
+      // Only include published, non-exclusive beats
+      {
+        $match: {
+          isPublished: true,
+          isExclusiveSold: { $ne: true },
+          tags: { $exists: true, $not: { $size: 0 } }
+        }
+      },
+      // Unwind the tags array to separate documents for each tag
+      { $unwind: "$tags" },
+      // Group by tag and count occurrences
+      {
+        $group: {
+          _id: { $toLower: "$tags" }, // Convert to lowercase for consistency
+          count: { $sum: 1 },
+          tag: { $first: "$tags" } // Keep original case
+        }
+      },
+      // Sort by count descending
+      { $sort: { count: -1 } },
+      // Limit to top 50 tags
+      { $limit: 50 },
+      // Project only what we need
+      {
+        $project: {
+          _id: 0,
+          tag: "$tag",
+          count: 1
+        }
+      }
+    ]);
+
+    res.status(200).json({
+      success: true,
+      count: popularTags.length,
+      data: popularTags
+    });
+  } catch (error) {
+    console.error('Error fetching popular tags:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching popular tags',
+      error: error.message
+    });
+  }
+};

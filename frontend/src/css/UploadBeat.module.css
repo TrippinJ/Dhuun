@@ -153,7 +153,7 @@
   transform: none;
 }
 
-.errorMessage, 
+.errorMessage,
 .successMessage {
   padding: 15px;
   border-radius: 8px;
@@ -179,7 +179,7 @@
   margin-top: 5px;
 }
 
-.errorInput, 
+.errorInput,
 .errorBorder {
   border-color: #ff3b30 !important;
 }
@@ -306,6 +306,7 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
 /* Enhanced License Feature Styles */
 .licenseSection {
   margin-top: 20px;
@@ -536,6 +537,7 @@
   color: #7B2CBF;
   font-weight: 600;
 }
+
 /* Add these styles for the license features */
 .licenseFeatures {
   margin-top: 15px;
@@ -589,18 +591,19 @@
 .licenseOption.selectedLicense .featureIcon {
   color: #9C42E5;
 }
+
 /* Responsive adjustments for licenses */
 @media (max-width: 768px) {
   .licenseTypesContainer {
     grid-template-columns: 1fr;
   }
-  
+
   .licenseCardHeader {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
   }
-  
+
   .licenseToggleContainer {
     align-self: flex-end;
   }
@@ -610,12 +613,13 @@
   .licenseCard {
     padding: 15px;
   }
-  
+
   .licensePriceInput {
     width: 80px;
     font-size: 0.9rem;
   }
 }
+
 /* Enhanced file preview styles */
 .filePreview {
   background-color: #222222;
@@ -645,7 +649,8 @@
   margin-bottom: 15px;
 }
 
-.removeFile, .cropButton {
+.removeFile,
+.cropButton {
   background-color: transparent;
   border: none;
   color: #FFFFFF;
@@ -832,7 +837,8 @@
   margin-left: auto;
 }
 
-.cancelCropButton, .applyCropButton {
+.cancelCropButton,
+.applyCropButton {
   padding: 8px 16px;
   border-radius: 4px;
   border: none;
@@ -864,13 +870,73 @@
   background-color: #8E44AD;
 }
 
+/* Enhanced Tags Styling */
+.tagsPreview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.tagPreview {
+  background-color: #7B2CBF;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.tagsSuggestions {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #333;
+}
+
+.tagsSuggestions small {
+  color: #AAAAAA;
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.8rem;
+}
+
+.tagSuggestion {
+  background-color: #444;
+  color: #CCCCCC;
+  border: none;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  margin-right: 6px;
+  margin-bottom: 4px;
+  transition: all 0.2s ease;
+}
+
+.tagSuggestion:hover {
+  background-color: #7B2CBF;
+  color: white;
+  transform: translateY(-1px);
+}
 
 /* Responsive styles */
 @media (max-width: 768px) {
   .formGrid {
     grid-template-columns: 1fr;
   }
-  
+
   .fileUploads {
     flex-direction: column;
   }

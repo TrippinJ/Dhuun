@@ -8,6 +8,7 @@ import Beat from '../models/beat.js';
 import User from '../models/user.js';
 import { v2 as cloudinary } from 'cloudinary';
 import * as beatController from '../controllers/beatController.js';
+import { getPopularTags  } from '../controllers/beatController.js';
 
 // Get current file directory equivalent for ESM
 const __filename = fileURLToPath(import.meta.url);
@@ -124,7 +125,7 @@ const getPublicIdFromUrl = (url) => {
   if (!url || typeof url !== 'string') return null;
   if (!url.includes('cloudinary.com')) return null;
 
-  // Example URL: https://res.cloudinary.com/cloud-name/image/upload/v1234567890/folder/filename.jpg
+ 
   const urlParts = url.split('/');
   const uploadIndex = urlParts.indexOf('upload');
 
@@ -159,6 +160,8 @@ router.get('/', async (req, res) => {
 
 // Get trending beats - IMPORTANT: This must come BEFORE the /:id route
 router.get('/trending', beatController.getTrendingBeats);
+
+router.get('/tags/popular', getPopularTags);
 
 // Get beats by producer (authorized route)
 router.get('/producer/beats', authenticateUser, async (req, res) => {
@@ -265,7 +268,7 @@ router.post('/', authenticateUser, upload.fields([
     }
 
     // Validate required fields
-    if (!req.body.title || !req.body.genre || !req.body.price || !req.body.licenseType) {
+    if (!req.body.title || !req.body.genre || !req.body.price || !req.body.licenseTypes) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 

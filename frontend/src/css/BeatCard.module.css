@@ -131,6 +131,80 @@
   z-index: 2;
 }
 
+/* Tags Filter Styles */
+.tagsFilter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.tagFilterButton {
+  background-color: #333;
+  color: #CCCCCC;
+  border: 1px solid #444;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tagFilterButton:hover {
+  background-color: #7B2CBF;
+  color: white;
+  border-color: #7B2CBF;
+}
+
+.tagFilterButton.tagSelected {
+  background-color: #7B2CBF;
+  color: white;
+  border-color: #7B2CBF;
+}
+
+.tagCount {
+  font-size: 0.7rem;
+  opacity: 0.8;
+}
+
+.selectedTags {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: #AAAAAA;
+}
+
+.selectedTag {
+  background-color: #7B2CBF;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.selectedTag button {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* Add animation for hover state */
 @keyframes pulse {
   0% { transform: scale(1); }
