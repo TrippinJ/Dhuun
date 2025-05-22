@@ -1,19 +1,40 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import styles from "../css/Login.module.css";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useGoogleLogin } from "@react-oauth/google";
 import axios from "axios";
 import API from "../api/api";
+import { useAuth } from "../context/AuthContext"; // Import AuthContext
 
 const Login = () => {
   const navigate = useNavigate();
+  const { login, googleLogin, isLoggedIn, loading } = useAuth(); // Use AuthContext
+  
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (isLoggedIn && !loading) {
+      // Get user from localStorage to determine redirect
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const userRole = user.role?.toLowerCase() || "buyer";
+      
+      if (userRole === "admin") {
+        navigate("/admin/dashboard", { replace: true });
+      } else if (userRole === "seller") {
+        navigate("/dashboard", { replace: true });
+      } else {
+        navigate("/BeatExplorePage", { replace: true });
+      }
+    }
+  }, [isLoggedIn, loading, navigate]);
 
   // Handle input change
   const handleChange = (e) => {
@@ -21,41 +42,43 @@ const Login = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  /// Handle form submission (Login Request)
+  // Handle form submission using AuthContext
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    setErrorMessage("");
 
     try {
       console.log("Logging in with:", formData.email);
-      const response = await API.post("/api/auth/login", formData, {
-        headers: { "Content-Type": "application/json" },
-      });
+      
+      // Use AuthContext login function
+      const result = await login(formData.email, formData.password);
+      
+      if (result.success) {
+        console.log("Login successful:", result.user);
+        
+        // Navigate based on user role
+        const userRole = result.user.role?.toLowerCase() || "buyer";
+        console.log("Redirecting based on role:", userRole);
 
-      // Store token in local storage
-      localStorage.setItem("token", response.data.token);
-      localStorage.setItem("user", JSON.stringify(response.data.user));
-
-      // Log user data to verify role
-      console.log("User data:", response.data.user);
-      console.log("User role:", response.data.user.role);
-
-      // Improved role check with fallback
-      const userRole = response.data.user.role?.toLowerCase() || "buyer";
-      console.log("Redirecting based on role:", userRole);
-
-      if (userRole === "admin") {
-        console.log("Redirecting to Admin Dashboard");
-        navigate("/admin/dashboard");
-      } else if (userRole === "seller") {
-        console.log("Redirecting to Dashboard");
-        navigate("/Dashboard");
+        if (userRole === "admin") {
+          console.log("Redirecting to Admin Dashboard");
+          navigate("/admin/dashboard", { replace: true });
+        } else if (userRole === "seller") {
+          console.log("Redirecting to Dashboard");
+          navigate("/dashboard", { replace: true });
+        } else {
+          console.log("Redirecting to BeatExplorePage");
+          navigate("/BeatExplorePage", { replace: true });
+        }
       } else {
-        console.log("Redirecting to BeatExplorePage");
-        navigate("/BeatExplorePage");
+        setErrorMessage(result.error || "Login failed. Please try again.");
       }
     } catch (error) {
       console.error("Login error:", error);
-      setErrorMessage(error.response?.data?.message || "Invalid credentials. Try again.");
+      setErrorMessage("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -64,13 +87,13 @@ const Login = () => {
     setShowPassword(!showPassword);
   };
 
-  // in frontend/src/pages/Login.js
-
-  // In frontend/src/pages/Login.js
+  // Google login using AuthContext
   const handleGoogleLogin = useGoogleLogin({
     onSuccess: async (response) => {
       try {
+        setIsSubmitting(true);
         console.log("Google auth success, getting user info...");
+        
         const { data } = await axios.get(`https://www.googleapis.com/oauth2/v3/userinfo`, {
           headers: {
             Authorization: `Bearer ${response.access_token}`,
@@ -79,45 +102,43 @@ const Login = () => {
 
         console.log("Google User Info:", data);
 
-        // Send data to backend for storing user info
-        const backendResponse = await API.post("/api/auth/google-login", {
+        // Use AuthContext googleLogin function
+        const result = await googleLogin({
           name: data.name,
           email: data.email,
-          googleId: data.sub, // Unique Google ID
-          avatar: data.picture, // Profile picture URL
+          googleId: data.sub,
+          avatar: data.picture,
         });
 
-        console.log("Backend response:", backendResponse.data);
+        if (result.success) {
+          console.log("Google login successful:", result.user);
+          
+          // Handle new user role selection
+          if (result.isNewUser) {
+            console.log("New user - redirecting to role selection");
+            navigate("/chooserole", { replace: true });
+            return;
+          }
 
-        // Store token and user details
-        localStorage.setItem("token", backendResponse.data.token);
-        localStorage.setItem("user", JSON.stringify(backendResponse.data.user));
+          // Navigate based on user role
+          const userRole = result.user.role?.toLowerCase() || "buyer";
+          console.log("Existing user with role:", userRole);
 
-        // Check if this is a new user needing to select a role
-        if (backendResponse.data.isNewUser) {
-          console.log("This is a new user - redirecting to role selection");
-          navigate("/chooserole");
-          return;
-        }
-
-        // For existing users, check their role and redirect appropriately
-        const userRole = backendResponse.data.user.role?.toLowerCase() || "buyer";
-        console.log("Existing user with role:", userRole);
-
-        if (userRole === "admin") {
-          console.log("Redirecting to Admin Dashboard");
-          navigate("/admin/dashboard");
-        } else if (userRole === "seller") {
-          console.log("Redirecting to Dashboard");
-          navigate("/Dashboard");
+          if (userRole === "admin") {
+            navigate("/admin/dashboard", { replace: true });
+          } else if (userRole === "seller") {
+            navigate("/dashboard", { replace: true });
+          } else {
+            navigate("/BeatExplorePage", { replace: true });
+          }
         } else {
-          console.log("Redirecting to BeatExplorePage");
-          navigate("/BeatExplorePage");
+          setErrorMessage(result.error || "Google login failed. Please try again.");
         }
       } catch (error) {
         console.error("Google login error:", error);
-        console.error("Error details:", error.response?.data || error.message);
         setErrorMessage(`Google login failed: ${error.response?.data?.error || error.message}`);
+      } finally {
+        setIsSubmitting(false);
       }
     },
     onError: (error) => {
@@ -125,6 +146,18 @@ const Login = () => {
       setErrorMessage("Google login was unsuccessful. Please try again.");
     },
   });
+
+  // Show loading state while auth is being verified
+  if (loading) {
+    return (
+      <div className={styles.wrapper}>
+        <div className={styles.loadingContainer}>
+          <div className={styles.spinner}></div>
+          <p>Verifying authentication...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.wrapper}>
@@ -144,6 +177,7 @@ const Login = () => {
               name="email"
               value={formData.email}
               onChange={handleChange}
+              disabled={isSubmitting}
               required
             />
             <label>Email</label>
@@ -157,6 +191,7 @@ const Login = () => {
               name="password"
               value={formData.password}
               onChange={handleChange}
+              disabled={isSubmitting}
               required
             />
             <label>Password</label>
@@ -165,7 +200,14 @@ const Login = () => {
             </span>
           </div>
           {errorMessage && <p className={styles.errorMessage}>{errorMessage}</p>}
-          <button type="submit" className={styles.btn}>Login</button>
+          
+          <button 
+            type="submit" 
+            className={styles.btn}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Logging in..." : "Login"}
+          </button>
 
           {/* Google Login */}
           <div className={styles.googleLogin}>
@@ -173,12 +215,13 @@ const Login = () => {
               type="button"
               className={`${styles.btn} ${styles.googleBtn}`}
               onClick={handleGoogleLogin}
+              disabled={isSubmitting}
             >
               <ion-icon
                 name="logo-google"
                 style={{ fontSize: "1.2em", marginRight: "8px", verticalAlign: "middle" }}
               ></ion-icon>
-              Login with Google
+              {isSubmitting ? "Logging in..." : "Login with Google"}
             </button>
           </div>
 

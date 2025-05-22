@@ -1,7 +1,6 @@
 // frontend/src/context/AuthContext.jsx
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import API from '../api/api';
-import { useNavigate } from 'react-router-dom';
 
 // Create context
 const AuthContext = createContext();
@@ -33,11 +32,18 @@ export const AuthProvider = ({ children }) => {
             headers: { Authorization: `Bearer ${token}` }
           });
           
-          // Token is valid, set user data
+          // Token is valid, set user data from localStorage
           const storedUser = JSON.parse(localStorage.getItem("user") || "null");
-          setUser(storedUser);
-          setIsLoggedIn(true);
-          console.log("Auth verification successful");
+          if (storedUser) {
+            setUser(storedUser);
+            setIsLoggedIn(true);
+            console.log("Auth verification successful:", storedUser.role);
+          } else {
+            // Token valid but no stored user - clear everything
+            localStorage.removeItem("token");
+            setIsLoggedIn(false);
+            setUser(null);
+          }
         } catch (verifyError) {
           console.error("Token verification failed:", verifyError);
           // Clear invalid auth data
@@ -66,22 +72,54 @@ export const AuthProvider = ({ children }) => {
       
       const { token, user } = response.data;
       
-      // Save to localStorage (keeping your existing pattern)
+      // Save to localStorage
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
       
-      // Update state
+      // Update state immediately
       setIsLoggedIn(true);
       setUser(user);
       setError(null);
       
+      console.log("Login successful, auth state updated:", user.role);
+      
       return { success: true, user };
     } catch (error) {
-      setError(error.response?.data?.message || "Login failed");
+      const errorMessage = error.response?.data?.message || "Login failed";
+      setError(errorMessage);
       return { 
         success: false, 
-        error: error.response?.data?.message || "Login failed" 
+        error: errorMessage
       };
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Google login function
+  const googleLogin = async (googleData) => {
+    try {
+      setLoading(true);
+      const response = await API.post("/api/auth/google-login", googleData);
+      
+      const { token, user, isNewUser } = response.data;
+      
+      // Save to localStorage
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+      
+      // Update state immediately
+      setIsLoggedIn(true);
+      setUser(user);
+      setError(null);
+      
+      console.log("Google login successful, auth state updated:", user.role);
+      
+      return { success: true, user, isNewUser };
+    } catch (error) {
+      const errorMessage = error.response?.data?.error || "Google login failed";
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
     } finally {
       setLoading(false);
     }
@@ -92,36 +130,19 @@ export const AuthProvider = ({ children }) => {
     // Clear localStorage
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    // Clear cart and other user data if needed
-    // localStorage.removeItem("cart");
-    // localStorage.removeItem("wishlist");
     
     // Update state
     setIsLoggedIn(false);
     setUser(null);
+    setError(null);
+    
+    console.log("User logged out, auth state cleared");
   };
   
-  // Google login function (if you're using it)
-  const googleLogin = async (googleData) => {
-    try {
-      setLoading(true);
-      const response = await API.post("/api/auth/google-login", googleData);
-      
-      const { token, user } = response.data;
-      
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
-      
-      setIsLoggedIn(true);
-      setUser(user);
-      
-      return { success: true, user };
-    } catch (error) {
-      setError("Google login failed");
-      return { success: false, error: "Google login failed" };
-    } finally {
-      setLoading(false);
-    }
+  // Update user state (for profile updates, etc.)
+  const updateUser = (updatedUser) => {
+    setUser(updatedUser);
+    localStorage.setItem("user", JSON.stringify(updatedUser));
   };
   
   // Context value
@@ -132,7 +153,8 @@ export const AuthProvider = ({ children }) => {
     error,
     login,
     logout,
-    googleLogin
+    googleLogin,
+    updateUser
   };
   
   return (
@@ -143,4 +165,10 @@ export const AuthProvider = ({ children }) => {
 };
 
 // Custom hook to use the auth context
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};

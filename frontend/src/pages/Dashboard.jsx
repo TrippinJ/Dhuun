@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import API from "../api/api";
 import styles from "../css/Dashboard.module.css";
 import NavbarBeatExplore from '../Components/NavbarBeatExplore';
@@ -25,8 +25,10 @@ import SellerWallet from "../Components/SellerWallet";
 import EditProfile from "../Components/EditProfile";
 import DocumentVerification from '../Components/DocumentVerification';
 
-const Dashboard = ({ activePage: initialPage }) => {
+const Dashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  
   const [user, setUser] = useState(null);
   const [beats, setBeats] = useState([]);
   const [showUploadForm, setShowUploadForm] = useState(false);
@@ -36,10 +38,21 @@ const Dashboard = ({ activePage: initialPage }) => {
   const [showConfirmDelete, setShowConfirmDelete] = useState(null);
   const [error, setError] = useState(null);
   const [audioLoading, setAudioLoading] = useState(false);
-  const [activePage, setActivePage] = useState(initialPage || "dashboard");
   const [userAvatar, setUserAvatar] = useState(null);
   const [userFullName, setUserFullName] = useState("User");
 
+  // Get current active page from URL
+  const getCurrentPage = () => {
+    const path = location.pathname;
+    if (path === '/dashboard') return 'dashboard';
+    if (path === '/dashboard/profile') return 'profile';
+    if (path === '/dashboard/wallet') return 'wallet';
+    if (path === '/dashboard/purchases') return 'purchases';
+    if (path === '/dashboard/verification') return 'verification';
+    return 'dashboard'; // default
+  };
+
+  const activePage = getCurrentPage();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -310,9 +323,7 @@ const Dashboard = ({ activePage: initialPage }) => {
     // Return different content based on user role
     if (user?.role === "seller") {
       return (
-
         <>
-
           <div className={styles.statsSection}>
             <div className={styles.statCard}>
               <h3>Total Beats</h3>
@@ -529,40 +540,39 @@ const Dashboard = ({ activePage: initialPage }) => {
           </div>
           <nav>
             <ul>
-              <li className={activePage === "dashboard" ? styles.active : ""} onClick={() => setActivePage("dashboard")}>
-                <FaChartLine /> Dashboard
+              <li className={activePage === "dashboard" ? styles.active : ""}>
+                <Link to="/dashboard" className={styles.navLink}>
+                  <FaChartLine /> Dashboard
+                </Link>
               </li>
 
               {/* Edit Profile link */}
-              <li
-                className={activePage === "profile" ? styles.active : ""}
-                onClick={() => setActivePage("profile")}
-              >
-                <FaUserEdit /> Edit Profile
+              <li className={activePage === "profile" ? styles.active : ""}>
+                <Link to="/dashboard/profile" className={styles.navLink}>
+                  <FaUserEdit /> Edit Profile
+                </Link>
               </li>
 
               {user?.role === "seller" ? (
                 <>
-                  <li className={activePage === "wallet" ? styles.active : ""} onClick={() => setActivePage("wallet")}>
-                    <FaWallet /> Wallet
+                  <li className={activePage === "wallet" ? styles.active : ""}>
+                    <Link to="/dashboard/wallet" className={styles.navLink}>
+                      <FaWallet /> Wallet
+                    </Link>
                   </li>
-                  <li className={activePage === "verification" ? styles.active : ""} onClick={() => setActivePage("verification")}>
-                    <FaIdCard /> Verify Account
+                  <li className={activePage === "verification" ? styles.active : ""}>
+                    <Link to="/dashboard/verification" className={styles.navLink}>
+                      <FaIdCard /> Verify Account
+                    </Link>
                   </li>
                 </>
               ) : (
-                <li className={activePage === "purchases" ? styles.active : ""} onClick={() => setActivePage("purchases")}>
-                  <FaMusic /> Purchased Beats
+                <li className={activePage === "purchases" ? styles.active : ""}>
+                  <Link to="/dashboard/purchases" className={styles.navLink}>
+                    <FaMusic /> Purchased Beats
+                  </Link>
                 </li>
               )}
-
-              {/* <li className={activePage === "settings" ? styles.active : ""} onClick={() => setActivePage("settings")}>
-              <FaTools /> {user?.role === "seller" ? "Selling Tools" : "Account Settings"}
-            </li> */}
-
-              {/* <li onClick={handleLogout}>
-              <FaSignOutAlt /> Logout
-            </li> */}
             </ul>
           </nav>
         </aside>
@@ -612,6 +622,10 @@ const Dashboard = ({ activePage: initialPage }) => {
 
                 {activePage === "purchases" && (
                   <h2>Purchased Beats</h2>
+                )}
+
+                {activePage === "verification" && (
+                  <h2>Account Verification</h2>
                 )}
               </div>
 

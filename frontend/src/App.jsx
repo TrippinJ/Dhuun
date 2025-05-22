@@ -34,6 +34,12 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Transactions from "./pages/Transactions";
 
+// Dashboard components
+import PurchasedBeats from "./Components/PurchasedBeats";
+import SellerWallet from "./Components/SellerWallet";
+import DocumentVerification from './Components/DocumentVerification';
+// import DashboardOverview from "./Components/DashboardOverview"; // We'll create this
+
 function App() {
   return (
     <ErrorBoundary>
@@ -68,20 +74,25 @@ function App() {
                     <Route path="/forgot-password" element={<ForgotPassword />} />
                     <Route path="/reset-password" element={<ResetPassword />} />
                     
-                    {/* Public Music Routes - Moved inside Routes component */}
+                    {/* Public Music Routes */}
                     <Route path="/BeatExplorePage" element={<BeatExplorePage />} />
                     <Route path="/creator-community" element={<CreatorCommunity />} />
 
-                    {/* Protected Routes */}
-                    <Route
-                      path="/dashboard"
-                      element={
-                        <PrivateRoute>
-                          <Dashboard />
-                        </PrivateRoute>
-                      }
-                    />
+                    {/* Nested Dashboard Routes */}
+                    <Route path="/dashboard" element={
+                      <PrivateRoute>
+                        <Dashboard />
+                      </PrivateRoute>
+                    }>
+                      {/* Nested routes - these will render inside Dashboard */}
+                      {/* <Route index element={<DashboardOverview />} /> */}
+                      <Route path="profile" element={<EditProfile />} />
+                      <Route path="wallet" element={<SellerWallet />} />
+                      <Route path="purchases" element={<PurchasedBeats />} />
+                      <Route path="verification" element={<DocumentVerification />} />
+                    </Route>
 
+                    {/* Other Protected Routes */}
                     <Route
                       path="/subscription"
                       element={
@@ -108,12 +119,6 @@ function App() {
                         </PrivateRoute>
                       }
                     />
-
-                    <Route path="/dashboard/purchased" element={
-                      <PrivateRoute>
-                        <Dashboard activePage="purchases" />
-                      </PrivateRoute>
-                    } />
 
                     {/* User Account Protected Routes */}
                     <Route path="/favorites" element={
