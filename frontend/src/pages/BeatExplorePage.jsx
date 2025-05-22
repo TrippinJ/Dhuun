@@ -18,7 +18,7 @@ import {
   FaChevronRight
 } from "react-icons/fa";
 import NavbarBeatExplore from '../Components/NavbarBeatExplore';
-import SingleBeatModal from '../Components/SingleBeatModal';
+import SingleBeatModal from '../Components/Singlebeatmodal';
 import { useAudio } from '../context/AudioContext';
 import LicenseSelectionModal from '../Components/LicenseSelectionModal';
 import ProducerProfile from '../Components/ProducerProfile';

@@ -141,7 +141,9 @@ const SingleBeatModal = ({
       price: beat.price || 4.99,
       benefits: [
         'MP3 File',
-        'No royalties'
+        'No royalties',
+        'Must credit producer'
+        
       ]
     },
     premium: {
@@ -149,7 +151,8 @@ const SingleBeatModal = ({
       price: (beat.price || 4.99) * 2.5,
       benefits: [
         'WAV + MP3 Files',
-        'No royalties'
+        'No royalties',
+        'Must credit producer'
       ]
     },
     exclusive: {
