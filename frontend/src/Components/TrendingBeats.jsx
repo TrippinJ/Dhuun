@@ -1,98 +1,76 @@
 // src/Components/TrendingBeats.jsx
-import React, { useState, useEffect, useRef } from 'react';
-import { FaPlay, FaPause, FaHeart, FaShoppingCart } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { FaPlay, FaPause, FaHeart, FaShoppingCart, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import { BsCheckCircleFill } from 'react-icons/bs';
 import styles from '../css/TrendingBeats.module.css';
 import API from '../api/api';
 import { useAudio } from '../context/AudioContext';
 import { useNavigate } from 'react-router-dom';
-import { useLicense } from '../context/LicenseContext';
+import SingleBeatModal from './Singlebeatmodal';
+import LicenseSelectionModal from './LicenseSelectionModal';
+import ProducerProfile from './ProducerProfile';
 
 const TrendingBeats = () => {
   const [trendingBeats, setTrendingBeats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [audioLoading, setAudioLoading] = useState(false);
+  const [wishlist, setWishlist] = useState([]);
+  const [cartItems, setCartItems] = useState([]);
   const navigate = useNavigate();
-  const { openLicenseModal } = useLicense();
+
+  // Modal states
+  const [selectedBeat, setSelectedBeat] = useState(null);
+  const [showLicenseModal, setShowLicenseModal] = useState(false);
+  const [selectedBeatForLicense, setSelectedBeatForLicense] = useState(null);
+  const [showProducerProfile, setShowProducerProfile] = useState(false);
+  const [selectedProducerId, setSelectedProducerId] = useState(null);
+
+  // Scroll states
+  const [scrollPosition, setScrollPosition] = useState(0);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
 
   // Use the audio context
   const { playTrack, currentTrack, isPlaying } = useAudio();
   
-  // Fetch trending beats from API
+  // Load wishlist and cart from localStorage
+  useEffect(() => {
+    try {
+      const savedWishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+      setWishlist(savedWishlist);
+      const savedCart = JSON.parse(localStorage.getItem('cart') || '[]');
+      setCartItems(savedCart);
+    } catch (error) {
+      console.error('Error loading localStorage data:', error);
+    }
+  }, []);
+
+  // Fetch trending beats
   useEffect(() => {
     const fetchTrendingBeats = async () => {
       try {
         setLoading(true);
         const response = await API.get('/api/beats/trending');
-        
-        // Log the complete response structure
-        console.log('Complete API response:', response);
-        
         const beatsData = response.data.data || [];
-        
-        // Check if we have valid audio URLs in the response
-        const hasValidAudioUrls = beatsData.some(beat => beat.audioFile || beat.audioUrl || beat.audio);
-        
-        if (beatsData.length > 0 && !hasValidAudioUrls) {
-          console.warn("Beats data found, but no valid audio URLs detected");
-        }
-        
-        // Add working audio URLs to beats that don't have them
-        const enhancedBeats = beatsData.map(beat => {
-          if (!beat.audioFile && !beat.audioUrl && !beat.audio) {
-            return {
-              ...beat,
-              audioUrl: `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${Math.floor(Math.random() * 10) + 1}.mp3`
-            };
-          }
-          return beat;
-        });
-        
-        setTrendingBeats(enhancedBeats.length > 0 ? enhancedBeats : [
-          // Fallback test beats with guaranteed working URLs
-          {
-            _id: "sample1",
-            title: "Never Give Up",
-            producer: { name: "TrippinJ", verified: true },
-            coverImage: "/default-cover.jpg",
-            audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-            price: 19.99
-          },
-          {
-            _id: "sample2",
-            title: "Trap Nation",
-            producer: { name: "Beat Master", verified: false },
-            coverImage: "/default-cover.jpg",
-            audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-            price: 24.99
-          }
-        ]);
-        
+        setTrendingBeats(beatsData);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching trending beats:', err);
         setError('Failed to load trending beats');
         setLoading(false);
         
-        // Set fallback data when API fails
+        // Fallback data
         setTrendingBeats([
           {
             _id: "sample1",
             title: "Summer Vibes",
-            producer: { name: "DJ Beats", verified: true },
+            producer: { name: "DJ Beats", _id: "prod1", verificationStatus: "approved" },
             coverImage: "/default-cover.jpg",
-            audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-            price: 19.99
+            audioFile: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+            price: 19.99,
+            genre: "Trap"
           },
-          {
-            _id: "sample2",
-            title: "Trap Nation",
-            producer: { name: "Beat Master", verified: false },
-            coverImage: "/default-cover.jpg",
-            audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-            price: 24.99
-          }
+          // Add more sample beats...
         ]);
       }
     };
@@ -100,86 +78,116 @@ const TrendingBeats = () => {
     fetchTrendingBeats();
   }, []);
 
-  // Handle play button click - now uses the global audio context
-  const handlePlay = (beat) => {
-    try {
-      // Check ALL possible audio URL properties
-      const audioUrl = beat.audioFile || beat.audioUrl || beat.audio;
-      
-      // If no audio URL is found, add a fallback URL
-      if (!audioUrl) {
-        console.error("No audio URL found for this beat - using fallback");
-        // Add fallback URL to the beat object
-        beat = {
-          ...beat,
-          audioUrl: `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3`
-        };
-      }
-      
-      // Use the AudioContext's playTrack function
-      playTrack(beat);
-      
-      // Try to increment play count via API
-      try {
-        API.post(`/api/beats/${beat._id}/play`).catch(err => {
-          console.log("Could not update play count, ignoring:", err);
-        });
-      } catch (e) {
-        // Silently ignore tracking errors
-      }
-    } catch (error) {
-      console.error("Error in handlePlay:", error);
+  // Scroll functions
+  const scrollLeft = () => {
+    const container = document.querySelector(`.${styles.beatsContainer}`);
+    if (container) {
+      container.scrollBy({ left: -300, behavior: 'smooth' });
     }
   };
 
-  // Handle add to cart
-  const handleAddToCart = (beat) => {
-    // Check if user is logged in
+  const scrollRight = () => {
+    const container = document.querySelector(`.${styles.beatsContainer}`);
+    if (container) {
+      container.scrollBy({ left: 300, behavior: 'smooth' });
+    }
+  };
+
+  const handleScroll = (e) => {
+    const { scrollLeft, scrollWidth, clientWidth } = e.target;
+    setScrollPosition(scrollLeft);
+    setCanScrollLeft(scrollLeft > 0);
+    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
+  };
+
+  // Play functionality
+  const handlePlayPreview = (event, beat) => {
+    event.stopPropagation();
+    playTrack(beat);
+    
+    try {
+      API.post(`/api/beats/${beat._id}/play`).catch(err => {
+        console.log("Could not update play count, ignoring:", err);
+      });
+    } catch (error) {
+      // Silently ignore tracking errors
+    }
+  };
+
+  // Add to cart functionality
+  const handleAddToCart = (event, beat) => {
+    event.stopPropagation();
+    
     const isLoggedIn = localStorage.getItem('token');
     if (!isLoggedIn) {
       alert("Please log in to add items to cart");
       navigate("/login");
       return;
     }
+
+    setSelectedBeatForLicense(beat);
+    setShowLicenseModal(true);
+  };
+
+  const handleLicenseSelect = (beatWithLicense) => {
+    const isInCart = cartItems.some(item =>
+      item._id === beatWithLicense._id &&
+      item.selectedLicense === beatWithLicense.selectedLicense
+    );
+
+    if (isInCart) {
+      alert(`"${beatWithLicense.title}" with ${beatWithLicense.licenseName} is already in your cart`);
+      return;
+    }
+
+    const updatedCart = [...cartItems, beatWithLicense];
+    setCartItems(updatedCart);
+    localStorage.setItem('cart', JSON.stringify(updatedCart));
+
+    setShowLicenseModal(false);
+    setSelectedBeatForLicense(null);
+    alert(`${beatWithLicense.title} with ${beatWithLicense.licenseName} added to cart!`);
+  };
+
+  // Wishlist functionality
+  const toggleWishlist = (event, beat) => {
+    event.stopPropagation();
     
-    openLicenseModal(beat, (beatWithLicense) => {
-      try {
-        // Get existing cart
-        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-        
-        // Check if beat is already in cart with same license
-        const beatInCart = cart.some(item => 
-          item._id === beatWithLicense._id && 
-          item.selectedLicense === beatWithLicense.selectedLicense
-        );
-        
-        if (beatInCart) {
-          alert(`"${beatWithLicense.title}" with ${beatWithLicense.licenseName} is already in your cart`);
-          return;
-        }
-        
-        // Add beat to cart
-        cart.push(beatWithLicense);
-        localStorage.setItem('cart', JSON.stringify(cart));
-        alert(`${beatWithLicense.title} with ${beatWithLicense.licenseName} added to cart!`);
-      } catch (error) {
-        console.error("Error adding to cart:", error);
-        alert("Error adding to cart. Please try again.");
-      }
-    });
+    const isLoggedIn = localStorage.getItem('token');
+    if (!isLoggedIn) {
+      alert("Please log in to add items to wishlist");
+      navigate("/login");
+      return;
+    }
+
+    const isInWishlist = wishlist.some(item => item._id === beat._id);
+    let updatedWishlist;
+
+    if (isInWishlist) {
+      updatedWishlist = wishlist.filter(item => item._id !== beat._id);
+      alert(`${beat.title} removed from wishlist`);
+    } else {
+      updatedWishlist = [...wishlist, beat];
+      alert(`${beat.title} added to wishlist!`);
+    }
+
+    setWishlist(updatedWishlist);
+    localStorage.setItem('wishlist', JSON.stringify(updatedWishlist));
   };
 
-  // Handle favorite
-  const handleFavorite = (id) => {
-    console.log(`Add beat ${id} to favorites`);
-    // Implement favorites functionality
-    alert("Favorite feature coming soon!");
+  // Helper functions
+  const isInWishlist = (beatId) => wishlist.some(item => item._id === beatId);
+  const isInCart = (beatId) => cartItems.some(item => item._id === beatId);
+
+  const handleBeatClick = (beat) => {
+    setSelectedBeat(beat);
   };
 
-  // Handle see more click
-  const handleSeeMore = () => {
-    console.log('See more beats');
-    navigate('/BeatExplorePage');
+  const handleProducerClick = (e, producerId) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setSelectedProducerId(producerId);
+    setShowProducerProfile(true);
   };
 
   if (loading) {
@@ -191,84 +199,146 @@ const TrendingBeats = () => {
   }
 
   return (
-    <>
+    <div className={styles.trendingSection}>
       <div className={styles.sectionHeader}>
-        <h2 className={styles.sectionTitle}>Trending tracks</h2>
-        <button className={styles.seeMoreButton} onClick={handleSeeMore}>
-          See more
-        </button>
+        <h2 className={styles.sectionTitle}>Trending Beats</h2>
+        <div className={styles.headerActions}>
+          <div className={styles.scrollControls}>
+            <button 
+              className={`${styles.scrollButton} ${!canScrollLeft ? styles.disabled : ''}`}
+              onClick={scrollLeft}
+              disabled={!canScrollLeft}
+            >
+              <FaChevronLeft />
+            </button>
+            <button 
+              className={`${styles.scrollButton} ${!canScrollRight ? styles.disabled : ''}`}
+              onClick={scrollRight}
+              disabled={!canScrollRight}
+            >
+              <FaChevronRight />
+            </button>
+          </div>
+          <button 
+            className={styles.seeMoreButton} 
+            onClick={() => navigate('/BeatExplorePage')}
+          >
+            See all
+          </button>
+        </div>
       </div>
 
-      <div className={styles.beatsGrid}>
-        {trendingBeats.length > 0 ? (
-          trendingBeats.map((beat) => {
-            // Check if this beat is currently playing
-            const isThisPlaying = 
-              isPlaying && 
-              currentTrack && 
-              (currentTrack._id === beat._id || currentTrack.id === beat.id);
+      <div 
+        className={styles.beatsContainer} 
+        onScroll={handleScroll}
+      >
+        {trendingBeats.map((beat) => {
+          const isThisPlaying = 
+            isPlaying && 
+            currentTrack && 
+            (currentTrack._id === beat._id || currentTrack.id === beat.id);
               
-            return (
-              <div key={beat._id} className={styles.beatCard}>
-                <div className={styles.imageContainer}>
-                  <img 
-                    src={beat.coverImage || "/default-cover.jpg"} 
-                    alt={beat.title} 
-                    className={styles.beatImage}
-                    onError={(e) => {
-                      console.log("Image error, using fallback");
-                      e.target.src = "/default-cover.jpg";
-                    }}
-                  />
-                  <div className={styles.imageOverlay}>
-                    <button 
-                      className={styles.playButton}
-                      onClick={() => handlePlay(beat)}
-                      disabled={audioLoading && currentTrack?._id === beat._id}
-                    >
-                      {audioLoading && currentTrack?._id === beat._id ? (
-                        <span>...</span>
-                      ) : isThisPlaying ? (
-                        <FaPause />
-                      ) : (
-                        <FaPlay />
-                      )}
-                    </button>
-                    <button 
-                      className={styles.favoriteButton}
-                      onClick={() => handleFavorite(beat._id)}
-                    >
-                      <FaHeart />
-                    </button>
-                  </div>
-                </div>
-
-                <div className={styles.beatInfo}>
-                  <h3 className={styles.beatTitle}>{beat.title}</h3>
-                  <div className={styles.producerInfo}>
-                    <span className={styles.producerName}>{beat.producer?.name || "Unknown"}</span>
-                    {beat.producer?.verified && (
-                      <BsCheckCircleFill className={styles.verifiedIcon} />
-                    )}
-                  </div>
-                  <div className={styles.beatActions}>
-                    <span className={styles.price}>Rs {beat.price?.toFixed(2) || "0.00"}</span>
-                    <button 
-                      className={styles.cartButton}
-                      onClick={() => handleAddToCart(beat)}
-                    >
-                      <FaShoppingCart />
-                    </button>
-                  </div>
+          return (
+            <div 
+              key={beat._id} 
+              className={styles.beatCard}
+              onClick={() => handleBeatClick(beat)}
+            >
+              <div className={styles.imageContainer}>
+                <img 
+                  src={beat.coverImage || "/default-cover.jpg"} 
+                  alt={beat.title} 
+                  className={styles.beatImage}
+                  onError={(e) => {
+                    e.target.src = "/default-cover.jpg";
+                  }}
+                />
+                <div className={styles.imageOverlay}>
+                  <button 
+                    className={styles.playButton}
+                    onClick={(e) => handlePlayPreview(e, beat)}
+                  >
+                    {isThisPlaying ? <FaPause /> : <FaPlay />}
+                  </button>
                 </div>
               </div>
-            );
-          })
-        ) : (
-          <div className={styles.noBeats}>No trending beats available</div>
-        )}
+
+              <div className={styles.beatInfo}>
+                <h3 className={styles.beatTitle}>{beat.title}</h3>
+                <div 
+                  className={styles.producerInfo}
+                  onClick={(e) => handleProducerClick(e, beat.producer._id)}
+                >
+                  <span className={styles.producerName}>
+                    {beat.producer?.name || "Unknown"}
+                  </span>
+                  {beat.producer?.verificationStatus === "approved" && (
+                    <BsCheckCircleFill className={styles.verifiedIcon} />
+                  )}
+                </div>
+                <div className={styles.beatMeta}>
+                  <span className={styles.genre}>{beat.genre}</span>
+                  <span className={styles.price}>Rs {beat.price?.toFixed(2) || "0.00"}</span>
+                </div>
+              </div>
+
+              <div className={styles.beatActions}>
+                <button 
+                  className={`${styles.wishlistButton} ${isInWishlist(beat._id) ? styles.inWishlist : ''}`}
+                  onClick={(e) => toggleWishlist(e, beat)}
+                >
+                  <FaHeart />
+                </button>
+                <button 
+                  className={`${styles.cartButton} ${isInCart(beat._id) ? styles.inCart : ''}`}
+                  onClick={(e) => handleAddToCart(e, beat)}
+                  disabled={isInCart(beat._id)}
+                >
+                  <FaShoppingCart />
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
-    </>
+
+      {/* Modals */}
+      {selectedBeat && (
+        <SingleBeatModal
+          beat={selectedBeat}
+          isOpen={!!selectedBeat}
+          onClose={() => setSelectedBeat(null)}
+          onAddToCart={(beat) => handleAddToCart({ stopPropagation: () => {} }, beat)}
+          onToggleWishlist={(beat) => toggleWishlist({ stopPropagation: () => {} }, beat)}
+          isInCart={isInCart(selectedBeat._id)}
+          isInWishlist={isInWishlist(selectedBeat._id)}
+          isPlaying={currentTrack?._id === selectedBeat._id && isPlaying}
+          onPlayPause={(e) => handlePlayPreview(e, selectedBeat)}
+        />
+      )}
+
+      {showLicenseModal && selectedBeatForLicense && (
+        <LicenseSelectionModal
+          beat={selectedBeatForLicense}
+          onClose={() => {
+            setShowLicenseModal(false);
+            setSelectedBeatForLicense(null);
+          }}
+          onSelectLicense={handleLicenseSelect}
+        />
+      )}
+
+      {showProducerProfile && selectedProducerId && (
+        <ProducerProfile
+          producerId={selectedProducerId}
+          isOpen={showProducerProfile}
+          onClose={() => {
+            setShowProducerProfile(false);
+            setSelectedProducerId(null);
+          }}
+        />
+      )}
+    </div>
   );
 };
 

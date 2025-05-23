@@ -164,13 +164,17 @@ const NavbarBeatExplore = () => {
         <a href="#" onClick={(e) => { e.preventDefault(); navigate("/chooserole"); }} className={styles.navLink}>Sell Beats</a>
         <a href="#" onClick={(e) => { e.preventDefault(); navigate("/creator-community"); }} className={styles.navLink}>Community</a>
 
+        
+      </div>
+
+      <div className={styles.navActions}>
         {/* Wishlist link */}
         <a href="#" onClick={(e) => { e.preventDefault(); navigate("/favorites"); }} className={styles.navLink}>
           <div className={styles.cartIconContainer}>
             <FaHeart />
             {wishlistCount > 0 && <span className={styles.cartBadge}>{wishlistCount}</span>}
           </div>
-          Wishlist
+          {/* Wishlist */}
         </a>
 
         {/* Cart link */}
@@ -179,11 +183,8 @@ const NavbarBeatExplore = () => {
             <FaShoppingCart />
             {cartCount > 0 && <span className={styles.cartBadge}>{cartCount}</span>}
           </div>
-          Cart
+          {/* Cart */}
         </a>
-      </div>
-
-      <div className={styles.navActions}>
         {isLoggedIn ? (
           <div className={styles.profileContainer} ref={dropdownRef}>
             <button
@@ -195,7 +196,7 @@ const NavbarBeatExplore = () => {
               ) : (
                 <FaUserCircle className={styles.profileIcon} />
               )}
-              {user?.name || user?.username || "User"}
+              {/* {user?.name || user?.username || "User"} */}
             </button>
 
             {showDropdown && (

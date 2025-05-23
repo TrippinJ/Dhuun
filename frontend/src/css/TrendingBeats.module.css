@@ -1,216 +1,436 @@
+/* TrendingBeats.module.css */
+
+.trendingSection {
+  width: 100%;
+  margin: 2rem 0;
+  padding: 0 1rem;
+}
+
+/* Section Header */
 .sectionHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    padding: 0 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding: 0 0.5rem;
+}
+
+.sectionTitle {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.scrollControls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.scrollButton {
+  background-color: #2a2a2a;
+  color: #fff;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.scrollButton:hover:not(.disabled) {
+  background-color: #7b2cbf;
+  transform: scale(1.05);
+}
+
+.scrollButton.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.seeMoreButton {
+  color: #7b2cbf;
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: color 0.2s ease;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+}
+
+.seeMoreButton:hover {
+  color: #fff;
+  background-color: #7b2cbf;
+}
+
+/* Horizontal Scrolling Container */
+.beatsContainer {
+  display: flex;
+  gap: 1.5rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  padding: 1rem 0.5rem;
+  margin: 0 -0.5rem;
+  
+  /* Hide scrollbar */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+.beatsContainer::-webkit-scrollbar {
+  display: none; /* WebKit */
+}
+
+/* Beat Card */
+.beatCard {
+  flex: 0 0 220px; /* Fixed width, no shrinking/growing */
+  background-color: #1a1a1a;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: 1px solid #333;
+  position: relative;
+}
+
+.beatCard:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+  border-color: #7b2cbf;
+}
+
+/* Image Container */
+.imageContainer {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 12px 12px 0 0;
+}
+
+.beatImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.beatCard:hover .beatImage {
+  transform: scale(1.05);
+}
+
+.imageOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.imageContainer:hover .imageOverlay {
+  opacity: 1;
+}
+
+.playButton {
+  background-color: rgba(123, 44, 191, 0.9);
+  color: white;
+  border: none;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.playButton:hover {
+  background-color: #7b2cbf;
+  transform: scale(1.1);
+}
+
+/* Beat Info */
+.beatInfo {
+  padding: 1rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.beatTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.producerInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.producerInfo:hover .producerName {
+  color: #7b2cbf;
+}
+
+.producerName {
+  font-size: 0.85rem;
+  color: #aaa;
+  transition: color 0.2s ease;
+}
+
+.verifiedIcon {
+  font-size: 0.75rem;
+  color: #1db954;
+  flex-shrink: 0;
+}
+
+.beatMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+
+.genre {
+  font-size: 0.75rem;
+  color: #888;
+  background-color: #2a2a2a;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.price {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #7b2cbf;
+}
+
+/* Beat Actions */
+.beatActions {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.beatCard:hover .beatActions {
+  opacity: 1;
+}
+
+.wishlistButton,
+.cartButton {
+  background-color: rgba(42, 42, 42, 0.9);
+  color: #fff;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.85rem;
+  backdrop-filter: blur(10px);
+}
+
+.wishlistButton:hover {
+  background-color: #ff4d4d;
+  transform: scale(1.1);
+}
+
+.wishlistButton.inWishlist {
+  background-color: #ff4d4d;
+  color: white;
+}
+
+.cartButton:hover {
+  background-color: #7b2cbf;
+  transform: scale(1.1);
+}
+
+.cartButton.inCart {
+  background-color: #1db954;
+  color: white;
+}
+
+.cartButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Loading and Error States */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  color: #aaa;
+  font-size: 1.1rem;
+}
+
+.error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  color: #ff4d4d;
+  font-size: 1.1rem;
+  background-color: rgba(255, 77, 77, 0.1);
+  border: 1px solid rgba(255, 77, 77, 0.3);
+  border-radius: 8px;
+  margin: 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .beatCard {
+    flex: 0 0 200px;
   }
   
   .sectionTitle {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: #fff;
-    margin: 0;
+    font-size: 1.5rem;
   }
-  
-  .seeMoreButton {
-    color: #fff;
-    background: none;
-    border: none;
-    font-size: 1rem;
-    cursor: pointer;
-    opacity: 0.8;
-    transition: opacity 0.2s ease;
-  }
-  
-  .seeMoreButton:hover {
-    opacity: 1;
-    text-decoration: underline;
-  }
-  
-  .beatsGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 1.5rem;
-    padding: 0 1rem;
+}
+
+@media (max-width: 768px) {
+  .trendingSection {
+    padding: 0 0.5rem;
   }
   
   .beatCard {
-    background-color: #171717;
-    border-radius: 8px;
-    overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    flex: 0 0 180px;
   }
   
-  .beatCard:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+  .sectionHeader {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
   }
   
-  .imageContainer {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    overflow: hidden;
-    border-radius: 8px 8px 0 0;
+  .headerActions {
+    justify-content: space-between;
   }
   
-  .beatImage {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
+  .scrollControls {
+    order: 2;
   }
   
-  .imageContainer:hover .beatImage {
-    transform: scale(1.05);
+  .seeMoreButton {
+    order: 1;
+    align-self: flex-start;
   }
   
-  .imageOverlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.4);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    opacity: 0;
-    transition: opacity 0.3s ease;
+  .sectionTitle {
+    font-size: 1.3rem;
   }
   
-  .imageContainer:hover .imageOverlay {
-    opacity: 1;
+  .beatsContainer {
+    gap: 1rem;
   }
-  
-  .playButton, .favoriteButton {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 1.5rem;
-    cursor: pointer;
-    padding: 0.5rem;
-    margin: 0 0.5rem;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
+}
+
+@media (max-width: 576px) {
+  .beatCard {
+    flex: 0 0 160px;
   }
   
   .playButton {
-    background-color: rgba(123, 44, 191, 0.8);
-    width: 3rem;
-    height: 3rem;
-  }
-  
-  .favoriteButton {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    font-size: 1.2rem;
-    background-color: rgba(0, 0, 0, 0.5);
-    width: 2rem;
-    height: 2rem;
-  }
-  
-  .playButton:hover {
-    background-color: #7b2cbf;
-    transform: scale(1.1);
-  }
-  
-  .favoriteButton:hover {
-    color: #ff4d4d;
-  }
-  
-  .beatInfo {
-    padding: 1rem;
-  }
-  
-  .beatTitle {
+    width: 40px;
+    height: 40px;
     font-size: 1rem;
-    font-weight: 600;
-    color: #fff;
-    margin: 0 0 0.5rem 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
   
-  .producerInfo {
-    display: flex;
-    align-items: center;
-    margin-bottom: 0.75rem;
-  }
-  
-  .producerName {
-    font-size: 0.85rem;
-    color: #aaa;
-    margin-right: 0.25rem;
-  }
-  
-  .verifiedIcon {
-    font-size: 0.75rem;
-    color: #3897f0;
-  }
-  
-  .beatActions {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  .price {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #7b2cbf;
-  }
-  
+  .wishlistButton,
   .cartButton {
-    background-color: #333;
-    color: white;
-    border: none;
-    width: 2rem;
-    height: 2rem;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
   }
   
-  .cartButton:hover {
-    background-color: #7b2cbf;
-    transform: scale(1.1);
+  .sectionTitle {
+    font-size: 1.2rem;
   }
   
-  /* Media queries for responsiveness */
-  @media (max-width: 1200px) {
-    .beatsGrid {
-      grid-template-columns: repeat(5, 1fr);
-    }
+  .beatsContainer {
+    padding: 0.5rem 0;
+  }
+}
+
+/* Smooth fade-in animation */
+.beatCard {
+  animation: fadeInUp 0.5s ease forwards;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Accessibility */
+.scrollButton:focus,
+.playButton:focus,
+.wishlistButton:focus,
+.cartButton:focus,
+.seeMoreButton:focus {
+  outline: 2px solid #7b2cbf;
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .beatCard {
+    border: 2px solid #fff;
   }
   
-  @media (max-width: 992px) {
-    .beatsGrid {
-      grid-template-columns: repeat(4, 1fr);
-    }
+  .playButton,
+  .wishlistButton,
+  .cartButton {
+    border: 1px solid #fff;
   }
-  
-  @media (max-width: 768px) {
-    .beatsGrid {
-      grid-template-columns: repeat(3, 1fr);
-    }
-  }
-  
-  @media (max-width: 576px) {
-    .beatsGrid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .sectionTitle {
-      font-size: 1.5rem;
-    }
-  }
+}

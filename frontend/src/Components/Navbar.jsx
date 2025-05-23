@@ -248,7 +248,7 @@ const Navbar = () => {
                 ) : (
                   <FaUserCircle className="avatar-icon" />
                 )}
-                <span className="username">{user?.name || "User"}</span>
+                {/* <span className="username">{user?.name || "User"}</span> */}
               </div>
 
               {showDropdown && (

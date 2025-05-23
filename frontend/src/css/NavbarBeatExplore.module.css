@@ -1,251 +1,277 @@
- .navbar {
-   display: flex;
-   align-items: center;
-   justify-content: space-between;
-   min-height: 80px;
-   width: 100%;
-   padding: 0 2rem;
-   background-color: #121212;
-   position: sticky;
-   top: 0;
-   z-index: 1000;
-   border-bottom: 1px solid #333;
- }
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 80px;
+  width: 100%;
+  padding: 0 2rem;
+  background-color: #121212;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  border-bottom: 1px solid #333;
+}
 
- .navLogo {
-   display: flex;
-   align-items: center;
+.navLogo {
+  display: flex;
+  align-items: center;
+}
 
- }
+.navLinks {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
 
- .navLinks {
-   display: flex;
-   align-items: center;
-   gap: 2rem;
- }
+.navLink {
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: color 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
- .navLink {
-   color:
-     #ffffff;
-   text-decoration: none;
-   font-size: 1rem;
-   font-weight: 600;
-   transition: color 0.3s ease;
-   display: flex;
-   align-items: center;
-   gap: 8px;
- }
+.navLink:hover {
+  color: #7B2CBF;
+}
 
- .navLink:hover {
-   color:
-     #7B2CBF;
- }
+.navActions {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
 
- .navActions {
-   display: flex;
-   align-items: center;
-   gap: 1rem;
- }
+.loginButton {
+  background-color: #7B2CBF;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 5rem;
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
 
- .loginButton,
- .profileButton {
-   background-color:
-     #7B2CBF;
-   color:
-     #FFFFFF;
-   border: none;
-   border-radius: 5rem;
-   padding: 0.6rem 1.2rem;
-   font-size: 1rem;
-   font-weight: 600;
-   cursor: pointer;
-   transition: all 0.3s ease;
-   display: flex;
-   align-items: center;
-   gap: 0.5rem;
- }
+.loginButton:hover {
+  background-color: #8E44AD;
+  transform: scale(1.05);
+}
 
- .loginButton:hover,
- .profileButton:hover {
-   background-color:
-     #8E44AD;
-   transform: scale(1.05);
- }
+.profileButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
- /* Profile Dropdown Styles */
- .profileContainer {
-   position: relative;
- }
+.profileButton:hover {
+  background-color: rgba(123, 44, 191, 0.1);
+  transform: scale(1.05);
+}
 
- .profileAvatar {
-   width: 30px;
-   height: 30px;
-   border-radius: 50%;
-   object-fit: cover;
-   border: 2px solid #FFFFFF;
- }
+/* Profile Dropdown Styles */
+.profileContainer {
+  position: relative;
+}
 
- .profileIcon {
-   font-size: 1.3rem;
- }
+.profileAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #333;
+  transition: border-color 0.3s ease;
+}
 
- .dropdown {
-   position: absolute;
-   top: calc(100% + 10px);
-   right: 0;
-   background-color:
-     #242424;
-   border-radius: 8px;
-   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-   min-width: 200px;
-   z-index: 10;
-   overflow: hidden;
-   border: 1px solid #333;
-   animation: fadeIn 0.2s ease;
- }
+.profileButton:hover .profileAvatar {
+  border-color: #7B2CBF;
+}
 
- @keyframes fadeIn {
-   from {
-     opacity: 0;
-     transform: translateY(-10px);
-   }
+.profileIcon {
+  font-size: 1.5rem;
+  color: #ffffff;
+}
 
-   to {
-     opacity: 1;
-     transform: translateY(0);
-   }
- }
+.dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  background-color: #242424;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  min-width: 200px;
+  z-index: 10;
+  overflow: hidden;
+  border: 1px solid #333;
+  animation: fadeIn 0.2s ease;
+}
 
- .dropdownItem {
-   display: flex;
-   align-items: center;
-   width: 100%;
-   padding: 0.8rem 1.2rem;
-   background: none;
-   border: none;
-   color:
-     #ffffff;
-   text-align: left;
-   font-size: 0.95rem;
-   cursor: pointer;
-   transition: background-color 0.2s ease;
- }
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
- .dropdownItem:hover {
-   background-color:
-     #333333;
- }
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.8rem 1.2rem;
+  background: none;
+  border: none;
+  color: #ffffff;
+  text-align: left;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
 
- .dropdownIcon {
-   margin-right: 0.8rem;
-   color:
-     #7B2CBF;
- }
+.dropdownItem:hover {
+  background-color: #333333;
+}
 
- .cartIconContainer {
-   position: relative;
-   display: inline-block;
-   margin-right: 5px;
- }
+.dropdownIcon {
+  margin-right: 0.8rem;
+  color: #7B2CBF;
+}
 
- .cartBadge {
-   position: absolute;
-   top: -8px;
-   right: -8px;
-   background-color:
-     #7B2CBF;
-   color: white;
-   font-size: 0.7rem;
-   width: 18px;
-   height: 18px;
-   border-radius: 50%;
-   display: flex;
-   align-items: center;
-   justify-content: center;
-   font-weight: bold;
- }
+.cartIconContainer {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  color: #ffffff;
+}
 
- /* Plan badge styles */
- .planBadge {
-   display: inline-block;
-   font-size: 0.7rem;
-   font-weight: bold;
-   padding: 2px 6px;
-   border-radius: 12px;
-   margin-left: 6px;
-   text-transform: uppercase;
- }
+.cartIconContainer:hover {
+  background-color: rgba(123, 44, 191, 0.1);
+  color: #7B2CBF;
+  transform: scale(1.05);
+}
 
- .proBadge {
-   background-color:
-     #FF1A1A;
-   color: white;
- }
+.cartBadge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: #7B2CBF;
+  color: white;
+  font-size: 0.7rem;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  border: 2px solid #121212;
+}
 
- .standardBadge {
-   background-color:
-     #FFBA00;
-   color:
-     #1a1a1a;
- }
+/* Plan badge styles */
+.planBadge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 12px;
+  margin-left: 6px;
+  text-transform: uppercase;
+}
 
- .freeBadge {
-   background-color:
-     #7B2CBF;
-   color: white;
- }
+.proBadge {
+  background-color: #FF1A1A;
+  color: white;
+}
 
- /* Menu badge styles */
- .menuBadge {
-   margin-left: auto;
-   font-size: 0.7rem;
-   font-weight: bold;
-   padding: 2px 8px;
-   border-radius: 12px;
-   text-transform: uppercase;
- }
+.standardBadge {
+  background-color: #FFBA00;
+  color: #1a1a1a;
+}
 
- /* Update profile button to accommodate the badge */
- .profileButton {
-   display: flex;
-   align-items: center;
-   gap: 6px;
-   padding-right: 12px;
- }
+.freeBadge {
+  background-color: #7B2CBF;
+  color: white;
+}
 
- /* Responsive styles */
- @media (max-width: 1024px) {
-   .navLinks {
-     gap: 1.5rem;
-   }
+/* Menu badge styles */
+.menuBadge {
+  margin-left: auto;
+  font-size: 0.7rem;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 12px;
+  text-transform: uppercase;
+}
 
-   .navLink {
-     font-size: 0.9rem;
-   }
- }
+/* Responsive styles */
+@media (max-width: 1024px) {
+  .navLinks {
+    gap: 1.5rem;
+  }
 
- @media (max-width: 768px) {
-   .navLinks {
-     display: none;
-   }
+  .navLink {
+    font-size: 0.9rem;
+  }
 
-   .navbar {
-     padding: 1rem;
-   }
+  .navActions {
+    gap: 1rem;
+  }
+}
 
-   .profileButton {
-     padding: 0.5rem 1rem;
-     font-size: 0.9rem;
-   }
+@media (max-width: 768px) {
+  .navLinks {
+    display: none;
+  }
 
-   /* Add a mobile menu button for smaller screens */
-   .mobileMenuButton {
-     display: block;
-     background: none;
-     border: none;
-     color:
-       #ffffff;
-     font-size: 1.5rem;
-     cursor: pointer;
-   }
- }
+  .navbar {
+    padding: 1rem;
+  }
+
+  .navActions {
+    gap: 0.8rem;
+  }
+
+  .profileAvatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .cartIconContainer {
+    padding: 6px;
+  }
+
+  /* Add a mobile menu button for smaller screens */
+  .mobileMenuButton {
+    display: block;
+    background: none;
+    border: none;
+    color: #ffffff;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+  }
+
+  .mobileMenuButton:hover {
+    background-color: rgba(123, 44, 191, 0.1);
+  }
+}
