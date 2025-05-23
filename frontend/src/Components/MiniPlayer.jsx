@@ -1,21 +1,20 @@
-// src/Components/MiniPlayer.jsx
+// frontend/src/Components/MiniPlayer.jsx
 import React from 'react';
 import { FaPlay, FaPause } from 'react-icons/fa';
 import { useAudio } from '../context/AudioContext';
+import { getBeatId } from '../utils/audioUtils';
 import styles from '../css/MiniPlayer.module.css';
 
 const MiniPlayer = ({ beat, showProgress = false }) => {
-  const { currentTrack, isPlaying, currentTime, duration, playTrack } = useAudio();
+  const { playTrack, isBeatPlaying, currentTime, duration } = useAudio();
   
-  // Check if this beat is currently playing
-  const isThisPlaying = 
-    isPlaying && 
-    currentTrack && 
-    (currentTrack._id === beat._id || currentTrack.id === beat.id);
+  // Use the context's helper function for consistency
+  const isThisPlaying = isBeatPlaying(beat);
   
   // Handle play button click
   const handlePlay = (e) => {
     e.stopPropagation(); // Prevent parent click event
+    console.log('MiniPlayer play clicked for beat:', getBeatId(beat));
     playTrack(beat);
   };
   
@@ -28,6 +27,7 @@ const MiniPlayer = ({ beat, showProgress = false }) => {
       <button 
         className={styles.playButton}
         onClick={handlePlay}
+        aria-label={isThisPlaying ? "Pause" : "Play"}
       >
         {isThisPlaying ? <FaPause /> : <FaPlay />}
       </button>

@@ -16,7 +16,7 @@ const AdminSettings = () => {
     maxUploadSizeMB: 20,
     commissionRate: 10,
     featuredBeatsLimit: 8,
-    maintenanceMode: false,
+    // maintenanceMode: false,
 
     // About section
     aboutTitle: '',
@@ -28,8 +28,7 @@ const AdminSettings = () => {
     contactPhone: '',
     websiteURL: '',
     shortURL: '',
-    workTitle: '',
-    workDescription: '',
+
   });
 
 
@@ -53,11 +52,15 @@ const AdminSettings = () => {
         maxUploadSizeMB: globalSettings.maxUploadSizeMB || 20,
         commissionRate: globalSettings.commissionRate || 10,
         featuredBeatsLimit: globalSettings.featuredBeatsLimit || 8,
-        maintenanceMode: globalSettings.maintenanceMode || false,
+        // maintenanceMode: globalSettings.maintenanceMode || false,
 
         aboutTitle: globalSettings.aboutSection?.title || '',
         aboutDescription: globalSettings.aboutSection?.description || '',
         aboutImage: globalSettings.aboutSection?.image || '',
+        heroTitle: '',
+        contactPhone: '',
+        websiteURL: '',
+        // shortURL: '',
       });
 
 
@@ -159,10 +162,12 @@ const AdminSettings = () => {
         siteName: formData.siteName,
         siteDescription: formData.siteDescription,
         contactEmail: formData.contactEmail,
+        contactPhone: formData.contactPhone,
+        // shortURL: formData.shortURL,
         maxUploadSizeMB: parseFloat(formData.maxUploadSizeMB),
         commissionRate: parseFloat(formData.commissionRate),
         featuredBeatsLimit: parseInt(formData.featuredBeatsLimit),
-        maintenanceMode: formData.maintenanceMode,
+        // maintenanceMode: formData.maintenanceMode,
         logoUrl: logoUrl,
         aboutSection: {
           title: formData.aboutTitle,
@@ -210,18 +215,21 @@ const AdminSettings = () => {
           >
             <FaCog /> General
           </button>
-          <button
-            className={`${styles.tabButton} ${activeTab === 'appearance' ? styles.activeTab : ''}`}
-            onClick={() => setActiveTab('appearance')}
-          >
-            <FaPalette /> Appearance
-          </button>
+
           <button
             className={`${styles.tabButton} ${activeTab === 'homepage' ? styles.activeTab : ''}`}
             onClick={() => setActiveTab('homepage')}
           >
             <FaHome /> Homepage
           </button>
+
+          <button
+            className={`${styles.tabButton} ${activeTab === 'appearance' ? styles.activeTab : ''}`}
+            onClick={() => setActiveTab('appearance')}
+          >
+            <FaPalette /> Appearance
+          </button>
+
 
           <button
             className={`${styles.tabButton} ${activeTab === 'advanced' ? styles.activeTab : ''}`}
@@ -301,7 +309,7 @@ const AdminSettings = () => {
                   />
                 </div>
 
-                <div className={styles.formGroup}>
+                {/* <div className={styles.formGroup}>
                   <label htmlFor="shortURL">Short URL</label>
                   <input
                     type="text"
@@ -311,7 +319,7 @@ const AdminSettings = () => {
                     onChange={handleInputChange}
                     placeholder="tj.com"
                   />
-                </div>
+                </div> */}
               </div>
             </div>
           )}
@@ -418,35 +426,6 @@ const AdminSettings = () => {
                   />
                 </div>
               </div>
-
-              {/* How It Works Section */}
-              <div className={styles.formSection}>
-                <h3>How It Works Section</h3>
-
-                <div className={styles.formGroup}>
-                  <label htmlFor="workTitle">Section Title</label>
-                  <input
-                    type="text"
-                    id="workTitle"
-                    name="workTitle"
-                    value={formData.workTitle}
-                    onChange={handleInputChange}
-                    placeholder="How It Works"
-                  />
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label htmlFor="workDescription">Section Description</label>
-                  <textarea
-                    id="workDescription"
-                    name="workDescription"
-                    value={formData.workDescription}
-                    onChange={handleInputChange}
-                    rows="3"
-                    placeholder="Describe how your platform works"
-                  ></textarea>
-                </div>
-              </div>
             </div>
           )}
 
@@ -473,80 +452,80 @@ const AdminSettings = () => {
                 <div className={styles.formGroup}>
                   <label htmlFor="commissionRate">Commission Rate (%)</label>
                   <div className={styles.inputWithAddon}>
+                    <input
+                      type="number"
+                      id="commissionRate"
+                      name="commissionRate"
+                      min="0"
+                      max="100"
+                      value={formData.commissionRate}
+                      onChange={handleInputChange}
+                      required
+                    />
+                    <button type="button" className={styles.inputAddonBtn} title="Help">
+                      <FaQuestion />
+                    </button>
+                  </div>
+                  <p className={styles.fieldHelp}>
+                    Percentage of each sale that goes to the platform
+                  </p>
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label htmlFor="featuredBeatsLimit">Featured Beats Limit</label>
                   <input
                     type="number"
-                    id="commissionRate"
-                    name="commissionRate"
-                    min="0"
-                    max="100"
-                    value={formData.commissionRate}
+                    id="featuredBeatsLimit"
+                    name="featuredBeatsLimit"
+                    min="1"
+                    max="20"
+                    value={formData.featuredBeatsLimit}
                     onChange={handleInputChange}
                     required
                   />
-                  <button type="button" className={styles.inputAddonBtn} title="Help">
-                    <FaQuestion />
-                  </button>
+                  <p className={styles.fieldHelp}>
+                    Maximum number of beats to show in featured sections
+                  </p>
                 </div>
-                <p className={styles.fieldHelp}>
-                  Percentage of each sale that goes to the platform
-                </p>
-              </div>
 
-              <div className={styles.formGroup}>
-                <label htmlFor="featuredBeatsLimit">Featured Beats Limit</label>
-                <input
-                  type="number"
-                  id="featuredBeatsLimit"
-                  name="featuredBeatsLimit"
-                  min="1"
-                  max="20"
-                  value={formData.featuredBeatsLimit}
-                  onChange={handleInputChange}
-                  required
-                />
-                <p className={styles.fieldHelp}>
-                  Maximum number of beats to show in featured sections
-                </p>
+                {/* <div className={styles.formGroup}>
+                  <div className={styles.checkboxControl}>
+                    <input
+                      type="checkbox"
+                      id="maintenanceMode"
+                      name="maintenanceMode"
+                      checked={formData.maintenanceMode}
+                      onChange={handleInputChange}
+                    />
+                    <label htmlFor="maintenanceMode">Enable Maintenance Mode</label>
+                  </div>
+                  <p className={styles.fieldHelp}>
+                    When enabled, only administrators can access the site
+                  </p>
+                </div> */}
               </div>
-
-              <div className={styles.formGroup}>
-                <div className={styles.checkboxControl}>
-                  <input
-                    type="checkbox"
-                    id="maintenanceMode"
-                    name="maintenanceMode"
-                    checked={formData.maintenanceMode}
-                    onChange={handleInputChange}
-                  />
-                  <label htmlFor="maintenanceMode">Enable Maintenance Mode</label>
-                </div>
-                <p className={styles.fieldHelp}>
-                  When enabled, only administrators can access the site
-                </p>
-              </div>
-            </div>
             </div>
           )}
 
-      {/* Save Button - Always visible at bottom */}
-      <div className={styles.formActions}>
-        <button
-          type="submit"
-          className={styles.saveButton}
-          disabled={loading}
-        >
-          {loading ? (
-            <>
-              <FaSpinner className={styles.spinnerIcon} /> Saving 
-            </>
-          ) : (
-            <>
-              <FaSave className={styles.saveIcon} /> Save
-            </>
-          )}
-        </button>
-      </div>
-    </form>
+          {/* Save Button - Always visible at bottom */}
+          <div className={styles.formActions}>
+            <button
+              type="submit"
+              className={styles.saveButton}
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <FaSpinner className={styles.spinnerIcon} /> Saving
+                </>
+              ) : (
+                <>
+                  <FaSave className={styles.saveIcon} /> Save
+                </>
+              )}
+            </button>
+          </div>
+        </form>
       </div >
     </div >
   );

@@ -33,7 +33,39 @@ export const requestWithdrawal = async (req, res) => {
         message: 'Please add payment details to your verification profile'
       });
     }
+    // Validate complete payment details based on method
+    const payoutDetails = verification.payoutDetails;
+    const selectedMethod = paymentMethod || payoutDetails.paymentMethod;
 
+    if (selectedMethod === 'bank') {
+      if (!payoutDetails.bankName || !payoutDetails.accountName || !payoutDetails.accountNumber) {
+        return res.status(400).json({
+          success: false,
+          message: 'Incomplete bank details. Please update your verification profile with complete bank information (Bank Name, Account Name, Account Number).',
+          missingFields: {
+            bankName: !payoutDetails.bankName,
+            accountName: !payoutDetails.accountName,
+            accountNumber: !payoutDetails.accountNumber
+          }
+        });
+      }
+    } else if (selectedMethod === 'khalti') {
+      if (!payoutDetails.khaltiId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Khalti ID is required. Please update your verification profile.',
+          missingFields: { khaltiId: true }
+        });
+      }
+    } else if (selectedMethod === 'paypal') {
+      if (!payoutDetails.paypalEmail) {
+        return res.status(400).json({
+          success: false,
+          message: 'PayPal email is required. Please update your verification profile.',
+          missingFields: { paypalEmail: true }
+        });
+      }
+    }
     // Get user wallet
     const wallet = await Wallet.findOne({ user: req.user.id });
     if (!wallet) {
@@ -47,7 +79,7 @@ export const requestWithdrawal = async (req, res) => {
     if (wallet.balance < amount) {
       return res.status(400).json({
         success: false,
-        message: `Insufficient balance. Available: $${wallet.balance.toFixed(2)}`
+        message: `Insufficient balance. Available: Rs ${wallet.balance.toFixed(2)}`
       });
     }
 
@@ -55,7 +87,8 @@ export const requestWithdrawal = async (req, res) => {
     const withdrawal = new Withdrawal({
       user: req.user.id,
       amount,
-      paymentMethod: paymentMethod || verification.payoutDetails.paymentMethod,
+      // paymentMethod: paymentMethod || verification.payoutDetails.paymentMethod,
+      paymentMethod: selectedMethod,
       status: 'pending'
     });
 
@@ -65,7 +98,7 @@ export const requestWithdrawal = async (req, res) => {
     await addTransaction(req.user.id, {
       type: 'withdrawal',
       amount: -amount, // Negative amount for withdrawals
-      description: `Withdrawal request via ${paymentMethod || verification.payoutDetails.paymentMethod}`,
+      description: `Withdrawal request via ${selectedMethod || verification.payoutDetails.paymentMethod}`,
       status: 'pending'
     });
 

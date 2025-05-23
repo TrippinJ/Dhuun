@@ -1,5 +1,6 @@
-// src/context/AudioContext.jsx
+// frontend/src/context/AudioContext.jsx
 import React, { createContext, useState, useRef, useEffect, useContext } from 'react';
+import { getBeatId, getBeatAudioUrl } from '../utils/audioUtils';
 
 // Create the context
 const AudioContext = createContext();
@@ -10,11 +11,23 @@ export const AudioProvider = ({ children }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
-  const [volume, setVolume] = useState(0.8); // Start at 80% volume
+  const [volume, setVolume] = useState(0.8);
   const [audioError, setAudioError] = useState(null);
   const [audioInitialized, setAudioInitialized] = useState(false);
 
   const audioRef = useRef(new Audio());
+
+  // Normalize beat object to ensure consistent ID format
+  const normalizeBeat = (beat) => {
+    if (!beat) return null;
+    
+    return {
+      ...beat,
+      // Ensure we always have an id property for consistency
+      id: getBeatId(beat),
+      audioUrl: getBeatAudioUrl(beat)
+    };
+  };
 
   const stopTrack = () => {
     const audio = audioRef.current;
@@ -24,8 +37,8 @@ export const AudioProvider = ({ children }) => {
     setIsPlaying(false);
     setCurrentTime(0);
     setDuration(0);
+    setAudioError(null);
   };
-
 
   // Set up audio element
   useEffect(() => {
@@ -43,7 +56,6 @@ export const AudioProvider = ({ children }) => {
     const handleEnded = () => {
       setIsPlaying(false);
       setCurrentTime(0);
-      // Could implement auto-next functionality here
     };
 
     const handleError = (e) => {
@@ -52,11 +64,16 @@ export const AudioProvider = ({ children }) => {
       setIsPlaying(false);
     };
 
+    const handleCanPlay = () => {
+      setAudioError(null);
+    };
+
     // Set up event listeners
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('loadedmetadata', handleLoadedMetadata);
     audio.addEventListener('ended', handleEnded);
     audio.addEventListener('error', handleError);
+    audio.addEventListener('canplay', handleCanPlay);
     audio.volume = volume;
 
     return () => {
@@ -65,59 +82,46 @@ export const AudioProvider = ({ children }) => {
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('error', handleError);
+      audio.removeEventListener('canplay', handleCanPlay);
 
       audio.pause();
       audio.src = '';
     };
-  }, []);
+  }, [volume]);
 
   // Update audio source when currentTrack changes
   useEffect(() => {
     const audio = audioRef.current;
 
     if (currentTrack) {
-      // Set loading state
-      setAudioError(null);
+      const audioUrl = currentTrack.audioUrl || getBeatAudioUrl(currentTrack);
 
-      // Determine the audio URL
-      const audioUrl = currentTrack.audioFile || currentTrack.audioUrl || currentTrack.audio;
-
-      if (audioUrl) {
-        // Reset current time
+      if (audioUrl && audioUrl !== audio.src) {
+        setAudioError(null);
         setCurrentTime(0);
-
+        
         // Set new source
         audio.src = audioUrl;
+        audio.load();
 
         if (isPlaying) {
-          audio.play().catch(err => {
-            console.error("Error playing audio:", err);
-            setIsPlaying(false);
-            setAudioError(`Failed to play: ${err.message}`);
-          });
+          const playPromise = audio.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(err => {
+              console.error("Error playing audio:", err);
+              setIsPlaying(false);
+              setAudioError(`Failed to play: ${err.message}`);
+            });
+          }
         }
-      } else {
-        setAudioError("No audio URL found for this track");
       }
-    }
-  }, [currentTrack]);
-
-  // Update when isPlaying changes
-  useEffect(() => {
-    const audio = audioRef.current;
-
-    if (isPlaying) {
-      // Try to play
-      audio.play().catch(err => {
-        console.error("Error playing audio:", err);
-        setIsPlaying(false);
-        setAudioError(`Failed to play: ${err.message}`);
-      });
     } else {
-      // Pause
-      audio.pause();
+      // No current track, clear audio
+      audio.src = '';
+      setDuration(0);
+      setCurrentTime(0);
     }
-  }, [isPlaying]);
+  }, [currentTrack, isPlaying]);
 
   // Handle volume changes
   useEffect(() => {
@@ -127,20 +131,26 @@ export const AudioProvider = ({ children }) => {
   // Control functions
   const playTrack = (track) => {
     if (!audioInitialized) {
-      // Initialize audio on first user interaction
-      audioRef.current = new Audio();
       setAudioInitialized(true);
     }
-    const isSameTrack = currentTrack &&
-      ((currentTrack._id && track._id && currentTrack._id === track._id) ||
-        (currentTrack.id && track.id && currentTrack.id === track.id));
+
+    const normalizedTrack = normalizeBeat(track);
+    const isSameTrack = currentTrack && normalizedTrack && 
+      getBeatId(currentTrack) === getBeatId(normalizedTrack);
+
+    console.log('PlayTrack called:', {
+      newTrack: getBeatId(normalizedTrack),
+      currentTrack: getBeatId(currentTrack),
+      isSameTrack,
+      isPlaying
+    });
 
     if (isSameTrack) {
       // Toggle play/pause for current track
       setIsPlaying(!isPlaying);
     } else {
       // Set new track and play it
-      setCurrentTrack(track);
+      setCurrentTrack(normalizedTrack);
       setIsPlaying(true);
     }
   };
@@ -163,18 +173,18 @@ export const AudioProvider = ({ children }) => {
     }
   };
 
-  // Additional functions for playlist management
-  const playNextTrack = () => {
-    // This would need playlist implementation
-    console.log("Play next track - feature coming soon");
+  // Helper function to check if a specific beat is playing
+  const isBeatPlaying = (beat) => {
+    if (!isPlaying || !currentTrack || !beat) {
+      return false;
+    }
+    
+    const currentId = getBeatId(currentTrack);
+    const beatId = getBeatId(beat);
+    
+    return currentId && beatId && currentId === beatId;
   };
 
-  const playPreviousTrack = () => {
-    // This would need playlist implementation
-    console.log("Play previous track - feature coming soon");
-  };
-
-  // Make all these functions and state available to components
   const value = {
     currentTrack,
     isPlaying,
@@ -186,9 +196,8 @@ export const AudioProvider = ({ children }) => {
     pauseTrack,
     seekTo,
     changeVolume,
-    playNextTrack,
-    playPreviousTrack,
-    stopTrack
+    stopTrack,
+    isBeatPlaying // Add this helper function
   };
 
   return (

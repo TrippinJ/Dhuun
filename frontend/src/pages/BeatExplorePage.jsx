@@ -22,6 +22,7 @@ import SingleBeatModal from '../Components/Singlebeatmodal';
 import { useAudio } from '../context/AudioContext';
 import LicenseSelectionModal from '../Components/LicenseSelectionModal';
 import ProducerProfile from '../Components/ProducerProfile';
+import { getBeatId } from '../utils/audioUtils';
 
 const BeatExplorePage = () => {
   // State variables
@@ -30,13 +31,12 @@ const BeatExplorePage = () => {
   const [loading, setLoading] = useState(true);
   const [keywords, setKeywords] = useState("");
   const [selectedGenre, setSelectedGenre] = useState("All Genres");
-  const [priceRange, setPriceRange] = useState(100); // Default max price
+  const [priceRange, setPriceRange] = useState(100);
   const [maxPrice, setMaxPrice] = useState(100);
   const [cartItems, setCartItems] = useState([]);
-  const [displayMode, setDisplayMode] = useState("grid"); // 'row' or 'grid'
-  const [audioLoading, setAudioLoading] = useState(false);
-  const [selectedBeat, setSelectedBeat] = useState(null); // For the single beat modal
-  const [showFilters, setShowFilters] = useState(false); // Mobile filter toggle
+  const [displayMode, setDisplayMode] = useState("grid");
+  const [selectedBeat, setSelectedBeat] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
   const [wishlist, setWishlist] = useState([]);
   const [showLicenseModal, setShowLicenseModal] = useState(false);
   const [selectedBeatForLicense, setSelectedBeatForLicense] = useState(null);
@@ -48,26 +48,19 @@ const BeatExplorePage = () => {
   const [initialLoad, setInitialLoad] = useState(true);
   const itemsPerLoad = 12;
 
-  //Producer Profile
+  // Producer Profile
   const [showProducerProfile, setShowProducerProfile] = useState(false);
   const [selectedProducerId, setSelectedProducerId] = useState(null);
 
-  //Function to initiate producer profile
-  const handleOpenProducerProfile = (producerId) => {
-    setSelectedProducerId(producerId);
-    setShowProducerProfile(true);
-  };
-
-  // Use the audio context
-  const { playTrack, currentTrack, isPlaying } = useAudio();
-
+  // FIXED: Single useAudio destructuring with all needed values
+  const { playTrack, isBeatPlaying, currentTrack, isPlaying } = useAudio();
 
   const navigate = useNavigate();
 
-  // Available genres (you could fetch these from your API)
+  // Available genres
   const genres = [
     "All Genres",
-    "Trap",
+    "Trap", 
     "Hip-Hop",
     "R&B",
     "Pop",
@@ -75,6 +68,12 @@ const BeatExplorePage = () => {
     "Lo-Fi",
     "Future"
   ];
+
+  // Function to initiate producer profile
+  const handleOpenProducerProfile = (producerId) => {
+    setSelectedProducerId(producerId);
+    setShowProducerProfile(true);
+  };
 
   // Fetch beats from API
   useEffect(() => {
@@ -84,15 +83,11 @@ const BeatExplorePage = () => {
         const response = await API.get("/api/beats");
         console.log("API Response:", response.data);
 
-        // Check if the response data contains the beats array
         if (response.data && response.data.data) {
-          // Use the beats array from the response
           setBeats(response.data.data);
         } else if (Array.isArray(response.data)) {
-          // If the response itself is an array (direct beats array)
           setBeats(response.data);
         } else {
-          // If we can't find a valid beats array
           setBeats([]);
           setErrorMessage("No beats data available");
         }
@@ -145,8 +140,7 @@ const BeatExplorePage = () => {
             price: 29.99,
             plays: 1500,
             likes: 412
-          },
-          // Add more sample beats for development
+          }
         ]);
       } finally {
         setLoading(false);
@@ -172,13 +166,13 @@ const BeatExplorePage = () => {
     }
   }, []);
 
-  // UseEffect to fetch popular tags
+  // Fetch popular tags
   useEffect(() => {
     const fetchPopularTags = async () => {
       try {
         const response = await API.get('/api/beats/tags/popular');
         if (response.data.success) {
-          setAvailableTags(response.data.data.slice(0, 20)); // Top 20 tags
+          setAvailableTags(response.data.data.slice(0, 20));
         }
       } catch (error) {
         console.error('Error fetching tags:', error);
@@ -187,7 +181,6 @@ const BeatExplorePage = () => {
 
     fetchPopularTags();
   }, []);
-
 
   // Set max price after beats are loaded
   useEffect(() => {
@@ -202,19 +195,15 @@ const BeatExplorePage = () => {
   // Filter functions
   const filterBeats = () => {
     return beats.filter(beat => {
-      // Keyword filter
       const keywordMatch = !keywords.trim() ||
         beat.title?.toLowerCase().includes(keywords.toLowerCase()) ||
         beat.producer?.name?.toLowerCase().includes(keywords.toLowerCase());
 
-      // Genre filter
       const genreMatch = selectedGenre === "All Genres" ||
         beat.genre?.toLowerCase() === selectedGenre.toLowerCase();
 
-      // Price filter
       const priceMatch = !beat.price || beat.price <= priceRange;
 
-      // Tags Filter
       const tagsMatch = selectedTags.length === 0 ||
         selectedTags.some(selectedTag =>
           beat.tags?.some(beatTag =>
@@ -226,16 +215,14 @@ const BeatExplorePage = () => {
     });
   };
 
-  // Add tags toggle function
+  // Tags toggle function
   const toggleTag = (tag) => {
     setSelectedTags(prev =>
       prev.includes(tag)
         ? prev.filter(t => t !== tag)
         : [...prev, tag]
     );
-
   };
-
 
   const handleProducerClick = (e, producerId) => {
     e.stopPropagation();
@@ -243,29 +230,17 @@ const BeatExplorePage = () => {
     handleOpenProducerProfile(producerId);
   };
 
-  // Modified: Handle play using the global audio context
+  // FIXED: Simplified play preview handler
   const handlePlayPreview = (event, beat) => {
-    event.stopPropagation(); // Prevent opening the modal
-
+    event.stopPropagation();
+    
     try {
-      // Check if valid audio URL exists
-      const audioUrl = beat.audioFile || beat.audioUrl || beat.audio;
-
-      if (!audioUrl) {
-        console.error("No audio URL for beat:", beat);
-        // Add a fallback URL if needed
-        beat = {
-          ...beat,
-          audioUrl: `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${Math.floor(Math.random() * 5) + 1}.mp3`
-        };
-      }
-
-      // Use the audio context's playTrack function
+      console.log('BeatExplorePage play clicked for beat:', getBeatId(beat));
       playTrack(beat);
 
       // Optionally increment play count via API
       try {
-        API.post(`/api/beats/${beat._id}/play`).catch(err => {
+        API.post(`/api/beats/${getBeatId(beat)}/play`).catch(err => {
           console.log("Could not update play count, ignoring:", err);
         });
       } catch (error) {
@@ -273,15 +248,13 @@ const BeatExplorePage = () => {
       }
     } catch (error) {
       console.error("Audio playback error:", error);
-      setAudioLoading(false);
     }
   };
 
   // Handle adding to cart
   const handleAddToCart = (event, beat) => {
-    event.stopPropagation(); // Prevent opening the modal
+    event.stopPropagation();
 
-    // Check if user is logged in
     const isLoggedIn = localStorage.getItem('token');
     if (!isLoggedIn) {
       alert("Please log in to add items to cart");
@@ -289,16 +262,14 @@ const BeatExplorePage = () => {
       return;
     }
 
-    // Show license selection modal instead of directly adding to cart
     setSelectedBeatForLicense(beat);
     setShowLicenseModal(true);
   };
 
-  // Add new function to handle license selection
+  // Handle license selection
   const handleLicenseSelect = (beatWithLicense) => {
-    // Check if already in cart (with same license)
     const isInCart = cartItems.some(item =>
-      item._id === beatWithLicense._id &&
+      getBeatId(item) === getBeatId(beatWithLicense) &&
       item.selectedLicense === beatWithLicense.selectedLicense
     );
 
@@ -307,12 +278,10 @@ const BeatExplorePage = () => {
       return;
     }
 
-    // Add to cart
     const updatedCart = [...cartItems, beatWithLicense];
     setCartItems(updatedCart);
     localStorage.setItem('cart', JSON.stringify(updatedCart));
 
-    // Close modal and show success message
     setShowLicenseModal(false);
     setSelectedBeatForLicense(null);
     alert(`${beatWithLicense.title} with ${beatWithLicense.licenseName} added to cart!`);
@@ -320,9 +289,8 @@ const BeatExplorePage = () => {
 
   // Toggle wishlist
   const toggleWishlist = (event, beat) => {
-    event.stopPropagation(); // Prevent opening the modal
+    event.stopPropagation();
 
-    // Check if user is logged in
     const isLoggedIn = localStorage.getItem('token');
     if (!isLoggedIn) {
       alert("Please log in to add items to wishlist");
@@ -330,16 +298,13 @@ const BeatExplorePage = () => {
       return;
     }
 
-    // Check if already in wishlist
-    const isInWishlist = wishlist.some(item => item._id === beat._id);
+    const isInWishlist = wishlist.some(item => getBeatId(item) === getBeatId(beat));
     let updatedWishlist;
 
     if (isInWishlist) {
-      // Remove from wishlist
-      updatedWishlist = wishlist.filter(item => item._id !== beat._id);
+      updatedWishlist = wishlist.filter(item => getBeatId(item) !== getBeatId(beat));
       alert(`${beat.title} removed from wishlist`);
     } else {
-      // Add to wishlist
       updatedWishlist = [...wishlist, beat];
       alert(`${beat.title} added to wishlist!`);
     }
@@ -348,13 +313,12 @@ const BeatExplorePage = () => {
     localStorage.setItem('wishlist', JSON.stringify(updatedWishlist));
   };
 
-  // ADD these new functions:
+  // Load more beats function
   const loadMoreBeats = useCallback(() => {
     if (loadingMore || !hasMore) return;
 
     setLoadingMore(true);
 
-    // Simulate API delay (remove this in production)
     setTimeout(() => {
       const filteredBeats = filterBeats();
       const currentLength = displayedBeats.length;
@@ -381,43 +345,33 @@ const BeatExplorePage = () => {
 
   const handleGenreSelect = (genre) => {
     setSelectedGenre(genre);
-
   };
 
   const handlePriceChange = (e) => {
     setPriceRange(parseFloat(e.target.value));
-
   };
 
   const handleSearch = (e) => {
     e.preventDefault();
-
-    // Search is already handled by the filterBeats function
   };
 
-  const toggleDisplayMode = () => {
-    setDisplayMode(displayMode === "grid" ? "list" : "grid");
-  };
-
-  // Handler for opening the single beat modal
   const handleBeatClick = (beat) => {
     setSelectedBeat(beat);
   };
 
-  // Handler for closing the single beat modal
   const handleCloseModal = () => {
     setSelectedBeat(null);
   };
 
-  // Check if a beat is in the wishlist
+  // FIXED: Use getBeatId for consistent checking
   const isInWishlist = (beatId) => {
-    return wishlist.some(item => item._id === beatId);
+    return wishlist.some(item => getBeatId(item) === beatId);
   };
 
-  // Check if a beat is in the cart
   const isInCart = (beatId) => {
-    return cartItems.some(item => item._id === beatId);
+    return cartItems.some(item => getBeatId(item) === beatId);
   };
+
   // Load initial beats when component mounts or filters change
   useEffect(() => {
     if (beats.length > 0 && !loading) {
@@ -434,7 +388,6 @@ const BeatExplorePage = () => {
       const scrollHeight = document.documentElement.scrollHeight;
       const clientHeight = window.innerHeight;
 
-      // Load more when user is 200px from bottom
       if (scrollTop + clientHeight >= scrollHeight - 200) {
         loadMoreBeats();
       }
@@ -443,6 +396,7 @@ const BeatExplorePage = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [loadMoreBeats, loadingMore, hasMore]);
+
   // UI rendering
   if (loading) {
     return (
@@ -456,9 +410,6 @@ const BeatExplorePage = () => {
     );
   }
 
-
-
-
   return (
     <div className={styles.exploreContainer}>
       <NavbarBeatExplore />
@@ -466,7 +417,6 @@ const BeatExplorePage = () => {
       <div className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>Explore Beats</h1>
 
-        {/* Search bar */}
         <form onSubmit={handleSearch} className={styles.searchForm}>
           <input
             type="text"
@@ -488,7 +438,6 @@ const BeatExplorePage = () => {
         </div>
 
         <div className={`${styles.filtersContainer} ${showFilters ? styles.showFilters : ''}`}>
-
           {/* Genre filter */}
           <div className={styles.filterGroup}>
             <h3 className={styles.filterLabel}>Genre</h3>
@@ -525,8 +474,7 @@ const BeatExplorePage = () => {
                 <button
                   key={index}
                   onClick={() => toggleTag(tagData.tag)}
-                  className={`${styles.tagFilterButton} ${selectedTags.includes(tagData.tag) ? styles.tagSelected : ''
-                    }`}
+                  className={`${styles.tagFilterButton} ${selectedTags.includes(tagData.tag) ? styles.tagSelected : ''}`}
                 >
                   {tagData.tag}
                   <span className={styles.tagCount}>({tagData.count})</span>
@@ -534,7 +482,6 @@ const BeatExplorePage = () => {
               ))}
             </div>
 
-            {/* Show selected tags */}
             {selectedTags.length > 0 && (
               <div className={styles.selectedTags}>
                 <span>Selected: </span>
@@ -569,241 +516,215 @@ const BeatExplorePage = () => {
         </div>
       </div>
 
-      {/* Error message */}
       {errorMessage && <div className={styles.errorMessage}>{errorMessage}</div>}
 
-      {/* Grid View */}
-      {
-        displayMode === "grid" ? (
-          <div className={styles.beatsGrid}>
-            {displayedBeats.length > 0 ? (
-              displayedBeats.map((beat) => {
-                // Check if this beat is currently playing using the audio context
-                const isThisPlaying =
-                  isPlaying &&
-                  currentTrack &&
-                  (currentTrack._id === beat._id || currentTrack.id === beat.id);
+      {/* FIXED: Consistent play state checking in both grid and list views */}
+      {displayMode === "grid" ? (
+        <div className={styles.beatsGrid}>
+          {displayedBeats.length > 0 ? (
+            displayedBeats.map((beat) => {
+              // FIXED: Use the context helper function consistently
+              const isThisPlaying = isBeatPlaying(beat);
 
-                return (
-                  <div
-                    key={beat._id}
-                    className={styles.beatCard}
-                    onClick={() => handleBeatClick(beat)}
-                  >
-                    <div className={styles.beatImageContainer}>
-                      <img
-                        src={beat.coverImage || "/default-cover.jpg"}
-                        alt={beat.title}
-                        className={styles.beatImage}
-                        onError={(e) => { e.target.src = "/default-cover.jpg" }}
-                      />
-                      <div className={styles.beatImageOverlay}>
-                        <button
-                          className={styles.playButton}
-                          onClick={(e) => handlePlayPreview(e, beat)}
-                        >
-                          {audioLoading && currentTrack?._id === beat._id ? (
-                            <div className={styles.loadingDots}></div>
-                          ) : isThisPlaying ? (
-                            <FaPause />
-                          ) : (
-                            <FaPlay />
-                          )}
-                        </button>
-                      </div>
+              return (
+                <div
+                  key={getBeatId(beat)}
+                  className={styles.beatCard}
+                  onClick={() => handleBeatClick(beat)}
+                >
+                  <div className={styles.beatImageContainer}>
+                    <img
+                      src={beat.coverImage || "/default-cover.jpg"}
+                      alt={beat.title}
+                      className={styles.beatImage}
+                      onError={(e) => { e.target.src = "/default-cover.jpg" }}
+                    />
+                    <div className={styles.beatImageOverlay}>
+                      <button
+                        className={styles.playButton}
+                        onClick={(e) => handlePlayPreview(e, beat)}
+                      >
+                        {isThisPlaying ? <FaPause /> : <FaPlay />}
+                      </button>
                     </div>
+                  </div>
 
-                    <div className={styles.beatInfo}>
-                      <h3 className={styles.beatTitle}>{beat.title}</h3>
+                  <div className={styles.beatInfo}>
+                    <h3 className={styles.beatTitle}>{beat.title}</h3>
+                    <span
+                      className={styles.producerName}
+                      onClick={(e) => handleProducerClick(e, beat.producer._id)}
+                      style={{ cursor: 'pointer', color: '#7B2CBF' }}
+                    >
+                      {beat.producer?.name || "Unknown Producer"}
+                      {beat.producer?.verificationStatus === "approved" && <span className={styles.verifiedBadge}>✓</span>}
+                    </span>
+                    <div className={styles.beatStats}>
+                      <span className={styles.beatPrice}>Rs {beat.price?.toFixed(2) || "0.00"}</span>
+                      <span className={styles.beatGenre}>{beat.genre}</span>
+                    </div>
+                  </div>
+
+                  <div className={styles.beatActions}>
+                    <button
+                      className={`${styles.cartButton} ${isInCart(getBeatId(beat)) ? styles.inCart : ''}`}
+                      onClick={(e) => handleAddToCart(e, beat)}
+                      disabled={isInCart(getBeatId(beat))}
+                    >
+                      <FaCartPlus /> {isInCart(getBeatId(beat)) ? 'In Cart' : 'Add to Cart'}
+                    </button>
+
+                    <button
+                      className={`${styles.wishlistButton} ${isInWishlist(getBeatId(beat)) ? styles.inWishlist : ''}`}
+                      onClick={(e) => toggleWishlist(e, beat)}
+                    >
+                      <FaHeart />
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className={styles.noBeats}>
+              <FaInfoCircle className={styles.noBeatsIcon} />
+              <p>No beats match your search criteria</p>
+              <button
+                className={styles.resetButton}
+                onClick={() => {
+                  setKeywords("");
+                  setSelectedGenre("All Genres");
+                  setPriceRange(maxPrice);
+                  setSelectedTags([]);
+                }}
+              >
+                Reset Filters
+              </button>
+            </div>
+          )}
+        </div>
+      ) : (
+        // FIXED: List View with consistent play state checking
+        <div className={styles.beatsList}>
+          {displayedBeats.length > 0 ? (
+            displayedBeats.map((beat) => {
+              // FIXED: Use the context helper function consistently
+              const isThisPlaying = isBeatPlaying(beat);
+
+              return (
+                <div
+                  key={getBeatId(beat)}
+                  className={styles.beatRow}
+                  onClick={() => handleBeatClick(beat)}
+                >
+                  <div className={styles.beatRowImageContainer}>
+                    <img
+                      src={beat.coverImage || "/default-cover.jpg"}
+                      alt={beat.title}
+                      className={styles.beatRowImage}
+                      onError={(e) => { e.target.src = "/default-cover.jpg" }}
+                    />
+                    <button
+                      className={styles.rowPlayButton}
+                      onClick={(e) => handlePlayPreview(e, beat)}
+                    >
+                      {isThisPlaying ? <FaPause /> : <FaPlay />}
+                    </button>
+                  </div>
+
+                  <div className={styles.beatRowInfo}>
+                    <h3 className={styles.beatRowTitle}>{beat.title}</h3>
+                    <div className={styles.beatRowProducer}>
                       <span
-                        className={styles.producerName}
                         onClick={(e) => handleProducerClick(e, beat.producer._id)}
                         style={{ cursor: 'pointer', color: '#7B2CBF' }}
                       >
                         {beat.producer?.name || "Unknown Producer"}
                         {beat.producer?.verificationStatus === "approved" && <span className={styles.verifiedBadge}>✓</span>}
                       </span>
-                      <div className={styles.beatStats}>
-                        <span className={styles.beatPrice}>Rs {beat.price?.toFixed(2) || "0.00"}</span>
-                        <span className={styles.beatGenre}>{beat.genre}</span>
-                      </div>
-                    </div>
-
-                    <div className={styles.beatActions}>
-                      <button
-                        className={`${styles.cartButton} ${isInCart(beat._id) ? styles.inCart : ''}`}
-                        onClick={(e) => handleAddToCart(e, beat)}
-                        disabled={isInCart(beat._id)}
-                      >
-                        <FaCartPlus /> {isInCart(beat._id) ? 'In Cart' : 'Add to Cart'}
-                      </button>
-
-                      <button
-                        className={`${styles.wishlistButton} ${isInWishlist(beat._id) ? styles.inWishlist : ''}`}
-                        onClick={(e) => toggleWishlist(e, beat)}
-                      >
-                        <FaHeart />
-                      </button>
                     </div>
                   </div>
-                );
-              })
-            ) : (
-              <div className={styles.noBeats}>
-                <FaInfoCircle className={styles.noBeatsIcon} />
-                <p>No beats match your search criteria</p>
-                <button
-                  className={styles.resetButton}
-                  onClick={() => {
-                    setKeywords("");
-                    setSelectedGenre("All Genres");
-                    setPriceRange(maxPrice);
-                    setSelectedTags([]);
-                  }}
-                >
-                  Reset Filters
-                </button>
-              </div>
-            )}
-          </div>
-        ) : (
-          // List View
-          <div className={styles.beatsList}>
-            {displayedBeats.length > 0 ? (
-              displayedBeats.map((beat) => {
-                // Check if this beat is currently playing using the audio context
-                const isThisPlaying =
-                  isPlaying &&
-                  currentTrack &&
-                  (currentTrack._id === beat._id || currentTrack.id === beat.id);
 
-                return (
-                  <div
-                    key={beat._id}
-                    className={styles.beatRow}
-                    onClick={() => handleBeatClick(beat)}
-                  >
-                    <div className={styles.beatRowImageContainer}>
-                      <img
-                        src={beat.coverImage || "/default-cover.jpg"}
-                        alt={beat.title}
-                        className={styles.beatRowImage}
-                        onError={(e) => { e.target.src = "/default-cover.jpg" }}
-                      />
-                      <button
-                        className={styles.rowPlayButton}
-                        onClick={(e) => handlePlayPreview(e, beat)}
-                      >
-                        {audioLoading && currentTrack?._id === beat._id ? (
-                          <div className={styles.loadingDots}></div>
-                        ) : isThisPlaying ? (
-                          <FaPause />
-                        ) : (
-                          <FaPlay />
-                        )}
-                      </button>
-                    </div>
+                  <div className={styles.beatRowGenre}>{beat.genre}</div>
 
-                    <div className={styles.beatRowInfo}>
-                      <h3 className={styles.beatRowTitle}>{beat.title}</h3>
-                      <div className={styles.beatRowProducer}>
-                        <span
-                          onClick={(e) => handleProducerClick(e, beat.producer._id)}
-                          style={{ cursor: 'pointer', color: '#7B2CBF' }}
-                        >
-                          {beat.producer?.name || "Unknown Producer"}
-                          {beat.producer?.verificationStatus === "approved" && <span className={styles.verifiedBadge}>✓</span>}
-                        </span>
-                      </div>
-                    </div>
+                  <div className={styles.beatRowPrice}>Rs {beat.price?.toFixed(2) || "0.00"}</div>
 
-                    <div className={styles.beatRowGenre}>{beat.genre}</div>
+                  <div className={styles.beatRowActions}>
+                    <button
+                      className={`${styles.rowCartButton} ${isInCart(getBeatId(beat)) ? styles.inCart : ''}`}
+                      onClick={(e) => handleAddToCart(e, beat)}
+                      disabled={isInCart(getBeatId(beat))}
+                    >
+                      <FaCartPlus />
+                    </button>
 
-                    <div className={styles.beatRowPrice}>Rs {beat.price?.toFixed(2) || "0.00"}</div>
-
-                    <div className={styles.beatRowActions}>
-                      <button
-                        className={`${styles.rowCartButton} ${isInCart(beat._id) ? styles.inCart : ''}`}
-                        onClick={(e) => handleAddToCart(e, beat)}
-                        disabled={isInCart(beat._id)}
-                      >
-                        <FaCartPlus />
-                      </button>
-
-                      <button
-                        className={`${styles.rowWishlistButton} ${isInWishlist(beat._id) ? styles.inWishlist : ''}`}
-                        onClick={(e) => toggleWishlist(e, beat)}
-                      >
-                        <FaHeart />
-                      </button>
-                    </div>
+                    <button
+                      className={`${styles.rowWishlistButton} ${isInWishlist(getBeatId(beat)) ? styles.inWishlist : ''}`}
+                      onClick={(e) => toggleWishlist(e, beat)}
+                    >
+                      <FaHeart />
+                    </button>
                   </div>
-                );
-              })
-            ) : (
-              <div className={styles.noBeats}>
-                <FaInfoCircle className={styles.noBeatsIcon} />
-                <p>No beats match your search criteria</p>
-                <button
-                  className={styles.resetButton}
-                  onClick={() => {
-                    setKeywords("");
-                    setSelectedGenre("All Genres");
-                    setPriceRange(maxPrice);
-                  }}
-                >
-                  Reset Filters
-                </button>
-              </div>
-            )}
-          </div>
-        )
-      }
+                </div>
+              );
+            })
+          ) : (
+            <div className={styles.noBeats}>
+              <FaInfoCircle className={styles.noBeatsIcon} />
+              <p>No beats match your search criteria</p>
+              <button
+                className={styles.resetButton}
+                onClick={() => {
+                  setKeywords("");
+                  setSelectedGenre("All Genres");
+                  setPriceRange(maxPrice);
+                  setSelectedTags([]);
+                }}
+              >
+                Reset Filters
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Single Beat Modal */}
-      {
-        selectedBeat && (
-          <SingleBeatModal
-            beat={selectedBeat}
-            isOpen={!!selectedBeat}
-            onClose={handleCloseModal}
-            onAddToCart={(beat) => handleAddToCart({ stopPropagation: () => { } }, beat)}
-            onToggleWishlist={(beat) => toggleWishlist({ stopPropagation: () => { } }, beat)}
-            isInCart={isInCart(selectedBeat._id)}
-            isInWishlist={isInWishlist(selectedBeat._id)}
-            isPlaying={currentTrack?._id === selectedBeat._id && isPlaying}
-            onPlayPause={(e) => handlePlayPreview(e, selectedBeat)}
-            isLoading={audioLoading && currentTrack?._id === selectedBeat._id}
-          />
-        )
-      }
+      {selectedBeat && (
+        <SingleBeatModal
+          beat={selectedBeat}
+          isOpen={!!selectedBeat}
+          onClose={handleCloseModal}
+          onAddToCart={(beat) => handleAddToCart({ stopPropagation: () => { } }, beat)}
+          onToggleWishlist={(beat) => toggleWishlist({ stopPropagation: () => { } }, beat)}
+          isInCart={isInCart(getBeatId(selectedBeat))}
+          isInWishlist={isInWishlist(getBeatId(selectedBeat))}
+          isPlaying={isBeatPlaying(selectedBeat)}
+          onPlayPause={(e) => handlePlayPreview(e, selectedBeat)}
+          isLoading={false}
+        />
+      )}
 
       {/* License Selection Modal */}
-      {
-        showLicenseModal && selectedBeatForLicense && (
-          <LicenseSelectionModal
-            beat={selectedBeatForLicense}
-            onClose={() => {
-              setShowLicenseModal(false);
-              setSelectedBeatForLicense(null);
-            }}
-            onSelectLicense={handleLicenseSelect}
-          />
-        )
-      }
+      {showLicenseModal && selectedBeatForLicense && (
+        <LicenseSelectionModal
+          beat={selectedBeatForLicense}
+          onClose={() => {
+            setShowLicenseModal(false);
+            setSelectedBeatForLicense(null);
+          }}
+          onSelectLicense={handleLicenseSelect}
+        />
+      )}
 
-      {
-        showProducerProfile && selectedProducerId && (
-          <ProducerProfile
-            producerId={selectedProducerId}
-            isOpen={showProducerProfile}
-            onClose={() => {
-              setShowProducerProfile(false);
-              setSelectedProducerId(null);
-            }}
-          />
-        )
-      }
+      {showProducerProfile && selectedProducerId && (
+        <ProducerProfile
+          producerId={selectedProducerId}
+          isOpen={showProducerProfile}
+          onClose={() => {
+            setShowProducerProfile(false);
+            setSelectedProducerId(null);
+          }}
+        />
+      )}
 
       {/* Infinite Scroll Loading Indicator */}
       {loadingMore && (
@@ -816,7 +737,7 @@ const BeatExplorePage = () => {
       {/* No More Beats Indicator */}
       {!hasMore && displayedBeats.length > 0 && (
         <div className={styles.noMoreBeats}>
-          <p> You've seen all the beats! </p>
+          <p>You've seen all the beats!</p>
         </div>
       )}
     </div>

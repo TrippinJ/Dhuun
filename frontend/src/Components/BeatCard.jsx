@@ -1,25 +1,31 @@
-// src/Components/BeatCard.jsx
+// frontend/src/Components/BeatCard.jsx
 import React from "react";
 import { FaPlay, FaPause, FaHeart, FaShoppingCart } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useAudio } from "../context/AudioContext";
 import { useLicense } from "../context/LicenseContext";
+import { getBeatId, isBeatPlaying } from "../utils/audioUtils";
 import styles from "../css/BeatCard.module.css";
 
 const BeatCard = ({ beat, onToggleWishlist, isInWishlist }) => {
-  const { currentTrack, isPlaying, playTrack } = useAudio();
+  const audioContext = useAudio();
+  const { playTrack, isBeatPlaying: checkIsBeatPlaying } = audioContext;
   const { openLicenseModal } = useLicense();
   const navigate = useNavigate();
   
-  // Check if this beat is currently playing
-  const isThisPlaying = 
-    isPlaying && 
-    currentTrack && 
-    (currentTrack._id === beat._id || currentTrack.id === beat.id);
+  // Use the context's helper function for consistency
+  const isThisPlaying = checkIsBeatPlaying(beat);
+  
+  // Debug logging (remove in production)
+  React.useEffect(() => {
+    const beatId = getBeatId(beat);
+    console.log(`BeatCard ${beatId} - isThisPlaying: ${isThisPlaying}`);
+  }, [isThisPlaying, beat]);
   
   // Handle play button click
   const handlePlayClick = (e) => {
     e.stopPropagation();
+    console.log('Play button clicked for beat:', getBeatId(beat));
     playTrack(beat);
   };
   
@@ -43,7 +49,7 @@ const BeatCard = ({ beat, onToggleWishlist, isInWishlist }) => {
         
         // Check if already in cart with same license
         const isInCart = cart.some(item => 
-          item._id === beatWithLicense._id &&
+          getBeatId(item) === getBeatId(beatWithLicense) &&
           item.selectedLicense === beatWithLicense.selectedLicense
         );
 
