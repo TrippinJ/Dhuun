@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Logo from "../Assets/DHUUN.png";
 import { BsCart2 } from "react-icons/bs";
-import { FaUser, FaHeart, FaUserCircle, FaCrown, FaSignOutAlt, FaCog } from "react-icons/fa";
+import { FaUser, FaHeart, FaUserCircle, FaCrown, FaSignOutAlt, FaCog, FaShoppingCart } from "react-icons/fa";
 import { HiOutlineBars3 } from "react-icons/hi2";
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
@@ -21,7 +21,7 @@ import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import DownloadIcon from "@mui/icons-material/Download";
 import { styled } from '@mui/material/styles';
-import "../css/Navbar.css";
+import "../css/Navbar.css"
 import { useAuth } from '../context/AuthContext';
 
 // Custom styled components for the sidebar menu
@@ -116,7 +116,7 @@ const Navbar = () => {
   // Function to navigate to dashboard based on user role
   const navigateToDashboard = () => {
     if (!user) return "/dashboard";
-    
+
     if (user.role === "admin") {
       return "/admin/dashboard";
     } else if (user.role === "seller") {
@@ -166,7 +166,8 @@ const Navbar = () => {
     {
       text: "Purchased",
       icon: <DownloadIcon />,
-      route: "/dashboard"
+      route: "/dashboard",
+      
     },
 
     {
@@ -206,32 +207,33 @@ const Navbar = () => {
         {isLoggedIn ? (
           <>
             {/* Wishlist Icon */}
-            <a
-              href="#"
+            <div
+
               onClick={(e) => {
                 e.preventDefault();
                 navigate("/favorites");
               }}
             >
-              <div className="icon-with-badge">
-                <FaHeart className="navbar-icon" />
-                {wishlistCount > 0 && <span className="badge">{wishlistCount}</span>}
+              <div className="cartIconContainer">
+                <FaHeart />
+                {wishlistCount > 0 && <span className="cartBadge">{wishlistCount}</span>}
               </div>
-            </a>
+            </div>
 
             {/* Cart Icon */}
-            <a
+            <div
               href="#"
               onClick={(e) => {
                 e.preventDefault();
                 navigate("/cart");
               }}
             >
-              <div className="icon-with-badge">
-                <BsCart2 className="navbar-cart-icon" />
-                {cartCount > 0 && <span className="badge">{cartCount}</span>}
+              <div className="cartIconContainer">
+                <FaShoppingCart />
+                {cartCount > 0 && <span className="cartBadge">{cartCount}</span>}
               </div>
-            </a>
+
+            </div>
 
             {/* User Profile Dropdown */}
             <div className="profile-dropdown" ref={dropdownRef}>

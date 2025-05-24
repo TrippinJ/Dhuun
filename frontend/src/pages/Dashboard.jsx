@@ -23,13 +23,14 @@ import UploadBeat from "../Components/UploadBeat";
 import PurchasedBeats from "../Components/PurchasedBeats";
 import SellerWallet from "../Components/SellerWallet";
 import EditProfile from "../Components/EditProfile";
+import SoldBeats from "../Components/SoldBeats";
 import DocumentVerification from '../Components/DocumentVerification';
 import { showToast } from '../utils/toast';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   const [user, setUser] = useState(null);
   const [beats, setBeats] = useState([]);
   const [showUploadForm, setShowUploadForm] = useState(false);
@@ -50,6 +51,7 @@ const Dashboard = () => {
     if (path === '/dashboard/wallet') return 'wallet';
     if (path === '/dashboard/purchases') return 'purchases';
     if (path === '/dashboard/verification') return 'verification';
+    if (path === '/dashboard/sales') return 'sales';
     return 'dashboard'; // default
   };
 
@@ -232,14 +234,14 @@ const Dashboard = () => {
   };
 
   const handleUploadComplete = (data) => {
-  if (data && data.beat) {
-    setBeats([data.beat, ...beats]);
-    showToast.uploadSuccess(data.beat.title);
-  } else {
-    showToast.success('Beat uploaded successfully!');
-  }
-  setShowUploadForm(false);
-};
+    if (data && data.beat) {
+      setBeats([data.beat, ...beats]);
+      showToast.uploadSuccess(data.beat.title);
+    } else {
+      showToast.success('Beat uploaded successfully!');
+    }
+    setShowUploadForm(false);
+  };
 
   const handleEditBeat = (beatId) => {
     // Implement edit functionality or navigate to edit page
@@ -258,12 +260,12 @@ const Dashboard = () => {
 
   const confirmDelete = async (beatId) => {
     try {
-    if (!beatId) {
-      console.error("Beat ID is undefined");
-      showToast.error("Cannot delete beat: Invalid ID");
-      setShowConfirmDelete(null);
-      return;
-    }
+      if (!beatId) {
+        console.error("Beat ID is undefined");
+        showToast.error("Cannot delete beat: Invalid ID");
+        setShowConfirmDelete(null);
+        return;
+      }
 
       const token = localStorage.getItem("token");
       await API.delete(`/api/beats/${beatId}`, {
@@ -320,6 +322,10 @@ const Dashboard = () => {
       return <DocumentVerification />;
     }
 
+    if (activePage === "sales") {
+      return <SoldBeats />;
+    }
+
     // Return different content based on user role
     if (user?.role === "seller") {
       return (
@@ -335,7 +341,7 @@ const Dashboard = () => {
             </div>
             <div className={styles.statCard}>
               <h3>Total Followers</h3>
-              <p>{user.followersCount || 0}</p>  
+              <p>{user.followersCount || 0}</p>
             </div>
             <div className={styles.statCard}>
               <h3>Upload Limit</h3>
@@ -573,6 +579,14 @@ const Dashboard = () => {
                   </Link>
                 </li>
               )}
+
+              {user?.role === "seller" && (
+                <li className={activePage === "sales" ? styles.active : ""}>
+                  <Link to="/dashboard/sales" className={styles.navLink}>
+                    <FaChartLine /> Sales & Analytics
+                  </Link>
+                </li>
+              )}
             </ul>
           </nav>
         </aside>
@@ -620,8 +634,8 @@ const Dashboard = () => {
                   <h2>Seller Wallet</h2>
                 )}
 
-                {activePage === "purchases" && (
-                  <h2>Purchased Beats</h2>
+                {activePage === "sales" && (
+                  <h2>Sales & Analytics</h2>
                 )}
 
                 {activePage === "verification" && (

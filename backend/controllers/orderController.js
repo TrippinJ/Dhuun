@@ -3,7 +3,7 @@ import Order from '../models/order.js';
 import Beat from '../models/beat.js';
 import User from '../models/user.js';
 import { verifyPayment } from '../utils/khaltiPayment.js';
-import { sendOrderConfirmation } from '../utils/emailService.js';
+import { sendOrderConfirmation, sendBeatPurchased } from '../utils/emailService.js';
 import { addTransaction } from './walletController.js';
 
 // Create a new order
@@ -25,6 +25,9 @@ export const createOrder = async (req, res) => {
       }
     }
 
+    // Get buyer information for notifications
+    const buyer = await User.findById(req.user.id);
+
     // Create the order
     const order = new Order({
       user: req.user.id,
@@ -44,8 +47,8 @@ export const createOrder = async (req, res) => {
     // Process each item in the order
     for (const item of items) {
       try {
-        // Get beat details
-        const beat = await Beat.findById(item.beatId);
+        // Get beat details with producer information
+        const beat = await Beat.findById(item.beatId).populate('producer');
 
         if (!beat) {
           console.error(`Beat not found: ${item.beatId}`);
@@ -61,14 +64,14 @@ export const createOrder = async (req, res) => {
         // Process payment to seller
         if (beat.producer) {
           // Get seller details and revenue share percentage
-          const seller = await User.findById(beat.producer);
+          const seller = await User.findById(beat.producer._id);
           const revenueShare = seller?.subscription?.revenueShare || 60; // Default to 60%
 
           // Calculate seller's amount
           const sellerAmount = (item.price * revenueShare) / 100;
 
           // Credit seller's wallet
-          await addTransaction(beat.producer, {
+          await addTransaction(beat.producer._id, {
             type: 'sale',
             amount: sellerAmount,
             description: `Sale of "${beat.title}" (${item.license} license)`,
@@ -76,7 +79,27 @@ export const createOrder = async (req, res) => {
             status: 'completed'
           });
 
-          console.log(`Credited $${sellerAmount} to seller ${beat.producer} for beat "${beat.title}"`);
+          console.log(`Credited $${sellerAmount} to seller ${beat.producer._id} for beat "${beat.title}"`);
+
+          // Send beat sale notification email to producer
+          try {
+            await sendBeatPurchased({
+              producerEmail: seller.email,
+              producerName: seller.name,
+              beatTitle: beat.title,
+              buyerName: buyer.name,
+              license: item.license || 'Basic',
+              salePrice: item.price,
+              earnings: sellerAmount,
+              revenueShare: revenueShare,
+              orderId: order._id,
+              saleDate: new Date()
+            });
+            console.log(`Beat sale notification sent to producer: ${seller.email}`);
+          } catch (emailError) {
+            console.error('Error sending beat sale notification:', emailError);
+            // Don't fail the order if email fails
+          }
         }
 
         const licenseType = item.license?.toLowerCase() || '';
@@ -108,13 +131,13 @@ export const createOrder = async (req, res) => {
     // Send order confirmation email
     try {
       await sendOrderConfirmation({
-        customerEmail: req.user.email,
+        customerEmail: req.user.email || buyer.email,
         orderId: order._id,
         items,
         totalAmount,
-        userName: req.user.name
+        userName: req.user.name || buyer.name
       });
-      console.log(`Order confirmation email sent to ${req.user.email}`);
+      console.log(`Order confirmation email sent to ${req.user.email || buyer.email}`);
     } catch (emailError) {
       console.error('Error sending order confirmation email:', emailError);
       // Continue with order creation even if email fails
@@ -204,5 +227,68 @@ export const verifyPaymentOrder = async (req, res) => {
       message: 'Failed to verify payment',
       error: error.message
     });
+  }
+};
+
+// NEW: Get sales analytics for producer
+export const getProducerSalesAnalytics = async (req, res) => {
+  try {
+    // Get all orders containing beats by this producer
+    const orders = await Order.find({
+      paymentStatus: 'Completed'
+    }).populate({
+      path: 'items.beat',
+      match: { producer: req.user.id },
+      select: 'title producer'
+    });
+
+    // Filter orders that actually contain beats by this producer
+    const producerOrders = orders.filter(order => 
+      order.items.some(item => item.beat && item.beat.producer.toString() === req.user.id)
+    );
+
+    // Calculate analytics
+    let totalSales = 0;
+    let totalEarnings = 0;
+    const beatSales = {};
+    const monthlySales = {};
+
+    for (const order of producerOrders) {
+      const month = order.createdAt.toISOString().slice(0, 7); // YYYY-MM format
+      
+      for (const item of order.items) {
+        if (item.beat && item.beat.producer.toString() === req.user.id) {
+          totalSales++;
+          
+          // Calculate earnings (assuming revenue share from user subscription)
+          const user = await User.findById(req.user.id);
+          const revenueShare = user?.subscription?.revenueShare || 60;
+          const earnings = (item.price * revenueShare) / 100;
+          totalEarnings += earnings;
+          
+          // Track beat sales
+          const beatTitle = item.beat.title;
+          beatSales[beatTitle] = (beatSales[beatTitle] || 0) + 1;
+          
+          // Track monthly sales
+          monthlySales[month] = (monthlySales[month] || 0) + 1;
+        }
+      }
+    }
+
+    // Get top performing beat
+    const topBeat = Object.entries(beatSales)
+      .sort(([,a], [,b]) => b - a)[0];
+
+    res.json({
+      totalSales,
+      totalEarnings: totalEarnings.toFixed(2),
+      topBeat: topBeat ? { title: topBeat[0], sales: topBeat[1] } : null,
+      monthlySales,
+      beatSales
+    });
+  } catch (error) {
+    console.error('Error fetching producer analytics:', error);
+    res.status(500).json({ message: 'Failed to fetch analytics' });
   }
 };

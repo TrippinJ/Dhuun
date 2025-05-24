@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API from '../api/api';
 import styles from '../css/Subscription.module.css';
-import { FaCheck, FaTimes, FaArrowLeft, FaCrown } from 'react-icons/fa';
+import { FaCheck, FaTimes, FaArrowLeft, FaCrown, FaGlobe } from 'react-icons/fa';
 import NavbarBeatExplore from '../Components/NavbarBeatExplore';
 
 const Subscription = () => {
@@ -13,6 +13,12 @@ const Subscription = () => {
   const navigate = useNavigate();
   const [processingPayment, setProcessingPayment] = useState(false);
   const [verifyingPayment, setVerifyingPayment] = useState(false);
+  
+  // NEW: Payment method selection states
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [selectedPrice, setSelectedPrice] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState('khalti');
 
   // Handle Khalti payment initiation
   const handleKhaltiPayment = async (plan, price) => {
@@ -81,6 +87,75 @@ const Subscription = () => {
     }
   };
 
+  // NEW: Handle Stripe payment initiation
+  const handleStripePayment = async (plan, price) => {
+    if (!plan || !price) {
+      setError("Invalid subscription plan");
+      return;
+    }
+
+    try {
+      setProcessingPayment(true);
+      setError(null);
+
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("You must be logged in to purchase a subscription");
+        navigate("/login");
+        return;
+      }
+
+      // Store plan information in localStorage
+      localStorage.setItem("selectedPlan", plan);
+      localStorage.setItem("planPrice", price.toString());
+
+      // Prepare the items for Stripe payment
+      const items = [
+        {
+          beatId: null, // Not applicable for subscriptions
+          license: plan,
+          licenseName: `${plan} Subscription Plan`,
+          beatName: `${plan} Monthly Subscription`,
+          price: price
+        }
+      ];
+
+      // Initiate Stripe payment session
+      const response = await API.post(
+        "/api/payments/create-stripe-session",
+        {
+          amount: price,
+          items,
+          successUrl: window.location.origin + "/subscription?payment=success",
+          cancelUrl: window.location.origin + "/subscription?payment=cancelled"
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      if (response.data.success && response.data.sessionUrl) {
+        // Store session ID for verification
+        localStorage.setItem("stripeSessionId", response.data.sessionId);
+
+        // Redirect to Stripe checkout
+        window.location.href = response.data.sessionUrl;
+      } else {
+        setError("Failed to initiate Stripe payment. Please try again.");
+      }
+    } catch (error) {
+      console.error("Stripe payment error:", error);
+      setError(
+        error.response?.data?.message ||
+          "Stripe payment failed. Please try again later."
+      );
+    } finally {
+      setProcessingPayment(false);
+    }
+  };
+
   // Handle payment verification when returning from Khalti
   useEffect(() => {
     const handlePaymentReturn = async () => {
@@ -88,80 +163,139 @@ const Subscription = () => {
       const returnedPidx = params.get("pidx");
       const txnId = params.get("txnId") || params.get("transaction_id");
       const status = params.get("status");
+      const paymentStatus = params.get("payment");
+      const sessionId = params.get("session_id");
 
-      // Only proceed if we have a pidx in the URL (returned from Khalti)
-      if (!returnedPidx) {
-        return;
-      }
+      // Handle Stripe return
+      if (paymentStatus === "success" || sessionId) {
+        try {
+          setVerifyingPayment(true);
+          setLoading(true);
 
-      try {
-        setVerifyingPayment(true);
-        setLoading(true);
-        
-        // Get stored values from localStorage
-        const storedPidx = localStorage.getItem("pidx");
-        const selectedPlan = localStorage.getItem("selectedPlan");
-        
-        console.log("Payment return detected:", { 
-          returnedPidx, 
-          txnId, 
-          status, 
-          storedPidx, 
-          selectedPlan 
-        });
-        
-        // Basic validation
-        if (returnedPidx !== storedPidx) {
-          setError("Invalid payment session. Please try again.");
-          setVerifyingPayment(false);
-          setLoading(false);
-          return;
-        }
+          const storedSessionId = localStorage.getItem("stripeSessionId") || sessionId;
+          const selectedPlan = localStorage.getItem("selectedPlan");
+          
+          console.log("Stripe payment return detected:", { 
+            sessionId: storedSessionId, 
+            selectedPlan 
+          });
 
-        const token = localStorage.getItem("token");
-        if (!token) {
-          setError("Authentication required. Please log in again.");
-          setTimeout(() => navigate("/login"), 2000);
-          return;
-        }
+          const token = localStorage.getItem("token");
+          if (!token) {
+            setError("Authentication required. Please log in again.");
+            setTimeout(() => navigate("/login"), 2000);
+            return;
+          }
 
-        // Verify payment with backend
-        const verifyResponse = await API.post(
-          "/api/payments/verify",
-          { pidx: returnedPidx },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-
-        console.log("Payment verification response:", verifyResponse.data);
-
-        if (verifyResponse.data.success || verifyResponse.data.status === "Completed") {
-          // Payment was successful, update subscription
-          const updateResponse = await API.post(
-            "/api/subscription/update",
-            { plan: selectedPlan },
+          // Verify Stripe payment
+          const verifyResponse = await API.post(
+            "/api/payments/verify-stripe-session",
+            { sessionId: storedSessionId },
             { headers: { Authorization: `Bearer ${token}` } }
           );
 
-          setSubscription(updateResponse.data.subscription);
-          setSuccessMessage(`${selectedPlan} plan activated successfully!`);
-          
-          // Clean up localStorage
-          localStorage.removeItem("selectedPlan");
-          localStorage.removeItem("pidx");
-          localStorage.removeItem("planPrice");
-        } else {
-          // Payment verification failed
-          setError("Payment verification failed. Please try again or contact support.");
-        }
+          console.log("Stripe verification response:", verifyResponse.data);
 
-        // Clean up URL parameters
-        window.history.replaceState({}, document.title, "/subscription");
-      } catch (error) {
-        console.error("Error processing payment return:", error);
-        setError("Failed to process payment. Please contact support.");
-      } finally {
-        setVerifyingPayment(false);
-        setLoading(false);
+          if (verifyResponse.data.success && verifyResponse.data.status === "complete") {
+            // Payment was successful, update subscription
+            const updateResponse = await API.post(
+              "/api/subscription/update",
+              { plan: selectedPlan },
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            setSubscription(updateResponse.data.subscription);
+            setSuccessMessage(`${selectedPlan} plan activated successfully via Stripe!`);
+            
+            // Clean up localStorage
+            localStorage.removeItem("selectedPlan");
+            localStorage.removeItem("stripeSessionId");
+            localStorage.removeItem("planPrice");
+          } else {
+            setError("Stripe payment verification failed. Please contact support.");
+          }
+
+          // Clean up URL parameters
+          window.history.replaceState({}, document.title, "/subscription");
+        } catch (error) {
+          console.error("Error processing Stripe return:", error);
+          setError("Failed to process Stripe payment. Please contact support.");
+        } finally {
+          setVerifyingPayment(false);
+          setLoading(false);
+        }
+      }
+      // Handle Khalti return (existing logic)
+      else if (returnedPidx) {
+        try {
+          setVerifyingPayment(true);
+          setLoading(true);
+          
+          // Get stored values from localStorage
+          const storedPidx = localStorage.getItem("pidx");
+          const selectedPlan = localStorage.getItem("selectedPlan");
+          
+          console.log("Khalti payment return detected:", { 
+            returnedPidx, 
+            txnId, 
+            status, 
+            storedPidx, 
+            selectedPlan 
+          });
+          
+          // Basic validation
+          if (returnedPidx !== storedPidx) {
+            setError("Invalid payment session. Please try again.");
+            setVerifyingPayment(false);
+            setLoading(false);
+            return;
+          }
+
+          const token = localStorage.getItem("token");
+          if (!token) {
+            setError("Authentication required. Please log in again.");
+            setTimeout(() => navigate("/login"), 2000);
+            return;
+          }
+
+          // Verify payment with backend
+          const verifyResponse = await API.post(
+            "/api/payments/verify",
+            { pidx: returnedPidx },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+
+          console.log("Khalti verification response:", verifyResponse.data);
+
+          if (verifyResponse.data.success || verifyResponse.data.status === "Completed") {
+            // Payment was successful, update subscription
+            const updateResponse = await API.post(
+              "/api/subscription/update",
+              { plan: selectedPlan },
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            setSubscription(updateResponse.data.subscription);
+            setSuccessMessage(`${selectedPlan} plan activated successfully via Khalti!`);
+            
+            // Clean up localStorage
+            localStorage.removeItem("selectedPlan");
+            localStorage.removeItem("pidx");
+            localStorage.removeItem("planPrice");
+          } else {
+            // Payment verification failed
+            setError("Payment verification failed. Please try again or contact support.");
+          }
+
+          // Clean up URL parameters
+          window.history.replaceState({}, document.title, "/subscription");
+        } catch (error) {
+          console.error("Error processing Khalti return:", error);
+          setError("Failed to process payment. Please contact support.");
+        } finally {
+          setVerifyingPayment(false);
+          setLoading(false);
+        }
       }
     };
 
@@ -214,7 +348,7 @@ const Subscription = () => {
     fetchSubscription();
   }, [fetchSubscription]);
 
-  // Handle plan selection
+  // NEW: Handle plan selection with payment method choice
   const handleSelectPlan = async (plan, price) => {
     try {
       setError(null);
@@ -246,13 +380,26 @@ const Subscription = () => {
         return;
       }
   
-      // For paid plans, redirect to Khalti payment flow
-      await handleKhaltiPayment(plan, price);
+      // For paid plans, show payment method selection modal
+      setSelectedPlan(plan);
+      setSelectedPrice(price);
+      setShowPaymentModal(true);
   
     } catch (err) {
       console.error("Error selecting plan:", err);
       setError("Failed to select plan. Please try again later.");
       setTimeout(() => setError(""), 3000);
+    }
+  };
+
+  // NEW: Handle payment method selection
+  const handlePaymentMethodSelect = async () => {
+    setShowPaymentModal(false);
+    
+    if (paymentMethod === 'khalti') {
+      await handleKhaltiPayment(selectedPlan, selectedPrice);
+    } else if (paymentMethod === 'stripe') {
+      await handleStripePayment(selectedPlan, selectedPrice);
     }
   };
 
@@ -436,6 +583,56 @@ const Subscription = () => {
           ))}
         </div>
 
+        {/* NEW: Payment Method Selection Modal */}
+        {showPaymentModal && (
+          <div className={styles.modalOverlay}>
+            <div className={styles.paymentModal}>
+              <h3>Choose Payment Method</h3>
+              <p>Select how you'd like to pay for your {selectedPlan} subscription (Rs {selectedPrice}/month)</p>
+              
+              <div className={styles.paymentMethods}>
+                <div 
+                  className={`${styles.paymentMethod} ${paymentMethod === 'khalti' ? styles.selected : ''}`}
+                  onClick={() => setPaymentMethod('khalti')}
+                >
+                  <div className={styles.methodIcon}>🇳🇵</div>
+                  <div className={styles.methodInfo}>
+                    <h4>Khalti</h4>
+                    <p>Pay using Khalti digital wallet (Nepal)</p>
+                  </div>
+                </div>
+                
+                <div 
+                  className={`${styles.paymentMethod} ${paymentMethod === 'stripe' ? styles.selected : ''}`}
+                  onClick={() => setPaymentMethod('stripe')}
+                >
+                  <div className={styles.methodIcon}><FaGlobe /></div>
+                  <div className={styles.methodInfo}>
+                    <h4>Stripe</h4>
+                    <p>Pay with Credit/Debit card (International)</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.modalActions}>
+                <button 
+                  className={styles.cancelButton}
+                  onClick={() => setShowPaymentModal(false)}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className={styles.confirmButton}
+                  onClick={handlePaymentMethodSelect}
+                  disabled={processingPayment}
+                >
+                  {processingPayment ? "Processing..." : `Pay with ${paymentMethod === 'khalti' ? 'Khalti' : 'Stripe'}`}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* FAQ Section */}
         <div className={styles.faqSection}>
           <h2>Frequently Asked Questions</h2>
@@ -458,12 +655,12 @@ const Subscription = () => {
                 You can cancel anytime by downgrading to the Free plan. Your paid features will remain active until the end of your current billing period.
               </p>
             </div>
-            <div className={styles.faqItem}>
+            {/* <div className={styles.faqItem}>
               <h3>What payment methods are accepted?</h3>
               <p>
-                We currently accept payments through Khalti. More payment options will be available soon.
+                We accept payments through Khalti (for Nepal users) and Stripe (international credit/debit cards). Both methods are secure and encrypted.
               </p>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

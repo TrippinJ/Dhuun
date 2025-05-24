@@ -404,6 +404,213 @@
   margin-bottom: 20px;
 }
 
+/* Add these styles to your existing Subscription.module.css */
+
+/* Modal Overlay */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+/* Payment Modal */
+.paymentModal {
+  background-color: #1E1E1E;
+  border-radius: 15px;
+  padding: 30px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  border: 1px solid #333333;
+  animation: slideIn 0.3s ease;
+}
+
+.paymentModal h3 {
+  color: #FFFFFF;
+  margin-bottom: 10px;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.paymentModal p {
+  color: #AAAAAA;
+  margin-bottom: 25px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* Payment Methods Container */
+.paymentMethods {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+/* Individual Payment Method */
+.paymentMethod {
+  display: flex;
+  align-items: center;
+  padding: 20px;
+  border: 2px solid #333333;
+  border-radius: 12px;
+  background-color: rgba(123, 44, 191, 0.05);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.paymentMethod:hover {
+  border-color: #7B2CBF;
+  background-color: rgba(123, 44, 191, 0.1);
+}
+
+.paymentMethod.selected {
+  border-color: #7B2CBF;
+  background-color: rgba(123, 44, 191, 0.15);
+  box-shadow: 0 0 0 2px rgba(123, 44, 191, 0.3);
+}
+
+/* Payment Method Icon */
+.methodIcon {
+  font-size: 2rem;
+  margin-right: 15px;
+  min-width: 40px;
+  text-align: center;
+}
+
+.methodIcon svg {
+  color: #7B2CBF;
+}
+
+/* Payment Method Info */
+.methodInfo {
+  flex: 1;
+}
+
+.methodInfo h4 {
+  color: #FFFFFF;
+  margin: 0 0 5px 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.methodInfo p {
+  color: #AAAAAA;
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  text-align: left;
+}
+
+/* Modal Actions */
+.modalActions {
+  display: flex;
+  gap: 15px;
+  justify-content: flex-end;
+  margin-top: 25px;
+}
+
+.cancelButton,
+.confirmButton {
+  padding: 12px 25px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 100px;
+}
+
+.cancelButton {
+  background-color: transparent;
+  color: #AAAAAA;
+  border: 1px solid #333333;
+}
+
+.cancelButton:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #FFFFFF;
+}
+
+.confirmButton {
+  background-color: #7B2CBF;
+  color: #FFFFFF;
+}
+
+.confirmButton:hover:not(:disabled) {
+  background-color: #9c42e5;
+  transform: translateY(-2px);
+}
+
+.confirmButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { 
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .paymentModal {
+    padding: 20px;
+    margin: 20px;
+    width: calc(100% - 40px);
+  }
+  
+  .paymentMethod {
+    padding: 15px;
+  }
+  
+  .methodIcon {
+    font-size: 1.5rem;
+    min-width: 35px;
+    margin-right: 12px;
+  }
+  
+  .methodInfo h4 {
+    font-size: 1.1rem;
+  }
+  
+  .methodInfo p {
+    font-size: 0.85rem;
+  }
+  
+  .modalActions {
+    flex-direction: column;
+  }
+  
+  .cancelButton,
+  .confirmButton {
+    width: 100%;
+  }
+}
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-10px); }
   to { opacity: 1; transform: translateY(0); }

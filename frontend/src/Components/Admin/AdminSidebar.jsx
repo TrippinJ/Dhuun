@@ -41,8 +41,7 @@ const AdminSidebar = ({ activeSection, setActiveSection }) => {
   return (
     <div className={styles.sidebar}>
       <div className={styles.logoContainer}>
-        <img src={Logo} alt="Dhuun Logo" onClick={() => navigate("/")} 
-        style={{ cursor: "pointer", width: "100px", height: "auto" }}/>
+        <img src={Logo} alt="Dhuun Logo" />
         {/* <h3>Admin Panel</h3> */}
       </div>
 

@@ -4,7 +4,7 @@ import styles from "../css/NavbarBeatExplore.module.css";
 import Logo from "../Assets/DHUUN.png"
 import { FaShoppingCart, FaUserCircle, FaHeart, FaSignOutAlt, FaCog, FaCrown, FaDownload } from 'react-icons/fa';
 import { useSettings } from '../context/SettingsContext';
-import { useAuth } from '../context/AuthContext'; 
+import { useAuth } from '../context/AuthContext';
 import { useWishlist } from '../context/WishlistContext';
 
 const NavbarBeatExplore = () => {
@@ -14,7 +14,7 @@ const NavbarBeatExplore = () => {
   const [cartCount, setCartCount] = useState(0);
   const { settings } = useSettings();
   const { getWishlistCount } = useWishlist();
-  
+
   // Replace manual auth state with AuthContext
   const { user, isLoggedIn, logout } = useAuth();
 
@@ -45,7 +45,7 @@ const NavbarBeatExplore = () => {
     };
   }, []);
 
- 
+
 
   // Handle clicks outside the dropdown to close it
   useEffect(() => {
@@ -76,14 +76,14 @@ const NavbarBeatExplore = () => {
   // Updated function to handle dashboard navigation based on role
   const navigateToDashboard = () => {
     if (!user) return;
-    
+
     if (user.role === "admin") {
       navigate("/admin/dashboard");
     } else if (user.role === "seller") {
       navigate("/dashboard");
     } else {
       // For buyers or unspecified roles
-      navigate("/dashboard");
+      navigate("/dashboard/purchases");
     }
   };
 
@@ -99,18 +99,24 @@ const NavbarBeatExplore = () => {
         text: "Wishlist",
         icon: <FaHeart className={styles.dropdownIcon} />,
         onClick: () => navigate("/favorites")
-      },
-      {
-        text: "Purchased",
-        icon: <FaDownload className={styles.dropdownIcon} />,
-        onClick: () => navigate("/dashboard/purchased")
-      },
-      {
-        text: "Logout",
-        icon: <FaSignOutAlt className={styles.dropdownIcon} />,
-        onClick: handleLogout
       }
     ];
+
+    // "Purchased" only for non-seller roles
+    if (user?.role !== "seller") {
+      baseItems.push({
+        text: "Purchased",
+        icon: <FaDownload className={styles.dropdownIcon} />,
+        onClick: () => navigate("/dashboard/purchases")
+      });
+    }
+
+    // Add logout for everyone
+    baseItems.push({
+      text: "Logout",
+      icon: <FaSignOutAlt className={styles.dropdownIcon} />,
+      onClick: handleLogout
+    });
 
     // Only add Upgrade Plan for seller role
     if (user?.role === "seller") {
@@ -121,18 +127,18 @@ const NavbarBeatExplore = () => {
           icon: <FaCrown className={styles.dropdownIcon} />,
           onClick: () => navigate("/subscription")
         },
-        ...baseItems.slice(1) // Rest of the items
+        ...baseItems.slice(1) // Wishlist and Logout (no Purchased)
       ];
     }
 
-    return baseItems;
+    return baseItems; // For buyers: Dashboard, Wishlist, Purchased, Logout
   };
 
   return (
     <nav className={styles.navbar}>
       <div className={styles.navLogo}>
         <img src={settings.logoUrl || Logo} alt="Dhuun Logo" onClick={() => navigate("/")}
-        style={{ cursor: "pointer", width: "100px", height: "auto" }}
+          style={{ cursor: "pointer", width: "100px", height: "auto" }}
           onError={(e) => {
             console.error('Logo failed to load:', e.target.src);
             e.target.src = Logo;
@@ -144,7 +150,7 @@ const NavbarBeatExplore = () => {
         <a href="#" onClick={(e) => { e.preventDefault(); navigate("/chooserole"); }} className={styles.navLink}>Sell Beats</a>
         <a href="#" onClick={(e) => { e.preventDefault(); navigate("/creator-community"); }} className={styles.navLink}>Community</a>
 
-        
+
       </div>
 
       <div className={styles.navActions}>

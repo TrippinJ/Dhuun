@@ -61,6 +61,40 @@
   gap: 1.5rem;
 }
 
+.cartIconContainer {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  color: #ffffff;
+}
+
+.cartIconContainer:hover {
+  background-color: rgba(123, 44, 191, 0.1);
+  color: #7B2CBF;
+  transform: scale(1.05);
+}
+
+.cartBadge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: #7B2CBF;
+  color: white;
+  font-size: 0.7rem;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  border: 2px solid #121212;
+}
+
+
 .navbar-cart-icon,
 .navbar-icon {
   font-size: 1.3rem;

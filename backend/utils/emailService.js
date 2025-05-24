@@ -73,9 +73,10 @@ export const sendOTPEmail = async (email, otp, name = 'User') => {
  * Send welcome email after successful registration
  * @param {string} email - Recipient email
  * @param {string} name - User's name
+ * @param {string} role - User's role
  * @returns {Promise} - Email sending result
  */
-export const sendWelcomeEmail = async (email, name = 'User') => {
+export const sendWelcomeEmail = async (email, name = 'User', role = 'buyer') => {
   try {
     const mailOptions = {
       from: `"Dhuun Music" <${process.env.EMAIL_FROM}>`,
@@ -98,8 +99,6 @@ export const sendWelcomeEmail = async (email, name = 'User') => {
               ${role === 'seller' ? '<li><strong>Upload Your Beats</strong> - Start selling your creations to artists worldwide</li>' : ''}
             </ul>
             
-            <p style="margin-top: 20px;">If you have any questions or need assistance, feel free to reach out to our support team.</p>
-            
             <div style="text-align: center; margin-top: 30px;">
               <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/BeatExplorePage" 
                 style="background-color: #7B2CBF; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
@@ -110,11 +109,6 @@ export const sendWelcomeEmail = async (email, name = 'User') => {
           
           <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #666; font-size: 12px; text-align: center;">
             <p>© ${new Date().getFullYear()} Dhuun. All rights reserved.</p>
-            <p>
-              <a href="#" style="color: #7B2CBF; text-decoration: none; margin: 0 10px;">Instagram</a> | 
-              <a href="#" style="color: #7B2CBF; text-decoration: none; margin: 0 10px;">Twitter</a> | 
-              <a href="#" style="color: #7B2CBF; text-decoration: none; margin: 0 10px;">YouTube</a>
-            </p>
           </div>
         </div>
       `
@@ -125,6 +119,94 @@ export const sendWelcomeEmail = async (email, name = 'User') => {
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error('Error sending welcome email:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Send subscription confirmation email
+ * @param {Object} subscriptionDetails - Subscription information
+ * @returns {Promise} - Email sending result
+ */
+export const sendSubscriptionConfirmationEmail = async (subscriptionDetails) => {
+  try {
+    const { 
+      userEmail, 
+      userName = 'Valued Customer', 
+      plan, 
+      price, 
+      paymentMethod,
+      transactionId,
+      expiryDate,
+      amountPaid 
+    } = subscriptionDetails;
+    
+    const formattedExpiryDate = expiryDate ? new Date(expiryDate).toLocaleDateString() : 'Never';
+    const displayPrice = amountPaid || price;
+
+    const planFeatures = {
+      Standard: [
+        '50 uploads per month',
+        '80% revenue share',
+        'Priority support'
+      ],
+      Pro: [
+        'Unlimited uploads',
+        '95% revenue share',
+        'Priority support',
+        'Advanced analytics'
+      ]
+    };
+
+    const mailOptions = {
+      from: `"Dhuun Music" <${process.env.EMAIL_FROM}>`,
+      to: userEmail,
+      subject: `Your Dhuun ${plan} Subscription is Active!`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h1 style="color: #7B2CBF;">Dhuun</h1>
+          </div>
+          <div style="margin-bottom: 20px;">
+            <h2>Subscription Confirmed! 🎉</h2>
+            <p>Hi ${userName},</p>
+            <p>Your <strong>${plan}</strong> subscription has been successfully activated!</p>
+            
+            <div style="margin: 20px 0; background-color: #f9f9f9; padding: 20px; border-radius: 5px; border-left: 4px solid #7B2CBF;">
+              <h3 style="margin-top: 0; color: #7B2CBF;">Subscription Details</h3>
+              <p><strong>Plan:</strong> ${plan}</p>
+              <p><strong>Amount Paid:</strong> Rs ${displayPrice}</p>
+              <p><strong>Payment Method:</strong> ${paymentMethod === 'stripe' ? 'Credit/Debit Card' : 'Khalti'}</p>
+              <p><strong>Renewal Date:</strong> ${formattedExpiryDate}</p>
+            </div>
+            
+            <div style="margin: 20px 0;">
+              <h3 style="color: #7B2CBF;">Your ${plan} Plan Includes:</h3>
+              <ul style="padding-left: 20px; line-height: 1.6;">
+                ${planFeatures[plan]?.map(feature => `<li>${feature}</li>`).join('') || '<li>Premium features</li>'}
+              </ul>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+              <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard" 
+                style="background-color: #7B2CBF; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                Go to Dashboard
+              </a>
+            </div>
+          </div>
+          
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #666; font-size: 12px;">
+            <p>© ${new Date().getFullYear()} Dhuun. All rights reserved.</p>
+          </div>
+        </div>
+      `
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`✉️ Subscription confirmation email sent to ${userEmail}: ${info.messageId}`);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('Error sending subscription confirmation email:', error);
     return { success: false, error: error.message };
   }
 };
@@ -145,7 +227,7 @@ export const sendOrderConfirmation = async (orderDetails) => {
           <strong>${item.beat?.title || 'Beat'}</strong><br>
           <span style="color: #666;">License: ${item.license}</span>
         </td>
-        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0; text-align: right;">$${item.price.toFixed(2)}</td>
+        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0; text-align: right;">Rs ${item.price.toFixed(2)}</td>
       </tr>
     `).join('');
 
@@ -179,15 +261,17 @@ export const sendOrderConfirmation = async (orderDetails) => {
                   ${itemsHtml}
                   <tr>
                     <td style="padding: 12px; text-align: right;"><strong>Total</strong></td>
-                    <td style="padding: 12px; text-align: right;"><strong>$${totalAmount.toFixed(2)}</strong></td>
+                    <td style="padding: 12px; text-align: right;"><strong>Rs ${totalAmount.toFixed(2)}</strong></td>
                   </tr>
                 </tbody>
               </table>
             </div>
             
-            <div style="margin-top: 20px;">
-              <p>You can download your beats by visiting your <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard" style="color: #7B2CBF; text-decoration: none;">Purchased Beats</a> section in your dashboard.</p>
-              <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
+            <div style="text-align: center; margin-top: 30px;">
+              <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard/purchases" 
+                style="background-color: #7B2CBF; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                View Purchased Beats
+              </a>
             </div>
           </div>
           
@@ -208,7 +292,7 @@ export const sendOrderConfirmation = async (orderDetails) => {
 };
 
 /**
- * Send thank you email after purchase (separate from order confirmation)
+ * Send thank you email after purchase
  * @param {Object} orderDetails - Order information
  * @returns {Promise} - Email sending result
  */
@@ -233,29 +317,18 @@ export const sendThankYouEmail = async (orderDetails) => {
             <p>Hi ${userName},</p>
             <p>We just wanted to reach out and thank you for purchasing ${beatsCount > 1 ? 'beats' : 'a beat'} from Dhuun.</p>
             
-            <p>We hope you enjoy ${beatsCount > 1 ? 'your beats' : 'your beat'} (${beatNames}) and create something amazing with ${beatsCount > 1 ? 'them' : 'it'}!</p>
+            <p>We hope you enjoy ${beatsCount > 1 ? 'your beats' : 'your beat'} (${beatNames}) and create something amazing!</p>
             
-            <div style="margin: 25px 0; text-align: center;">
-              <p style="font-style: italic; color: #666;">
-                "Where words fail, music speaks" - Hans Christian Andersen
-              </p>
-            </div>
-            
-            <p>We'd love to hear your feedback or see what you create with our beats. Feel free to tag us on social media or respond to this email!</p>
-            
-            <div style="margin-top: 25px;">
-              <p>Thank you for supporting independent music producers.</p>
-              <p>The Dhuun Team</p>
+            <div style="text-align: center; margin-top: 30px;">
+              <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/BeatExplorePage" 
+                style="background-color: #7B2CBF; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                Explore More Beats
+              </a>
             </div>
           </div>
           
           <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #666; font-size: 12px; text-align: center;">
             <p>© ${new Date().getFullYear()} Dhuun. All rights reserved.</p>
-            <p>
-              <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}" style="color: #7B2CBF; text-decoration: none; margin: 0 10px;">Website</a> | 
-              <a href="#" style="color: #7B2CBF; text-decoration: none; margin: 0 10px;">Instagram</a> | 
-              <a href="#" style="color: #7B2CBF; text-decoration: none; margin: 0 10px;">Twitter</a>
-            </p>
           </div>
         </div>
       `
@@ -270,12 +343,94 @@ export const sendThankYouEmail = async (orderDetails) => {
   }
 };
 
+/**
+ * Send beat purchase notification to producer (when someone buys their beat)
+ * @param {Object} saleDetails - Beat sale information
+ * @returns {Promise} - Email sending result
+ */
+export const sendBeatPurchased = async (saleDetails) => {
+  try {
+    const { 
+      producerEmail,
+      producerName = 'Producer',
+      beatTitle,
+      buyerName = 'A customer',
+      license,
+      salePrice,
+      earnings,
+      revenueShare,
+      orderId,
+      saleDate = new Date()
+    } = saleDetails;
+
+    const formattedDate = new Date(saleDate).toLocaleDateString();
+
+    const mailOptions = {
+      from: `"Dhuun Music" <${process.env.EMAIL_FROM}>`,
+      to: producerEmail,
+      subject: `🎵 Your beat "${beatTitle}" just sold!`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h1 style="color: #7B2CBF;">Dhuun</h1>
+          </div>
+          <div style="margin-bottom: 20px;">
+            <h2>Congratulations! 🎉</h2>
+            <p>Hi ${producerName},</p>
+            <p>Great news! Your beat <strong>"${beatTitle}"</strong> has just been purchased!</p>
+            
+            <div style="margin: 20px 0; background-color: #f0f8ff; padding: 20px; border-radius: 5px; border-left: 4px solid #1DB954;">
+              <h3 style="margin-top: 0; color: #1DB954;">Sale Details</h3>
+              <p><strong>Beat:</strong> ${beatTitle}</p>
+              <p><strong>Buyer:</strong> ${buyerName}</p>
+              <p><strong>License:</strong> ${license}</p>
+              <p><strong>Sale Price:</strong> Rs ${salePrice.toFixed(2)}</p>
+              <p><strong>Your Earnings:</strong> Rs ${earnings.toFixed(2)} (${revenueShare}% share)</p>
+              <p><strong>Order ID:</strong> #${orderId}</p>
+              <p><strong>Sale Date:</strong> ${formattedDate}</p>
+            </div>
+            
+            <div style="margin: 20px 0; background-color: #fff7e6; padding: 15px; border-radius: 5px; border-left: 4px solid #FFA500;">
+              <p style="margin: 0;"><strong>💰 Earnings Update:</strong> Your earnings have been added to your wallet and are available for withdrawal.</p>
+            </div>
+            
+            <div style="text-align: center; margin-top: 30px;">
+              <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard/wallet" 
+                style="background-color: #1DB954; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-right: 10px;">
+                View Wallet
+              </a>
+              <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard" 
+                style="background-color: transparent; color: #7B2CBF; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; border: 2px solid #7B2CBF;">
+                Upload More Beats
+              </a>
+            </div>
+          </div>
+          
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #666; font-size: 12px;">
+            <p>© ${new Date().getFullYear()} Dhuun. All rights reserved.</p>
+          </div>
+        </div>
+      `
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`✉️ Beat purchase notification sent to ${producerEmail}: ${info.messageId}`);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('Error sending beat purchase notification:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 // Export the transporter for custom email scenarios
 export const getTransporter = () => transporter;
 
 export default {
   sendOTPEmail,
+  sendWelcomeEmail,
+  sendSubscriptionConfirmationEmail,
   sendOrderConfirmation,
   sendThankYouEmail,
+  sendBeatPurchased,
   getTransporter
 };
