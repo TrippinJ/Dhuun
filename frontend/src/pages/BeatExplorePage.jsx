@@ -1,6 +1,6 @@
 // src/pages/BeatExplorePage.jsx
 import React, { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import API from "../api/api";
 import styles from "../css/BeatExplorePage.module.css";
 import {
@@ -56,6 +56,7 @@ const BeatExplorePage = () => {
   const { playTrack, isBeatPlaying, currentTrack, isPlaying } = useAudio();
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Available genres
   const genres = [
@@ -68,6 +69,34 @@ const BeatExplorePage = () => {
     "Lo-Fi",
     "Future"
   ];
+
+  // Parse URL parameters on component mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const searchParam = urlParams.get('search');
+    const genreParam = urlParams.get('genre');
+
+    console.log('URL Params - search:', searchParam, 'genre:', genreParam);
+
+    // Set initial values from URL parameters
+    if (searchParam) {
+      setKeywords(searchParam);
+      console.log('Setting keywords from URL:', searchParam);
+    }
+
+    if (genreParam) {
+      // Make sure the genre matches our available genres
+      const matchingGenre = genres.find(g => 
+        g.toLowerCase() === genreParam.toLowerCase()
+      );
+      if (matchingGenre) {
+        setSelectedGenre(matchingGenre);
+        console.log('Setting genre from URL:', matchingGenre);
+      } else {
+        console.log('Genre not found in available genres:', genreParam);
+      }
+    }
+  }, [location.search]);
 
   // Function to initiate producer profile
   const handleOpenProducerProfile = (producerId) => {
@@ -194,7 +223,15 @@ const BeatExplorePage = () => {
 
   // Filter functions
   const filterBeats = () => {
-    return beats.filter(beat => {
+    console.log('Filtering beats with:', {
+      keywords,
+      selectedGenre,
+      priceRange,
+      selectedTags,
+      totalBeats: beats.length
+    });
+
+    const filtered = beats.filter(beat => {
       const keywordMatch = !keywords.trim() ||
         beat.title?.toLowerCase().includes(keywords.toLowerCase()) ||
         beat.producer?.name?.toLowerCase().includes(keywords.toLowerCase());
@@ -211,8 +248,22 @@ const BeatExplorePage = () => {
           )
         );
 
-      return keywordMatch && genreMatch && priceMatch && tagsMatch;
+      const matches = keywordMatch && genreMatch && priceMatch && tagsMatch;
+      
+      if (!matches && keywords.trim()) {
+        console.log('Beat filtered out:', beat.title, {
+          keywordMatch,
+          genreMatch,
+          priceMatch,
+          tagsMatch
+        });
+      }
+
+      return matches;
     });
+
+    console.log('Filtered beats count:', filtered.length);
+    return filtered;
   };
 
   // Tags toggle function
@@ -345,6 +396,17 @@ const BeatExplorePage = () => {
 
   const handleGenreSelect = (genre) => {
     setSelectedGenre(genre);
+    // Update URL without page reload
+    const newParams = new URLSearchParams(location.search);
+    if (genre === "All Genres") {
+      newParams.delete('genre');
+    } else {
+      newParams.set('genre', genre);
+    }
+    
+    // Update URL
+    const newUrl = `${location.pathname}${newParams.toString() ? '?' + newParams.toString() : ''}`;
+    window.history.replaceState({}, '', newUrl);
   };
 
   const handlePriceChange = (e) => {
@@ -353,6 +415,17 @@ const BeatExplorePage = () => {
 
   const handleSearch = (e) => {
     e.preventDefault();
+    // Update URL with search parameters
+    const newParams = new URLSearchParams(location.search);
+    if (keywords.trim()) {
+      newParams.set('search', keywords.trim());
+    } else {
+      newParams.delete('search');
+    }
+    
+    // Update URL
+    const newUrl = `${location.pathname}${newParams.toString() ? '?' + newParams.toString() : ''}`;
+    window.history.replaceState({}, '', newUrl);
   };
 
   const handleBeatClick = (beat) => {
@@ -416,7 +489,11 @@ const BeatExplorePage = () => {
       <NavbarBeatExplore />
 
       <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>Explore Beats</h1>
+        <h1 className={styles.pageTitle}>
+          {keywords ? `Search results for "${keywords}"` : 
+           selectedGenre !== "All Genres" ? `${selectedGenre} Beats` : 
+           "Explore Beats"}
+        </h1>
 
         <form onSubmit={handleSearch} className={styles.searchForm}>
           <input
@@ -466,35 +543,6 @@ const BeatExplorePage = () => {
               className={styles.priceSlider}
             />
           </div>
-
-          {/* Tags filter */}
-          {/* <div className={styles.filterGroup}>
-            <h3 className={styles.filterLabel}>Tags</h3>
-            <div className={styles.tagsFilter}>
-              {availableTags.map((tagData, index) => (
-                <button
-                  key={index}
-                  onClick={() => toggleTag(tagData.tag)}
-                  className={`${styles.tagFilterButton} ${selectedTags.includes(tagData.tag) ? styles.tagSelected : ''}`}
-                >
-                  {tagData.tag}
-                  <span className={styles.tagCount}>({tagData.count})</span>
-                </button>
-              ))}
-            </div>
-
-            {selectedTags.length > 0 && (
-              <div className={styles.selectedTags}>
-                <span>Selected: </span>
-                {selectedTags.map((tag, index) => (
-                  <span key={index} className={styles.selectedTag}>
-                    {tag}
-                    <button onClick={() => toggleTag(tag)}>×</button>
-                  </span>
-                ))}
-              </div>
-            )}
-          </div> */}
         </div>
 
         {/* View mode toggle */}
@@ -596,6 +644,8 @@ const BeatExplorePage = () => {
                   setSelectedGenre("All Genres");
                   setPriceRange(maxPrice);
                   setSelectedTags([]);
+                  // Clear URL parameters
+                  window.history.replaceState({}, '', location.pathname);
                 }}
               >
                 Reset Filters
@@ -679,6 +729,8 @@ const BeatExplorePage = () => {
                   setSelectedGenre("All Genres");
                   setPriceRange(maxPrice);
                   setSelectedTags([]);
+                  // Clear URL parameters
+                  window.history.replaceState({}, '', location.pathname);
                 }}
               >
                 Reset Filters

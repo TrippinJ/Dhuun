@@ -8,18 +8,18 @@ import API from "../api/api";
 import "../css/Home.css";
 import { useAudio } from "../context/AudioContext"; 
 import { useSettings } from '../context/SettingsContext';
+import { getBeatId } from '../utils/audioUtils';
 
 const Home = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [heroBeats, setHeroBeats] = useState([]);
   const [currentBeatIndex, setCurrentBeatIndex] = useState(0);
-  // const [isPlaying, setIsPlaying] = useState(false);
   const [audioLoading, setAudioLoading] = useState(false);
-  const audioRef = useRef(new Audio());
-  const { currentTrack, isPlaying, playTrack } = useAudio();
+  
+  // Use global audio context instead of local audio ref
+  const { currentTrack, isPlaying, playTrack, isBeatPlaying } = useAudio();
   const { settings } = useSettings();
-
 
   // In the useEffect for fetching hero beats
   useEffect(() => {
@@ -78,22 +78,56 @@ const Home = () => {
               price: 19.99,
               plays: 1200
             },
-            // ... other fallback beats
+            {
+              _id: "sample2",
+              title: "Midnight Feels",
+              producer: { name: "Beat Master", verified: false },
+              genre: "Hip-Hop",
+              coverImage: "/default-cover.jpg",
+              audioFile: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+              price: 24.99,
+              plays: 820
+            },
+            {
+              _id: "sample3",
+              title: "Cloudy Dreams",
+              producer: { name: "Cloud Beatz", verified: true },
+              genre: "Lo-Fi",
+              coverImage: "/default-cover.jpg",
+              audioFile: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+              price: 14.99,
+              plays: 650
+            }
           ]);
         }
       } catch (error) {
         console.error("Error fetching hero beats:", error);
         // Fallback data in case of error
+        setHeroBeats([
+          {
+            _id: "sample1",
+            title: "Summer Vibes",
+            producer: { name: "DJ Beats", verified: true },
+            genre: "Trap",
+            coverImage: "/default-cover.jpg",
+            audioFile: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+            price: 19.99,
+            plays: 1200
+          }
+        ]);
       }
     };
 
     fetchHeroBeats();
   }, []);
 
-  // Auto-advance carousel
+  // Auto-advance carousel only when not playing current beat
   useEffect(() => {
     const interval = setInterval(() => {
-      if (!isPlaying) {
+      const currentBeat = heroBeats[currentBeatIndex];
+      const isCurrentBeatPlaying = currentBeat && isBeatPlaying(currentBeat);
+      
+      if (!isCurrentBeatPlaying) {
         setCurrentBeatIndex(prevIndex =>
           prevIndex === heroBeats.length - 1 ? 0 : prevIndex + 1
         );
@@ -101,109 +135,32 @@ const Home = () => {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [isPlaying, heroBeats.length]);
+  }, [heroBeats.length, currentBeatIndex, isBeatPlaying]);
 
-  // Handle audio playback
-  useEffect(() => {
-    const audio = audioRef.current;
-
-    // Clean up on unmount
-    return () => {
-      audio.pause();
-      audio.src = "";
-    };
-  }, []);
-
-  // Play/pause current beat
+  // Play/pause current beat using global audio context
   const togglePlay = () => {
-    const audio = audioRef.current;
-
     if (heroBeats.length === 0) return;
 
     const currentBeat = heroBeats[currentBeatIndex];
+    
+    console.log('Home togglePlay - currentBeat:', getBeatId(currentBeat));
+    console.log('Home togglePlay - is this beat playing:', isBeatPlaying(currentBeat));
+    
+    // Use the global audio context
+    playTrack(currentBeat);
 
-    // Get audio URL with fallbacks
-    let audioUrl = currentBeat.audioFile || currentBeat.audioUrl;
-
-    // If no valid audio URL, use a fallback
-    if (!audioUrl || audioUrl === "") {
-      console.warn("No audio URL for this beat, using fallback");
-      audioUrl = `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${(currentBeatIndex % 5) + 1}.mp3`;
+    // Track play count
+    try {
+      API.post(`/api/beats/${getBeatId(currentBeat)}/play`).catch(err => {
+        console.log("Could not update play count:", err);
+      });
+    } catch (error) {
+      // Silently ignore tracking errors
     }
-
-    console.log(`Attempting to play audio: ${audioUrl}`);
-
-    if (isPlaying) {
-      audio.pause();
-      setIsPlaying(false);
-    } else {
-      setAudioLoading(true);
-
-      // Reset previous handlers
-      audio.oncanplaythrough = null;
-      audio.onerror = null;
-      audio.onended = null;
-
-      // Set up error handling first
-      audio.onerror = (e) => {
-        console.error("Audio error:", e);
-        console.error("Audio error code:", audio.error ? audio.error.code : "unknown");
-        setAudioLoading(false);
-        setIsPlaying(false);
-
-        // Try a fallback if original URL fails
-        if (!audioUrl.includes('soundhelix')) {
-          const fallbackUrl = `https://www.soundhelix.com/examples/mp3/SoundHelix-Song-${(currentBeatIndex % 5) + 1}.mp3`;
-          console.log("Trying fallback URL:", fallbackUrl);
-
-          // Create a new audio element for the fallback
-          const fallbackAudio = new Audio(fallbackUrl);
-          fallbackAudio.oncanplaythrough = () => {
-            setAudioLoading(false);
-            fallbackAudio.play()
-              .then(() => {
-                setIsPlaying(true);
-                audioRef.current = fallbackAudio;
-              })
-              .catch(err => console.error("Fallback audio play error:", err));
-          };
-
-          fallbackAudio.onended = () => setIsPlaying(false);
-          fallbackAudio.load();
-        }
-      };
-
-      // Set canplaythrough handler
-      audio.oncanplaythrough = () => {
-        setAudioLoading(false);
-        audio.play()
-          .then(() => setIsPlaying(true))
-          .catch(error => {
-            console.error("Error playing audio:", error);
-            setIsPlaying(false);
-          });
-      };
-
-      // Set ended handler
-      audio.onended = () => setIsPlaying(false);
-
-      // Set the source and load the audio
-      try {
-        audio.src = audioUrl;
-        audio.load();
-      } catch (err) {
-        console.error("Error loading audio:", err);
-        setAudioLoading(false);
-      }
-    }
-  };;
+  };
 
   // Navigate to previous beat
   const prevBeat = () => {
-    // Stop current playback
-    audioRef.current.pause();
-    setIsPlaying(false);
-
     setCurrentBeatIndex(prevIndex =>
       prevIndex === 0 ? heroBeats.length - 1 : prevIndex - 1
     );
@@ -211,21 +168,39 @@ const Home = () => {
 
   // Navigate to next beat
   const nextBeat = () => {
-    // Stop current playback
-    audioRef.current.pause();
-    setIsPlaying(false);
-
     setCurrentBeatIndex(prevIndex =>
       prevIndex === heroBeats.length - 1 ? 0 : prevIndex + 1
     );
   };
 
-  // Handle search submission
+  // Handle search submission with proper URL parameters
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/BeatExplorePage?search=${encodeURIComponent(searchQuery)}`);
+      // Navigate with search query parameter
+      navigate(`/BeatExplorePage?search=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      // If no search term, just go to explore page
+      navigate('/BeatExplorePage');
     }
+  };
+
+  // Handle trending tag clicks with proper navigation
+  const handleTagClick = (tag, isGenre = false) => {
+    if (isGenre) {
+      // For genre filtering, capitalize first letter to match your genre options
+      const formattedGenre = tag.charAt(0).toUpperCase() + tag.slice(1);
+      navigate(`/BeatExplorePage?genre=${encodeURIComponent(formattedGenre)}`);
+    } else {
+      navigate(`/BeatExplorePage?search=${encodeURIComponent(tag)}`);
+    }
+  };
+
+  // Check if current hero beat is playing
+  const isCurrentHeroBeatPlaying = () => {
+    if (heroBeats.length === 0) return false;
+    const currentBeat = heroBeats[currentBeatIndex];
+    return isBeatPlaying(currentBeat);
   };
 
   return (
@@ -260,14 +235,14 @@ const Home = () => {
               </form>
             </div>
 
-            {/* Trending tags */}
+            {/* Trending tags with proper navigation */}
             <div className="trending-tags">
               <span className="trending-label">What's trending right now:</span>
               <div className="tags-container">
-                <span className="tag-item" onClick={() => navigate("/BeatExplorePage?genre=pop")}>pop</span>
-                <span className="tag-item" onClick={() => navigate("/BeatExplorePage?genre=hip%20hop")}>hip hop</span>
-                <span className="tag-item" onClick={() => navigate("/BeatExplorePage?genre=trap")}>trap</span>
-                <span className="tag-item" onClick={() => navigate("/BeatExplorePage?search=juice%20wrld")}>juice wrld</span>
+                <span className="tag-item" onClick={() => handleTagClick("Pop", true)}>pop</span>
+                <span className="tag-item" onClick={() => handleTagClick("Hip-Hop", true)}>hip hop</span>
+                <span className="tag-item" onClick={() => handleTagClick("Trap", true)}>trap</span>
+                <span className="tag-item" onClick={() => handleTagClick("R&B", true)}>rnb</span>
               </div>
             </div>
           </div>
@@ -287,7 +262,7 @@ const Home = () => {
                     >
                       {audioLoading ? (
                         <div className="loading-spinner"></div>
-                      ) : isPlaying ? (
+                      ) : isCurrentHeroBeatPlaying() ? (
                         <FaPause />
                       ) : (
                         <FaPlay />
@@ -317,8 +292,6 @@ const Home = () => {
                       key={index}
                       className={`hero-indicator ${index === currentBeatIndex ? 'active' : ''}`}
                       onClick={() => {
-                        audioRef.current.pause();
-                        setIsPlaying(false);
                         setCurrentBeatIndex(index);
                       }}
                     />
