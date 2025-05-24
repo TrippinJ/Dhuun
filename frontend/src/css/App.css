@@ -24,19 +24,23 @@
 }
 
 ::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
+  width: 0px;
+  background: transparent;
 }
 
-
 html,
+body {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+/* html,
 body,
 #root,
 .App,
 div {
   -ms-overflow-style: none !important;
   scrollbar-width: none !important;
-}
+} */ 
 
 .scrollable-content {
   overflow-y: auto;
@@ -65,18 +69,17 @@ img {
 html,
 body {
   height: 100%;
-  overflow-x: hidden;
+  /* overflow-x: hidden; */
   position: relative;
 }
 
 body {
   max-width: 100%;
   overflow-x: hidden;
+  overflow-y: scroll;
   height: 100%;
   background-color: var(--primary-dark);
-  /* Updated background color */
   color: var(--light-text);
-  /* Updated text color */
   padding-bottom: 56px;
 }
 

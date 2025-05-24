@@ -3,7 +3,14 @@
   background-color: #121212;
   color: #ffffff;
   min-height: 100vh;
-  /* padding: 0 20px 40px; */
+  height: auto;
+  overflow-y: auto;
+  position: relative;
+
+}
+
+.mainContent {
+  padding-bottom: 80px;
 }
 
 /* Page header styling */
@@ -216,7 +223,7 @@
   margin-bottom: 40px;
   margin-left: 40px;
   margin-right: 40px;
-  
+
 }
 
 /* Beat card styling */
@@ -508,7 +515,8 @@
   gap: 10px;
 }
 
-.rowCartButton, .rowWishlistButton {
+.rowCartButton,
+.rowWishlistButton {
   width: 38px;
   height: 38px;
   display: flex;
@@ -752,8 +760,13 @@
 
 /* Spinning animation */
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Mobile responsive */
@@ -761,47 +774,61 @@
   .loadingMore {
     padding: 2rem 1rem;
   }
-  
+
   .loadingMore .spinner {
     width: 32px;
     height: 32px;
     border-width: 3px;
   }
-  
+
   .loadingMore p {
     font-size: 0.9rem;
   }
-  
+
   .noMoreBeats p {
     font-size: 1rem;
   }
 }
 
 /* Smooth fade-in animation */
-.loadingMore, .noMoreBeats {
+.loadingMore,
+.noMoreBeats {
   opacity: 0;
   animation: fadeIn 0.3s ease-in-out forwards;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
+
 /* Animations */
 @keyframes spin {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
 }
 
 @keyframes dots {
-  0%, 80%, 100% {
+
+  0%,
+  80%,
+  100% {
     transform: scale(0);
     opacity: 0;
   }
+
   40% {
     transform: scale(1);
     opacity: 1;
@@ -820,16 +847,16 @@
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .searchForm {
     width: 100%;
     max-width: none;
   }
-  
+
   .filterToggle {
     display: flex;
   }
-  
+
   .filtersContainer {
     display: none;
     width: 100%;
@@ -837,42 +864,42 @@
     align-items: flex-start;
     margin-top: 15px;
   }
-  
+
   .showFilters {
     display: flex;
   }
-  
+
   .filterGroup {
     width: 100%;
   }
-  
+
   .beatsGrid {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   }
-  
+
   .beatRow {
     flex-wrap: wrap;
   }
-  
+
   .beatRowInfo {
     width: calc(100% - 100px);
   }
-  
-  .beatRowGenre, 
-  .beatRowPrice, 
+
+  .beatRowGenre,
+  .beatRowPrice,
   .beatRowActions {
     margin-top: 10px;
   }
-  
+
   .beatRowGenre {
     order: 3;
     margin-left: 100px;
   }
-  
+
   .beatRowPrice {
     order: 4;
   }
-  
+
   .beatRowActions {
     order: 5;
   }
@@ -882,7 +909,7 @@
   .beatsGrid {
     grid-template-columns: 1fr;
   }
-  
+
   .pagination {
     flex-wrap: wrap;
     gap: 10px;

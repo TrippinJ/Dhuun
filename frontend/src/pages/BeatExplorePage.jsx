@@ -60,7 +60,7 @@ const BeatExplorePage = () => {
   // Available genres
   const genres = [
     "All Genres",
-    "Trap", 
+    "Trap",
     "Hip-Hop",
     "R&B",
     "Pop",
@@ -233,7 +233,7 @@ const BeatExplorePage = () => {
   // FIXED: Simplified play preview handler
   const handlePlayPreview = (event, beat) => {
     event.stopPropagation();
-    
+
     try {
       console.log('BeatExplorePage play clicked for beat:', getBeatId(beat));
       playTrack(beat);
@@ -397,6 +397,7 @@ const BeatExplorePage = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [loadMoreBeats, loadingMore, hasMore]);
 
+  
   // UI rendering
   if (loading) {
     return (
@@ -467,7 +468,7 @@ const BeatExplorePage = () => {
           </div>
 
           {/* Tags filter */}
-          <div className={styles.filterGroup}>
+          {/* <div className={styles.filterGroup}>
             <h3 className={styles.filterLabel}>Tags</h3>
             <div className={styles.tagsFilter}>
               {availableTags.map((tagData, index) => (
@@ -493,7 +494,7 @@ const BeatExplorePage = () => {
                 ))}
               </div>
             )}
-          </div>
+          </div> */}
         </div>
 
         {/* View mode toggle */}
@@ -603,11 +604,11 @@ const BeatExplorePage = () => {
           )}
         </div>
       ) : (
-        // FIXED: List View with consistent play state checking
+        // List View with consistent play state checking
         <div className={styles.beatsList}>
           {displayedBeats.length > 0 ? (
             displayedBeats.map((beat) => {
-              // FIXED: Use the context helper function consistently
+              // Use the context helper function consistently
               const isThisPlaying = isBeatPlaying(beat);
 
               return (
