@@ -3,16 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { FaWallet, FaMoneyBillWave, FaExchangeAlt, FaChevronRight } from "react-icons/fa";
 import API from "../api/api";
 import styles from "../css/SellerWallet.module.css";
+import { showToast } from "../utils/toast";
 
 const SellerWallet = () => {
   const navigate = useNavigate();
   const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [withdrawMethod, setWithdrawMethod] = useState("bank");
   const [withdrawLoading, setWithdrawLoading] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
 
   // Fetch wallet data
   useEffect(() => {
@@ -22,7 +21,7 @@ const SellerWallet = () => {
         const token = localStorage.getItem("token");
 
         if (!token) {
-          setError("Authentication required");
+          showToast.error("Authentication required, Please log in.");
           setLoading(false);
           return;
         }
@@ -35,6 +34,7 @@ const SellerWallet = () => {
 
         if (response.data && response.data.wallet) {
           setWallet(response.data.wallet);
+          showToast.success("Wallet data loaded successfully");
         } else {
           throw new Error("Invalid wallet data format");
         }
@@ -42,7 +42,7 @@ const SellerWallet = () => {
         setLoading(false);
       } catch (error) {
         console.error("Error fetching wallet:", error);
-        setError("Failed to load wallet information. Please try again.");
+        showToast.error("Failed to load wallet information. Please try again.");
         setLoading(false);
       }
     };
@@ -57,25 +57,27 @@ const SellerWallet = () => {
     // Validate amount
     const amount = parseFloat(withdrawAmount);
     if (isNaN(amount) || amount <= 0) {
-      setError("Please enter a valid withdrawal amount");
+      showToast.error("Please enter a valid withdrawal amount");
       return;
     }
 
     if (amount > wallet.balance) {
-      setError(`Insufficient balance. Available: $${wallet.balance ? wallet.balance.toFixed(2): '0.00'}`);
+      showToast.error(`Insufficient balance. Available: $${wallet.balance ? wallet.balance.toFixed(2) : '0.00'}`);
       return;
     }
 
     try {
       setWithdrawLoading(true);
-      setError(null);
+      showToast.error(null);
 
       const response = await API.post("/api/withdrawals", {
         amount,
         paymentMethod: withdrawMethod
       });
 
-      setSuccessMessage("Withdrawal request submitted successfully");
+      showToast.success(`Withdrawal request of Rs ${amount.toFixed(2)} submitted successfully! 💰`, {
+        icon: '🏦'
+      });
       setWithdrawAmount("");
 
       // Update wallet balance
@@ -87,11 +89,11 @@ const SellerWallet = () => {
 
       // Clear success message after 5 seconds
       setTimeout(() => {
-        setSuccessMessage("");
+        showToast.success("");
       }, 5000);
     } catch (error) {
       console.error("Error requesting withdrawal:", error);
-      setError(error.response?.data?.message || "Failed to submit withdrawal request");
+      showToast.error(error.response?.data?.message || "Failed to submit withdrawal request");
     } finally {
       setWithdrawLoading(false);
     }
@@ -108,14 +110,14 @@ const SellerWallet = () => {
     // Create a Map using transaction description and date as composite key
     // This will automatically remove duplicates with the same description and date
     const uniqueTransactionsMap = new Map();
-    
+
     transactions.forEach(transaction => {
       const key = `${transaction.description}-${transaction.createdAt}-${transaction.amount}`;
       if (!uniqueTransactionsMap.has(key)) {
         uniqueTransactionsMap.set(key, transaction);
       }
     });
-    
+
     // Convert map values back to array and return
     return Array.from(uniqueTransactionsMap.values());
   };
@@ -129,7 +131,7 @@ const SellerWallet = () => {
   }
 
   // Get unique transactions for display
-  const uniqueTransactions = wallet.transactions ? 
+  const uniqueTransactions = wallet.transactions ?
     getUniqueTransactions(wallet.transactions) : [];
 
   return (

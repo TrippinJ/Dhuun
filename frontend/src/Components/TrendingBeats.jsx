@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import SingleBeatModal from './Singlebeatmodal';
 import LicenseSelectionModal from './LicenseSelectionModal';
 import ProducerProfile from './ProducerProfile';
+import { showToast } from '../utils/toast';
 
 const TrendingBeats = () => {
   const [trendingBeats, setTrendingBeats] = useState([]);
@@ -120,7 +121,7 @@ const TrendingBeats = () => {
     
     const isLoggedIn = localStorage.getItem('token');
     if (!isLoggedIn) {
-      alert("Please log in to add items to cart");
+      showToast.loginRequired();
       navigate("/login");
       return;
     }
@@ -136,7 +137,7 @@ const TrendingBeats = () => {
     );
 
     if (isInCart) {
-      alert(`"${beatWithLicense.title}" with ${beatWithLicense.licenseName} is already in your cart`);
+      showToast.warning(`"${beatWithLicense.title}" with ${beatWithLicense.licenseName} is already in your cart! 🛒`);
       return;
     }
 
@@ -146,7 +147,7 @@ const TrendingBeats = () => {
 
     setShowLicenseModal(false);
     setSelectedBeatForLicense(null);
-    alert(`${beatWithLicense.title} with ${beatWithLicense.licenseName} added to cart!`);
+    showToast.addedToCart(beatWithLicense.title, beatWithLicense.licenseName);
   };
 
   // Wishlist functionality
@@ -155,7 +156,7 @@ const TrendingBeats = () => {
     
     const isLoggedIn = localStorage.getItem('token');
     if (!isLoggedIn) {
-      alert("Please log in to add items to wishlist");
+      showToast.loginRequired();
       navigate("/login");
       return;
     }
@@ -165,10 +166,10 @@ const TrendingBeats = () => {
 
     if (isInWishlist) {
       updatedWishlist = wishlist.filter(item => item._id !== beat._id);
-      alert(`${beat.title} removed from wishlist`);
+      showToast.removedFromWishlist(beat.title);
     } else {
       updatedWishlist = [...wishlist, beat];
-      alert(`${beat.title} added to wishlist!`);
+      showToast.addedToWishlist(beat.title);
     }
 
     setWishlist(updatedWishlist);
