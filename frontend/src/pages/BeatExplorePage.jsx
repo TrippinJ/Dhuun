@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import API from "../api/api";
@@ -20,12 +19,13 @@ import {
 import NavbarBeatExplore from '../Components/NavbarBeatExplore';
 import SingleBeatModal from '../Components/Singlebeatmodal';
 import { useAudio } from '../context/AudioContext';
+import { useWishlist } from '../context/WishlistContext'; // Added this import
 import LicenseSelectionModal from '../Components/LicenseSelectionModal';
 import ProducerProfile from '../Components/ProducerProfile';
 import { getBeatId } from '../utils/audioUtils';
 
 const BeatExplorePage = () => {
-  // State variables
+  // State variables (REMOVED local wishlist state)
   const [beats, setBeats] = useState([]);
   const [errorMessage, setErrorMessage] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -37,7 +37,6 @@ const BeatExplorePage = () => {
   const [displayMode, setDisplayMode] = useState("grid");
   const [selectedBeat, setSelectedBeat] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
-  const [wishlist, setWishlist] = useState([]);
   const [showLicenseModal, setShowLicenseModal] = useState(false);
   const [selectedBeatForLicense, setSelectedBeatForLicense] = useState(null);
   const [selectedTags, setSelectedTags] = useState([]);
@@ -52,8 +51,9 @@ const BeatExplorePage = () => {
   const [showProducerProfile, setShowProducerProfile] = useState(false);
   const [selectedProducerId, setSelectedProducerId] = useState(null);
 
-  // Single useAudio destructuring with all needed values
+  // Use context hooks
   const { playTrack, isBeatPlaying, currentTrack, isPlaying } = useAudio();
+  const { toggleWishlist, isInWishlist } = useWishlist(); // Use wishlist context
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -78,14 +78,12 @@ const BeatExplorePage = () => {
 
     console.log('URL Params - search:', searchParam, 'genre:', genreParam);
 
-    // Set initial values from URL parameters
     if (searchParam) {
       setKeywords(searchParam);
       console.log('Setting keywords from URL:', searchParam);
     }
 
     if (genreParam) {
-      // Make sure the genre matches our available genres
       const matchingGenre = genres.find(g =>
         g.toLowerCase() === genreParam.toLowerCase()
       );
@@ -178,15 +176,7 @@ const BeatExplorePage = () => {
 
     fetchBeats();
 
-    // Load wishlist from localStorage
-    try {
-      const savedWishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
-      setWishlist(savedWishlist);
-    } catch (error) {
-      console.error('Error loading wishlist:', error);
-    }
-
-    // Load cart from localStorage
+    // Load cart from localStorage (keep this, but REMOVE wishlist loading)
     try {
       const savedCart = JSON.parse(localStorage.getItem('cart') || '[]');
       setCartItems(savedCart);
@@ -194,9 +184,9 @@ const BeatExplorePage = () => {
       console.error('Error loading cart:', error);
     }
   }, []);
+
   // Add this useEffect to handle auto-opening modals from GlobalAudioPlayer navigation
   useEffect(() => {
-    // Check if we need to open a beat modal
     const beatIdToOpen = sessionStorage.getItem('openBeatModal');
     if (beatIdToOpen && beats.length > 0) {
       const beatToOpen = beats.find(beat => getBeatId(beat) === beatIdToOpen);
@@ -204,26 +194,21 @@ const BeatExplorePage = () => {
         console.log('Auto-opening beat modal for:', beatToOpen.title);
         setSelectedBeat(beatToOpen);
       }
-      // Clear the session storage
       sessionStorage.removeItem('openBeatModal');
     }
 
-    // Check if we need to open a producer profile
     const producerIdToOpen = sessionStorage.getItem('openProducerProfile');
     if (producerIdToOpen) {
       console.log('Auto-opening producer profile for ID:', producerIdToOpen);
       setSelectedProducerId(producerIdToOpen);
       setShowProducerProfile(true);
-      // Clear the session storage
       sessionStorage.removeItem('openProducerProfile');
     }
-  }, [beats]); // Run when beats are loaded
+  }, [beats]);
 
-  
   // Handle auto-opening modals from GlobalAudioPlayer navigation
   useEffect(() => {
     const checkAndOpenModals = () => {
-      // Check if we need to open a beat modal
       const beatIdToOpen = sessionStorage.getItem('openBeatModal');
       if (beatIdToOpen && beats.length > 0) {
         const beatToOpen = beats.find(beat => getBeatId(beat) === beatIdToOpen);
@@ -234,7 +219,6 @@ const BeatExplorePage = () => {
         sessionStorage.removeItem('openBeatModal');
       }
 
-      // Check if we need to open a producer profile
       const producerIdToOpen = sessionStorage.getItem('openProducerProfile');
       if (producerIdToOpen) {
         console.log('Auto-opening producer profile for ID:', producerIdToOpen);
@@ -244,12 +228,11 @@ const BeatExplorePage = () => {
       }
     };
 
-    // Check when beats are loaded OR when location changes
     if (beats.length > 0) {
-      // Small delay to ensure component is fully rendered
       setTimeout(checkAndOpenModals, 150);
     }
-  }, [beats, location]); // Run when beats load OR location changes
+  }, [beats, location]);
+
   // Fetch popular tags
   useEffect(() => {
     const fetchPopularTags = async () => {
@@ -344,7 +327,6 @@ const BeatExplorePage = () => {
       console.log('BeatExplorePage play clicked for beat:', getBeatId(beat));
       playTrack(beat);
 
-      // Optionally increment play count via API
       try {
         API.post(`/api/beats/${getBeatId(beat)}/play`).catch(err => {
           console.log("Could not update play count, ignoring:", err);
@@ -393,8 +375,8 @@ const BeatExplorePage = () => {
     alert(`${beatWithLicense.title} with ${beatWithLicense.licenseName} added to cart!`);
   };
 
-  // Toggle wishlist
-  const toggleWishlist = (event, beat) => {
+  // UPDATED: Toggle wishlist using context
+  const handleToggleWishlist = (event, beat) => {
     event.stopPropagation();
 
     const isLoggedIn = localStorage.getItem('token');
@@ -404,19 +386,14 @@ const BeatExplorePage = () => {
       return;
     }
 
-    const isInWishlist = wishlist.some(item => getBeatId(item) === getBeatId(beat));
-    let updatedWishlist;
-
-    if (isInWishlist) {
-      updatedWishlist = wishlist.filter(item => getBeatId(item) !== getBeatId(beat));
-      alert(`${beat.title} removed from wishlist`);
-    } else {
-      updatedWishlist = [...wishlist, beat];
-      alert(`${beat.title} added to wishlist!`);
+    // Use context function instead of local state
+    const result = toggleWishlist(beat);
+    
+    // Optional: Show feedback (you can remove this alert if you don't want it)
+    if (result.success && result.message) {
+      // You can replace this with a toast notification later
+      console.log(result.message); // Just log instead of alert for better UX
     }
-
-    setWishlist(updatedWishlist);
-    localStorage.setItem('wishlist', JSON.stringify(updatedWishlist));
   };
 
   // Load more beats function
@@ -451,7 +428,6 @@ const BeatExplorePage = () => {
 
   const handleGenreSelect = (genre) => {
     setSelectedGenre(genre);
-    // Update URL without page reload
     const newParams = new URLSearchParams(location.search);
     if (genre === "All Genres") {
       newParams.delete('genre');
@@ -459,7 +435,6 @@ const BeatExplorePage = () => {
       newParams.set('genre', genre);
     }
 
-    // Update URL
     const newUrl = `${location.pathname}${newParams.toString() ? '?' + newParams.toString() : ''}`;
     window.history.replaceState({}, '', newUrl);
   };
@@ -470,7 +445,6 @@ const BeatExplorePage = () => {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    // Update URL with search parameters
     const newParams = new URLSearchParams(location.search);
     if (keywords.trim()) {
       newParams.set('search', keywords.trim());
@@ -478,7 +452,6 @@ const BeatExplorePage = () => {
       newParams.delete('search');
     }
 
-    // Update URL
     const newUrl = `${location.pathname}${newParams.toString() ? '?' + newParams.toString() : ''}`;
     window.history.replaceState({}, '', newUrl);
   };
@@ -491,11 +464,7 @@ const BeatExplorePage = () => {
     setSelectedBeat(null);
   };
 
-  // FIXED: Use getBeatId for consistent checking
-  const isInWishlist = (beatId) => {
-    return wishlist.some(item => getBeatId(item) === beatId);
-  };
-
+  // UPDATED: Use context function to check wishlist status
   const isInCart = (beatId) => {
     return cartItems.some(item => getBeatId(item) === beatId);
   };
@@ -524,7 +493,6 @@ const BeatExplorePage = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [loadMoreBeats, loadingMore, hasMore]);
-
 
   // UI rendering
   if (loading) {
@@ -571,7 +539,6 @@ const BeatExplorePage = () => {
         </div>
 
         <div className={`${styles.filtersContainer} ${showFilters ? styles.showFilters : ''}`}>
-          {/* Genre filter */}
           <div className={styles.filterGroup}>
             <h3 className={styles.filterLabel}>Genre</h3>
             <select
@@ -585,7 +552,6 @@ const BeatExplorePage = () => {
             </select>
           </div>
 
-          {/* Price range filter */}
           <div className={styles.filterGroup}>
             <h3 className={styles.filterLabel}>Max Price: Rs {priceRange}</h3>
             <input
@@ -600,7 +566,6 @@ const BeatExplorePage = () => {
           </div>
         </div>
 
-        {/* View mode toggle */}
         <div className={styles.filterGroup}>
           <h3 className={styles.filterLabel}>View Mode</h3>
           <div className={styles.viewToggle}>
@@ -622,12 +587,11 @@ const BeatExplorePage = () => {
 
       {errorMessage && <div className={styles.errorMessage}>{errorMessage}</div>}
 
-      {/* FIXED: Consistent play state checking in both grid and list views */}
+      {/* GRID VIEW */}
       {displayMode === "grid" ? (
         <div className={styles.beatsGrid}>
           {displayedBeats.length > 0 ? (
             displayedBeats.map((beat) => {
-              // FIXED: Use the context helper function consistently
               const isThisPlaying = isBeatPlaying(beat);
 
               return (
@@ -679,8 +643,8 @@ const BeatExplorePage = () => {
                     </button>
 
                     <button
-                      className={`${styles.wishlistButton} ${isInWishlist(getBeatId(beat)) ? styles.inWishlist : ''}`}
-                      onClick={(e) => toggleWishlist(e, beat)}
+                      className={`${styles.wishlistButton} ${isInWishlist(beat) ? styles.inWishlist : ''}`}
+                      onClick={(e) => handleToggleWishlist(e, beat)}
                     >
                       <FaHeart />
                     </button>
@@ -699,7 +663,6 @@ const BeatExplorePage = () => {
                   setSelectedGenre("All Genres");
                   setPriceRange(maxPrice);
                   setSelectedTags([]);
-                  // Clear URL parameters
                   window.history.replaceState({}, '', location.pathname);
                 }}
               >
@@ -709,11 +672,10 @@ const BeatExplorePage = () => {
           )}
         </div>
       ) : (
-        // List View with consistent play state checking
+        // LIST VIEW
         <div className={styles.beatsList}>
           {displayedBeats.length > 0 ? (
             displayedBeats.map((beat) => {
-              // Use the context helper function consistently
               const isThisPlaying = isBeatPlaying(beat);
 
               return (
@@ -764,8 +726,8 @@ const BeatExplorePage = () => {
                     </button>
 
                     <button
-                      className={`${styles.rowWishlistButton} ${isInWishlist(getBeatId(beat)) ? styles.inWishlist : ''}`}
-                      onClick={(e) => toggleWishlist(e, beat)}
+                      className={`${styles.rowWishlistButton} ${isInWishlist(beat) ? styles.inWishlist : ''}`}
+                      onClick={(e) => handleToggleWishlist(e, beat)}
                     >
                       <FaHeart />
                     </button>
@@ -784,7 +746,6 @@ const BeatExplorePage = () => {
                   setSelectedGenre("All Genres");
                   setPriceRange(maxPrice);
                   setSelectedTags([]);
-                  // Clear URL parameters
                   window.history.replaceState({}, '', location.pathname);
                 }}
               >
@@ -802,9 +763,8 @@ const BeatExplorePage = () => {
           isOpen={!!selectedBeat}
           onClose={handleCloseModal}
           onAddToCart={(beat) => handleAddToCart({ stopPropagation: () => { } }, beat)}
-          onToggleWishlist={(beat) => toggleWishlist({ stopPropagation: () => { } }, beat)}
+          onToggleWishlist={(beat) => handleToggleWishlist({ stopPropagation: () => { } }, beat)}
           isInCart={isInCart(getBeatId(selectedBeat))}
-          isInWishlist={isInWishlist(getBeatId(selectedBeat))}
           isPlaying={isBeatPlaying(selectedBeat)}
           onPlayPause={(e) => handlePlayPreview(e, selectedBeat)}
           isLoading={false}

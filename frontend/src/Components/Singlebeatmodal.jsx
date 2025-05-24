@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLicense } from '../context/LicenseContext';
+import { useWishlist } from '../context/WishlistContext'; // Add wishlist context
 import styles from '../css/SingleBeatModal.module.css';
 import { 
   FaPlay, 
@@ -24,9 +25,8 @@ const SingleBeatModal = ({
   isOpen,
   onClose,
   onAddToCart,
-  onToggleWishlist,
+  // Removed: onToggleWishlist, isInWishlist (using context now)
   isInCart,
-  isInWishlist,
   isPlaying,
   onPlayPause,
   isLoading
@@ -38,6 +38,10 @@ const SingleBeatModal = ({
   const [audioSource, setAudioSource] = useState(null);
   const navigate = useNavigate();
   const { openLicenseModal } = useLicense();
+  const { toggleWishlist, isInWishlist } = useWishlist(); // Use wishlist context
+  
+  // Check if this beat is in wishlist using context
+  const isInWishlistState = isInWishlist(beat);
   
   // Initialize audio context for transposition
   useEffect(() => {
@@ -121,6 +125,25 @@ const SingleBeatModal = ({
         alert("Error adding to cart. Please try again.");
       }
     });
+  };
+  
+  // UPDATED: Handle wishlist toggle using context
+  const handleWishlistToggle = () => {
+    // Check if user is logged in
+    const isLoggedIn = localStorage.getItem('token');
+    if (!isLoggedIn) {
+      alert("Please log in to add items to wishlist");
+      navigate("/login");
+      return;
+    }
+
+    // Use context function directly
+    const result = toggleWishlist(beat);
+    
+    // Optional: Log the result (you can remove this or replace with toast notification)
+    if (result.success && result.message) {
+      console.log(result.message); // Just log instead of alert for better UX
+    }
   };
   
   // Format date
@@ -266,10 +289,10 @@ const SingleBeatModal = ({
               </button>
               
               <button 
-                className={`${styles.wishlistButton} ${isInWishlist ? styles.inWishlist : ''}`}
-                onClick={() => onToggleWishlist(beat)}
+                className={`${styles.wishlistButton} ${isInWishlistState ? styles.inWishlist : ''}`}
+                onClick={handleWishlistToggle}
               >
-                <FaHeart /> {isInWishlist ? 'Saved' : 'Save'}
+                <FaHeart /> {isInWishlistState ? 'Saved' : 'Save'}
               </button>
               
               <button className={styles.shareButton}>

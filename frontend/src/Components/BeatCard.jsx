@@ -3,24 +3,29 @@ import React from "react";
 import { FaPlay, FaPause, FaHeart, FaShoppingCart } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useAudio } from "../context/AudioContext";
+import { useWishlist } from "../context/WishlistContext"; // Added direct wishlist context
 import { useLicense } from "../context/LicenseContext";
 import { getBeatId, isBeatPlaying } from "../utils/audioUtils";
 import styles from "../css/BeatCard.module.css";
 
-const BeatCard = ({ beat, onToggleWishlist, isInWishlist }) => {
+const BeatCard = ({ beat }) => { // Removed onToggleWishlist and isInWishlist props
   const audioContext = useAudio();
   const { playTrack, isBeatPlaying: checkIsBeatPlaying } = audioContext;
   const { openLicenseModal } = useLicense();
+  const { toggleWishlist, isInWishlist } = useWishlist(); // Use wishlist context directly
   const navigate = useNavigate();
   
   // Use the context's helper function for consistency
   const isThisPlaying = checkIsBeatPlaying(beat);
   
+  // Check if this beat is in wishlist
+  const isInWishlistState = isInWishlist(beat);
+  
   // Debug logging (remove in production)
   React.useEffect(() => {
     const beatId = getBeatId(beat);
-    console.log(`BeatCard ${beatId} - isThisPlaying: ${isThisPlaying}`);
-  }, [isThisPlaying, beat]);
+    console.log(`BeatCard ${beatId} - isThisPlaying: ${isThisPlaying}, isInWishlist: ${isInWishlistState}`);
+  }, [isThisPlaying, isInWishlistState, beat]);
   
   // Handle play button click
   const handlePlayClick = (e) => {
@@ -69,10 +74,25 @@ const BeatCard = ({ beat, onToggleWishlist, isInWishlist }) => {
     });
   };
   
-  // Toggle wishlist handler
+  // UPDATED: Toggle wishlist using context directly
   const handleToggleWishlist = (e) => {
     e.stopPropagation();
-    if (onToggleWishlist) onToggleWishlist(beat);
+    
+    // Check if user is logged in
+    const isLoggedIn = localStorage.getItem('token');
+    if (!isLoggedIn) {
+      alert("Please log in to add items to wishlist");
+      navigate("/login");
+      return;
+    }
+
+    // Use context function directly
+    const result = toggleWishlist(beat);
+    
+    // Optional: Log the result (you can remove this or replace with toast notification)
+    if (result.success && result.message) {
+      console.log(result.message); // Just log instead of alert for better UX
+    }
   };
 
   return (
@@ -114,9 +134,9 @@ const BeatCard = ({ beat, onToggleWishlist, isInWishlist }) => {
             </button>
             
             <button 
-              className={`${styles.wishlistButton} ${isInWishlist ? styles.active : ""}`}
+              className={`${styles.wishlistButton} ${isInWishlistState ? styles.active : ""}`}
               onClick={handleToggleWishlist}
-              aria-label={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
+              aria-label={isInWishlistState ? "Remove from wishlist" : "Add to wishlist"}
             >
               <FaHeart />
             </button>
