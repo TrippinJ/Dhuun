@@ -1,6 +1,7 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useAudio } from '../context/AudioContext';
+import { useLicense } from '../context/LicenseContext';
+import { useWishlist } from '../context/WishlistContext';
 import { useNavigate } from 'react-router-dom';
 import {
   FaPlay,
@@ -14,9 +15,8 @@ import {
   FaShoppingCart,
   FaTimes
 } from 'react-icons/fa';
+import { getBeatId } from '../utils/audioUtils';
 import styles from '../css/GlobalAudioPlayer.module.css';
-
-
 
 const GlobalAudioPlayer = () => {
   const {
@@ -25,35 +25,56 @@ const GlobalAudioPlayer = () => {
     duration,
     currentTime,
     volume,
+    autoPlayEnabled,
     playTrack,
     pauseTrack,
     seekTo,
     changeVolume,
-    stopTrack
+    stopTrack,
+    playRandomTrack,
+    toggleAutoPlay
   } = useAudio();
+
+  const { openLicenseModal } = useLicense();
+  const { toggleWishlist, isInWishlist } = useWishlist();
+  const navigate = useNavigate();
 
   const [showVolume, setShowVolume] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const previousVolume = useRef(volume);
   const progressBarRef = useRef(null);
-  const navigate = useNavigate();
 
-  // Check if beat is in wishlist
+  // Check if current track is in wishlist
+  const isLiked = currentTrack ? isInWishlist(currentTrack) : false;
+
+  // Space bar functionality - only when player is visible
   useEffect(() => {
-    if (currentTrack) {
-      try {
-        const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
-        const liked = wishlist.some(item =>
-          item._id === currentTrack._id || item.id === currentTrack.id
-        );
-        setIsLiked(liked);
-      } catch (error) {
-        console.error("Error parsing wishlist:", error);
+    const handleKeyPress = (e) => {
+      // Only work when player is visible and currentTrack exists
+      if (currentTrack && e.code === 'Space') {
+        // Prevent default behavior (page scroll)
+        e.preventDefault();
+        
+        // Don't trigger if user is typing in an input field
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+          return;
+        }
+        
+        handlePlayPause();
       }
+    };
+
+    // Add event listener when player is visible
+    if (currentTrack) {
+      document.addEventListener('keydown', handleKeyPress);
     }
-  }, [currentTrack]);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [currentTrack, isPlaying]);
 
   // Only show the player if there's a track
   if (!currentTrack) {
@@ -90,30 +111,16 @@ const GlobalAudioPlayer = () => {
     }
   };
 
-  // Handle like toggle
+  // Handle like toggle using wishlist context
   const handleLikeToggle = () => {
-    let wishlist = [];
-    try {
-      wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
-    } catch (error) {
-      console.error("Error parsing wishlist:", error);
+    if (!currentTrack) return;
+
+    const result = toggleWishlist(currentTrack);
+    if (result.success && result.message) {
+      // Optional: Show a toast notification instead of alert
+      // For now, we'll keep it simple without alerts since the heart icon updates immediately
+      console.log(result.message);
     }
-
-    const index = wishlist.findIndex(item =>
-      item._id === currentTrack._id || item.id === currentTrack.id
-    );
-
-    if (index !== -1) {
-      // Remove from wishlist
-      wishlist.splice(index, 1);
-      setIsLiked(false);
-    } else {
-      // Add to wishlist
-      wishlist.push(currentTrack);
-      setIsLiked(true);
-    }
-
-    localStorage.setItem('wishlist', JSON.stringify(wishlist));
   };
 
   // Handle progress bar click for seeking
@@ -127,53 +134,73 @@ const GlobalAudioPlayer = () => {
     }
   };
 
-  // Handle adding to cart
+  // Enhanced add to cart with license selection
   const handleAddToCart = () => {
-    // Get existing cart or initialize empty array
-    let cart = [];
-    try {
-      cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    } catch (error) {
-      console.error("Error parsing cart:", error);
-    }
-
-    // Check if beat is already in cart
-    const beatInCart = cart.some(item =>
-      item._id === currentTrack._id || item.id === currentTrack.id
-    );
-
-    if (beatInCart) {
-      alert(`"${currentTrack.title}" is already in your cart`);
+    // Check if user is logged in
+    const isLoggedIn = localStorage.getItem('token');
+    if (!isLoggedIn) {
+      alert("Please log in to add items to cart");
+      navigate("/login");
       return;
     }
 
-    // Add beat to cart
-    cart.push(currentTrack);
-    localStorage.setItem('cart', JSON.stringify(cart));
+    // Open license modal with callback
+    openLicenseModal(currentTrack, (beatWithLicense) => {
+      try {
+        // Get existing cart
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        
+        // Check if already in cart with same license
+        const isInCart = cart.some(item => 
+          getBeatId(item) === getBeatId(beatWithLicense) &&
+          item.selectedLicense === beatWithLicense.selectedLicense
+        );
 
-    // Show feedback to user
-    alert(`${currentTrack.title} added to cart!`);
+        if (isInCart) {
+          alert(`"${beatWithLicense.title}" with ${beatWithLicense.licenseName} is already in your cart`);
+          return;
+        }
+        
+        // Add to cart
+        cart.push(beatWithLicense);
+        localStorage.setItem('cart', JSON.stringify(cart));
+        alert(`${beatWithLicense.title} with ${beatWithLicense.licenseName} added to cart!`);
+      } catch (error) {
+        console.error("Error adding to cart:", error);
+        alert("Error adding to cart. Please try again.");
+      }
+    });
   };
 
-  // Handle navigate to track page
+  // Handle navigate to track page - redirect to BeatExplorePage and trigger modal
   const goToTrack = () => {
-    navigate(`/beat/${currentTrack._id || currentTrack.id}`);
+    // Store the beat ID to open modal on BeatExplorePage
+    sessionStorage.setItem('openBeatModal', getBeatId(currentTrack));
+    navigate('/BeatExplorePage');
     setShowOptions(false);
   };
 
-  // Handle navigate to artist page
+  // Handle navigate to artist page - redirect to BeatExplorePage and trigger producer profile
   const goToArtist = () => {
-    navigate(`/producer/${currentTrack.producer?._id || currentTrack.producer?.id}`);
+    // Store the producer ID to open producer profile on BeatExplorePage
+    sessionStorage.setItem('openProducerProfile', currentTrack.producer?._id || currentTrack.producer?.id);
+    navigate('/BeatExplorePage');
     setShowOptions(false);
   };
-
-  if (!currentTrack) {
-    return null;
-  }
 
   // Handle close/stop button click
   const handleClose = () => {
     stopTrack();
+  };
+
+  // Handle previous track (random for now)
+  const handlePrevious = () => {
+    playRandomTrack();
+  };
+
+  // Handle next track (random for now)
+  const handleNext = () => {
+    playRandomTrack();
   };
 
   return (
@@ -192,10 +219,13 @@ const GlobalAudioPlayer = () => {
           <div className={styles.trackDetails}>
             <div className={styles.trackText}>
               <h3 className={styles.trackTitle}>{currentTrack.title}</h3>
-              <p className={styles.trackArtist}>{currentTrack.producer?.name || currentTrack.artist || 'Unknown Producer'}</p>
+              <p className={styles.trackArtist}>
+                {currentTrack.producer?.name || currentTrack.artist || 'Unknown Producer'}
+              </p>
             </div>
             <div className={styles.bpmInfo}>
               {currentTrack.bpm && `${currentTrack.bpm} BPM`}
+              {autoPlayEnabled && <span className={styles.autoPlayIndicator}> • Auto-play</span>}
             </div>
           </div>
         </div>
@@ -203,7 +233,11 @@ const GlobalAudioPlayer = () => {
         {/* Center controls */}
         <div className={styles.centerControls}>
           <div className={styles.controlButtons}>
-            <button className={styles.controlButton} aria-label="Previous track">
+            <button 
+              className={styles.controlButton} 
+              onClick={handlePrevious}
+              aria-label="Previous track"
+            >
               <FaBackward />
             </button>
 
@@ -215,7 +249,11 @@ const GlobalAudioPlayer = () => {
               {isPlaying ? <FaPause /> : <FaPlay />}
             </button>
 
-            <button className={styles.controlButton} aria-label="Next track">
+            <button 
+              className={styles.controlButton} 
+              onClick={handleNext}
+              aria-label="Next track"
+            >
               <FaForward />
             </button>
           </div>
@@ -289,6 +327,12 @@ const GlobalAudioPlayer = () => {
               <div className={styles.menuDropdown}>
                 <ul>
                   <li onClick={() => {
+                    toggleAutoPlay();
+                    setShowOptions(false);
+                  }}>
+                    {autoPlayEnabled ? 'Disable' : 'Enable'} Auto-play
+                  </li>
+                  <li onClick={() => {
                     navigate('/favorites');
                     setShowOptions(false);
                   }}>Add to Playlist</li>
@@ -304,7 +348,7 @@ const GlobalAudioPlayer = () => {
             )}
           </div>
 
-          {/* Buy button */}
+          {/* Enhanced Buy button with license selection */}
           <button
             className={styles.buyButton}
             onClick={handleAddToCart}

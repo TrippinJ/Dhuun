@@ -350,6 +350,12 @@
   position: relative;
 }
 
+.autoPlayIndicator {
+  color: #7b2cbf;
+  font-weight: 500;
+  font-size: 10px;
+}
+
 /* Responsive design for smaller screens */
 @media (max-width: 768px) {
   .trackInfo {

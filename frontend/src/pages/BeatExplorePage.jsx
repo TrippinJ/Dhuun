@@ -1,4 +1,4 @@
-// src/pages/BeatExplorePage.jsx
+
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import API from "../api/api";
@@ -52,7 +52,7 @@ const BeatExplorePage = () => {
   const [showProducerProfile, setShowProducerProfile] = useState(false);
   const [selectedProducerId, setSelectedProducerId] = useState(null);
 
-  // FIXED: Single useAudio destructuring with all needed values
+  // Single useAudio destructuring with all needed values
   const { playTrack, isBeatPlaying, currentTrack, isPlaying } = useAudio();
 
   const navigate = useNavigate();
@@ -86,7 +86,7 @@ const BeatExplorePage = () => {
 
     if (genreParam) {
       // Make sure the genre matches our available genres
-      const matchingGenre = genres.find(g => 
+      const matchingGenre = genres.find(g =>
         g.toLowerCase() === genreParam.toLowerCase()
       );
       if (matchingGenre) {
@@ -194,7 +194,62 @@ const BeatExplorePage = () => {
       console.error('Error loading cart:', error);
     }
   }, []);
+  // Add this useEffect to handle auto-opening modals from GlobalAudioPlayer navigation
+  useEffect(() => {
+    // Check if we need to open a beat modal
+    const beatIdToOpen = sessionStorage.getItem('openBeatModal');
+    if (beatIdToOpen && beats.length > 0) {
+      const beatToOpen = beats.find(beat => getBeatId(beat) === beatIdToOpen);
+      if (beatToOpen) {
+        console.log('Auto-opening beat modal for:', beatToOpen.title);
+        setSelectedBeat(beatToOpen);
+      }
+      // Clear the session storage
+      sessionStorage.removeItem('openBeatModal');
+    }
 
+    // Check if we need to open a producer profile
+    const producerIdToOpen = sessionStorage.getItem('openProducerProfile');
+    if (producerIdToOpen) {
+      console.log('Auto-opening producer profile for ID:', producerIdToOpen);
+      setSelectedProducerId(producerIdToOpen);
+      setShowProducerProfile(true);
+      // Clear the session storage
+      sessionStorage.removeItem('openProducerProfile');
+    }
+  }, [beats]); // Run when beats are loaded
+
+  
+  // Handle auto-opening modals from GlobalAudioPlayer navigation
+  useEffect(() => {
+    const checkAndOpenModals = () => {
+      // Check if we need to open a beat modal
+      const beatIdToOpen = sessionStorage.getItem('openBeatModal');
+      if (beatIdToOpen && beats.length > 0) {
+        const beatToOpen = beats.find(beat => getBeatId(beat) === beatIdToOpen);
+        if (beatToOpen) {
+          console.log('Auto-opening beat modal for:', beatToOpen.title);
+          setSelectedBeat(beatToOpen);
+        }
+        sessionStorage.removeItem('openBeatModal');
+      }
+
+      // Check if we need to open a producer profile
+      const producerIdToOpen = sessionStorage.getItem('openProducerProfile');
+      if (producerIdToOpen) {
+        console.log('Auto-opening producer profile for ID:', producerIdToOpen);
+        setSelectedProducerId(producerIdToOpen);
+        setShowProducerProfile(true);
+        sessionStorage.removeItem('openProducerProfile');
+      }
+    };
+
+    // Check when beats are loaded OR when location changes
+    if (beats.length > 0) {
+      // Small delay to ensure component is fully rendered
+      setTimeout(checkAndOpenModals, 150);
+    }
+  }, [beats, location]); // Run when beats load OR location changes
   // Fetch popular tags
   useEffect(() => {
     const fetchPopularTags = async () => {
@@ -249,7 +304,7 @@ const BeatExplorePage = () => {
         );
 
       const matches = keywordMatch && genreMatch && priceMatch && tagsMatch;
-      
+
       if (!matches && keywords.trim()) {
         console.log('Beat filtered out:', beat.title, {
           keywordMatch,
@@ -403,7 +458,7 @@ const BeatExplorePage = () => {
     } else {
       newParams.set('genre', genre);
     }
-    
+
     // Update URL
     const newUrl = `${location.pathname}${newParams.toString() ? '?' + newParams.toString() : ''}`;
     window.history.replaceState({}, '', newUrl);
@@ -422,7 +477,7 @@ const BeatExplorePage = () => {
     } else {
       newParams.delete('search');
     }
-    
+
     // Update URL
     const newUrl = `${location.pathname}${newParams.toString() ? '?' + newParams.toString() : ''}`;
     window.history.replaceState({}, '', newUrl);
@@ -470,7 +525,7 @@ const BeatExplorePage = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [loadMoreBeats, loadingMore, hasMore]);
 
-  
+
   // UI rendering
   if (loading) {
     return (
@@ -490,9 +545,9 @@ const BeatExplorePage = () => {
 
       <div className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>
-          {keywords ? `Search results for "${keywords}"` : 
-           selectedGenre !== "All Genres" ? `${selectedGenre} Beats` : 
-           "Explore Beats"}
+          {keywords ? `Search results for "${keywords}"` :
+            selectedGenre !== "All Genres" ? `${selectedGenre} Beats` :
+              "Explore Beats"}
         </h1>
 
         <form onSubmit={handleSearch} className={styles.searchForm}>

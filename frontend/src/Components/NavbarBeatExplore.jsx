@@ -4,15 +4,16 @@ import styles from "../css/NavbarBeatExplore.module.css";
 import Logo from "../Assets/DHUUN.png"
 import { FaShoppingCart, FaUserCircle, FaHeart, FaSignOutAlt, FaCog, FaCrown, FaDownload } from 'react-icons/fa';
 import { useSettings } from '../context/SettingsContext';
-import { useAuth } from '../context/AuthContext'; // Add this import
+import { useAuth } from '../context/AuthContext'; 
+import { useWishlist } from '../context/WishlistContext';
 
 const NavbarBeatExplore = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
   const [cartCount, setCartCount] = useState(0);
-  const [wishlistCount, setWishlistCount] = useState(0);
   const { settings } = useSettings();
+  const { getWishlistCount } = useWishlist();
   
   // Replace manual auth state with AuthContext
   const { user, isLoggedIn, logout } = useAuth();
@@ -44,28 +45,7 @@ const NavbarBeatExplore = () => {
     };
   }, []);
 
-  // Update wishlist count
-  useEffect(() => {
-    const updateWishlistCount = () => {
-      try {
-        const wishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
-        setWishlistCount(wishlist.length);
-      } catch (error) {
-        console.error("Error parsing wishlist:", error);
-        setWishlistCount(0);
-      }
-    };
-
-    // Update on mount
-    updateWishlistCount();
-
-    // Add event listener for storage changes
-    window.addEventListener("storage", updateWishlistCount);
-
-    return () => {
-      window.removeEventListener("storage", updateWishlistCount);
-    };
-  }, []);
+ 
 
   // Handle clicks outside the dropdown to close it
   useEffect(() => {
@@ -172,7 +152,7 @@ const NavbarBeatExplore = () => {
         <a href="#" onClick={(e) => { e.preventDefault(); navigate("/favorites"); }} className={styles.navLink}>
           <div className={styles.cartIconContainer}>
             <FaHeart />
-            {wishlistCount > 0 && <span className={styles.cartBadge}>{wishlistCount}</span>}
+            {getWishlistCount() > 0 && <span className={styles.cartBadge}>{getWishlistCount()}</span>}
           </div>
           {/* Wishlist */}
         </a>
