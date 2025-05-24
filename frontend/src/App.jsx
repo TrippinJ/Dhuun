@@ -42,6 +42,10 @@ import SellerWallet from "./Components/SellerWallet";
 import DocumentVerification from './Components/DocumentVerification';
 // import DashboardOverview from "./Components/DashboardOverview"; // We'll create this
 
+// Toastify
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 function App() {
   return (
     <ErrorBoundary>
@@ -160,7 +164,18 @@ function App() {
                         }
                       />
                     </Routes>
-
+                    <ToastContainer
+                      position="top-right"
+                      autoClose={3000}
+                      hideProgressBar={false}
+                      newestOnTop={false}
+                      closeOnClick
+                      rtl={false}
+                      pauseOnFocusLoss
+                      draggable
+                      pauseOnHover
+                      theme="light"
+                    />
                     <GlobalAudioPlayer />
                   </BrowserRouter>
                 </div>

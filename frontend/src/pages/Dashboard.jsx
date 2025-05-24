@@ -24,6 +24,7 @@ import PurchasedBeats from "../Components/PurchasedBeats";
 import SellerWallet from "../Components/SellerWallet";
 import EditProfile from "../Components/EditProfile";
 import DocumentVerification from '../Components/DocumentVerification';
+import { showToast } from '../utils/toast';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -231,12 +232,14 @@ const Dashboard = () => {
   };
 
   const handleUploadComplete = (data) => {
-    // Add the new beat to the beats list
-    if (data && data.beat) {
-      setBeats([data.beat, ...beats]);
-    }
-    setShowUploadForm(false);
-  };
+  if (data && data.beat) {
+    setBeats([data.beat, ...beats]);
+    showToast.uploadSuccess(data.beat.title);
+  } else {
+    showToast.success('Beat uploaded successfully!');
+  }
+  setShowUploadForm(false);
+};
 
   const handleEditBeat = (beatId) => {
     // Implement edit functionality or navigate to edit page
@@ -255,15 +258,12 @@ const Dashboard = () => {
 
   const confirmDelete = async (beatId) => {
     try {
-      console.log("Deleting beat with ID:", beatId); // Debug log
-
-      // Make sure beatId is not undefined
-      if (!beatId) {
-        console.error("Beat ID is undefined");
-        setError("Cannot delete beat: Invalid ID");
-        setShowConfirmDelete(null);
-        return;
-      }
+    if (!beatId) {
+      console.error("Beat ID is undefined");
+      showToast.error("Cannot delete beat: Invalid ID");
+      setShowConfirmDelete(null);
+      return;
+    }
 
       const token = localStorage.getItem("token");
       await API.delete(`/api/beats/${beatId}`, {
@@ -285,7 +285,7 @@ const Dashboard = () => {
       setShowConfirmDelete(null);
     } catch (error) {
       console.error("Error deleting beat:", error);
-      setError("Failed to delete beat. Please try again.");
+      showToast.error("Failed to delete beat. Please try again.");
       setShowConfirmDelete(null);
     }
   };

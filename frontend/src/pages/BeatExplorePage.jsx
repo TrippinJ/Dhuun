@@ -19,10 +19,11 @@ import {
 import NavbarBeatExplore from '../Components/NavbarBeatExplore';
 import SingleBeatModal from '../Components/Singlebeatmodal';
 import { useAudio } from '../context/AudioContext';
-import { useWishlist } from '../context/WishlistContext'; // Added this import
+import { useWishlist } from '../context/WishlistContext';
 import LicenseSelectionModal from '../Components/LicenseSelectionModal';
 import ProducerProfile from '../Components/ProducerProfile';
 import { getBeatId } from '../utils/audioUtils';
+import { showToast } from '../utils/toast';
 
 const BeatExplorePage = () => {
   // State variables (REMOVED local wishlist state)
@@ -345,7 +346,7 @@ const BeatExplorePage = () => {
 
     const isLoggedIn = localStorage.getItem('token');
     if (!isLoggedIn) {
-      alert("Please log in to add items to cart");
+      showToast.loginRequired();
       navigate("/login");
       return;
     }
@@ -362,7 +363,7 @@ const BeatExplorePage = () => {
     );
 
     if (isInCart) {
-      alert(`"${beatWithLicense.title}" with ${beatWithLicense.licenseName} is already in your cart`);
+      showToast.warning(`"${beatWithLicense.title}" with ${beatWithLicense.licenseName} is already in your cart`);
       return;
     }
 
@@ -372,27 +373,32 @@ const BeatExplorePage = () => {
 
     setShowLicenseModal(false);
     setSelectedBeatForLicense(null);
-    alert(`${beatWithLicense.title} with ${beatWithLicense.licenseName} added to cart!`);
+    showToast.addedToCart(beatWithLicense.title, beatWithLicense.licenseName);
   };
 
-  // UPDATED: Toggle wishlist using context
+  // Toggle wishlist using context
   const handleToggleWishlist = (event, beat) => {
     event.stopPropagation();
 
     const isLoggedIn = localStorage.getItem('token');
     if (!isLoggedIn) {
-      alert("Please log in to add items to wishlist");
+      showToast.loginRequired();
       navigate("/login");
       return;
     }
 
     // Use context function instead of local state
     const result = toggleWishlist(beat);
-    
-    // Optional: Show feedback (you can remove this alert if you don't want it)
-    if (result.success && result.message) {
-      // You can replace this with a toast notification later
-      console.log(result.message); // Just log instead of alert for better UX
+
+    // Show appropriate toast based on action
+    if (result.success) {
+      if (result.action === 'added') {
+        showToast.addedToWishlist(beat.title);
+      } else if (result.action === 'removed') {
+        showToast.removedFromWishlist(beat.title);
+      }
+    } else if (result.message) {
+      showToast.error(result.message);
     }
   };
 
