@@ -11,6 +11,8 @@ import AdminSettings from '../../Components/Admin/AdminSettings';
 import AdminWithdrawals from '../../Components/Admin/AdminWithdrawals';
 import AdminDocumentVerification from '../../Components/Admin/AdminDocumentVerification';
 import AdminReviews from '../../Components/Admin/AdminReviews';
+import AdminCreatorResources from '../../Components/Admin/AdminCreatorResources';
+
 import API from '../../api/api';
 import styles from '../../css/Admin/AdminDashboard.module.css';
 
@@ -76,6 +78,8 @@ const AdminDashboard = () => {
         return <AdminDocumentVerification />;
       case 'withdrawals':
         return <AdminWithdrawals />;
+        case 'creator-resources':  
+      return <AdminCreatorResources />;
       default:
         return <AdminOverview />;
     }
