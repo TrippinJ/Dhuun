@@ -100,7 +100,7 @@ const ProducerProfile = ({ producerId, isOpen, onClose }) => {
       const token = localStorage.getItem('token');
       if (!token) {
         // If no token, redirect to login or show a message
-        alert('Please log in to follow this producer');
+        showToast.error('Please log in to follow this producer');
         navigate('/login'); 
         return;
       }
