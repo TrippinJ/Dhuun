@@ -12,10 +12,11 @@ const ResetPassword = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [token, setToken] = useState("");
+  const [validatingToken, setValidatingToken] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Extract token from URL parameters
+  // Extract and validate token from URL parameters
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const resetToken = searchParams.get("token");
@@ -25,8 +26,10 @@ const ResetPassword = () => {
         type: "error", 
         text: "Invalid reset link. Please request a new password reset." 
       });
+      setValidatingToken(false);
     } else {
       setToken(resetToken);
+      setValidatingToken(false);
     }
   }, [location]);
 
@@ -60,13 +63,13 @@ const ResetPassword = () => {
       
       setMessage({ 
         type: "success", 
-        text: "Your password has been reset successfully!" 
+        text: "Your password has been reset successfully! Redirecting to login..." 
       });
       
-      // Redirect to login page after 2 seconds
+      // Redirect to login page after 3 seconds
       setTimeout(() => {
         navigate("/login");
-      }, 2000);
+      }, 3000);
       
     } catch (error) {
       console.error("Password reset error:", error);
@@ -79,6 +82,18 @@ const ResetPassword = () => {
     }
   };
 
+  if (validatingToken) {
+    return (
+      <div className={styles.wrapper}>
+        <div className={`${styles.formBox} ${styles.login}`}>
+          <div style={{ textAlign: 'center', padding: '20px' }}>
+            <p>Validating reset link...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.wrapper}>
       <button className={styles.iconClose} onClick={() => navigate("/")}>
@@ -86,6 +101,9 @@ const ResetPassword = () => {
       </button>
       <div className={`${styles.formBox} ${styles.login}`}>
         <h2>Reset Password</h2>
+        <p className={styles.forgotPasswordInfo}>
+          Enter your new password below
+        </p>
         
         {message.text && (
           <div className={message.type === "error" ? styles.errorMessage : styles.successMessage}>
@@ -103,6 +121,7 @@ const ResetPassword = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              disabled={!token}
             />
             <label>New Password</label>
             <span 
@@ -122,6 +141,7 @@ const ResetPassword = () => {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
+              disabled={!token}
             />
             <label>Confirm Password</label>
             <span 
@@ -140,6 +160,16 @@ const ResetPassword = () => {
             {isSubmitting ? "Updating..." : "Reset Password"}
           </button>
         </form>
+        
+        {!token && (
+          <div className={styles.loginRegister}>
+            <p>
+              <Link to="/forgot-password" className={styles.loginLink}>
+                ← Request new reset link
+              </Link>
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

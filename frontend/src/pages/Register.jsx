@@ -129,7 +129,7 @@ const Register = () => {
             </div>
             <div className={styles.inputBox}>
               <span className={styles.icon}>
-                <ion-icon name="call"></ion-icon>
+                <ion-icon name="person"></ion-icon>
               </span>
               <input
                 type="text"

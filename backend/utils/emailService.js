@@ -422,6 +422,63 @@ export const sendBeatPurchased = async (saleDetails) => {
   }
 };
 
+
+/**
+ * Send password reset email
+ * @param {string} email - Recipient email
+ * @param {string} resetToken - Password reset token
+ * @param {string} name - User's name
+ * @returns {Promise} - Email sending result
+ */
+export const sendPasswordResetEmail = async (email, resetToken, name = 'User') => {
+  try {
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
+    
+    const mailOptions = {
+      from: `"Dhuun Music" <${process.env.EMAIL_FROM}>`,
+      to: email,
+      subject: 'Reset Your Dhuun Password',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h1 style="color: #7B2CBF;">Dhuun</h1>
+          </div>
+          <div style="margin-bottom: 20px;">
+            <h2>Reset Your Password</h2>
+            <p>Hi ${name},</p>
+            <p>We received a request to reset your password for your Dhuun account. Click the button below to reset your password:</p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${resetUrl}" 
+                style="background-color: #7B2CBF; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">
+                Reset Password
+              </a>
+            </div>
+            
+            <p>Or copy and paste this link into your browser:</p>
+            <p style="word-break: break-all; background-color: #f5f5f5; padding: 10px; border-radius: 3px;">
+              ${resetUrl}
+            </p>
+            
+            <p><strong>This link will expire in 1 hour.</strong></p>
+            
+            <p>If you didn't request this password reset, please ignore this email. Your password will not be changed.</p>
+          </div>
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #666; font-size: 12px;">
+            <p>© ${new Date().getFullYear()} Dhuun. All rights reserved.</p>
+          </div>
+        </div>
+      `
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`✉️ Password reset email sent to ${email}: ${info.messageId}`);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    return { success: false, error: error.message };
+  }
+};
 // Export the transporter for custom email scenarios
 export const getTransporter = () => transporter;
 

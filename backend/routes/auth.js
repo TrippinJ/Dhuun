@@ -8,6 +8,7 @@ import User from '../models/user.js';
 import crypto from 'crypto';
 import { sendOTPEmail } from '../utils/emailService.js';
 import { sendWelcomeEmail } from '../utils/emailService.js';
+import { sendPasswordResetEmail } from '../utils/emailService.js';
 import { deleteFromCloudinary } from '../utils/cloudinaryConfig.js';
 import Profile from '../models/profile.js';
 
@@ -430,8 +431,8 @@ router.post("/verify-otp", async (req, res) => {
 
     // Mark user as verified and clear OTP fields
     user.isVerified = true;
-    user.verificationOTP = undefined;
-    user.otpExpires = undefined;
+    user.otp = null;
+    user.otpExpires = null;
     await user.save();
 
     // Send welcome email
@@ -611,12 +612,12 @@ router.post("/forgot-password", async (req, res) => {
     if (!user) {
       // For security reasons, don't reveal that the user doesn't exist
       return res.status(200).json({
-        message: "If a user with that email exists, a password reset token has been sent."
+        message: "If a user with that email exists, a password reset link has been sent."
       });
     }
 
     // Generate a reset token
-    const resetToken = crypto.randomBytes(20).toString('hex');
+    const resetToken = crypto.randomBytes(32).toString('hex'); // Increased token length for security
     const resetTokenExpiry = Date.now() + 3600000; // 1 hour from now
 
     // Save the reset token and expiry to the user
@@ -624,28 +625,30 @@ router.post("/forgot-password", async (req, res) => {
     user.resetPasswordExpires = resetTokenExpiry;
     await user.save();
 
-    // For development: Log or return the token
-    console.log(`Password Reset Token for ${email}: ${resetToken}`);
-
-    // In development, we'll return the token in the response
-    // In production, you'd send an email instead
-    if (process.env.NODE_ENV === 'production') {
-      // TODO: Send actual email with reset link
-      return res.status(200).json({
-        message: "Password reset email sent successfully!"
-      });
-    } else {
-      // For development only - return the token in the response
-      return res.status(200).json({
-        message: "Password reset token generated. In production, an email would be sent.",
-        devToken: resetToken,
-        // For local testing, include a link you could click
-        resetLink: `http://localhost:3000/reset-password?token=${resetToken}`
+    // Send password reset email
+    try {
+      const emailResult = await sendPasswordResetEmail(user.email, resetToken, user.name);
+      
+      if (emailResult.success) {
+        console.log(`Password reset email sent successfully to ${email}`);
+        return res.status(200).json({
+          message: "Password reset link has been sent to your email address."
+        });
+      } else {
+        console.error("Failed to send password reset email:", emailResult.error);
+        return res.status(500).json({
+          message: "Failed to send password reset email. Please try again later."
+        });
+      }
+    } catch (emailError) {
+      console.error("Email service error:", emailError);
+      return res.status(500).json({
+        message: "Failed to send password reset email. Please try again later."
       });
     }
   } catch (error) {
     console.error("Forgot password error:", error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ message: "Server error. Please try again later." });
   }
 });
 

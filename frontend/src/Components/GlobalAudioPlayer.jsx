@@ -338,11 +338,6 @@ const GlobalAudioPlayer = () => {
                   }}>Add to Playlist</li>
                   <li onClick={goToTrack}>Go to Track</li>
                   <li onClick={goToArtist}>Go to Artist</li>
-                  <li onClick={() => {
-                    // Share functionality could be implemented here
-                    alert('Share functionality coming soon!');
-                    setShowOptions(false);
-                  }}>Share</li>
                 </ul>
               </div>
             )}

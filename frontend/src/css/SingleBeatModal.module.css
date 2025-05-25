@@ -454,6 +454,74 @@
   animation-delay: 0.6s;
 }
 
+/* Add these styles to your existing SingleBeatModal.module.css */
+
+/* Transposing indicator */
+.transposingIndicator {
+  text-align: center;
+  color: #7B2CBF;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 8px;
+  background-color: rgba(123, 44, 191, 0.1);
+  border-radius: 6px;
+  margin-bottom: 15px;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Enhanced transpose button styles */
+.transposeButton:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  background-color: #222;
+}
+
+.transposeButton:not(:disabled):hover {
+  background-color: #7B2CBF;
+  transform: scale(1.05);
+}
+
+/* Loading state for transposition controls */
+.transpositionControls.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Enhanced semitone value display */
+.semitoneValue {
+  color: #7B2CBF;
+  font-weight: 700;
+  font-size: 1rem;
+  min-width: 50px;
+  text-align: center;
+  transition: color 0.3s ease;
+}
+
+.semitoneValue.active {
+  color: #FF1A1A;
+  text-shadow: 0 0 5px rgba(255, 26, 26, 0.3);
+}
+
+/* Play button disabled state */
+.playButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.playButton:disabled:hover {
+  transform: translate(-50%, -50%);
+  background-color: rgba(123, 44, 191, 0.8);
+}
+
 /* Animations */
 @keyframes modalFadeIn {
   from {

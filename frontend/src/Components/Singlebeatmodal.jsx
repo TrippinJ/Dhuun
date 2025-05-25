@@ -1,22 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useLicense } from '../context/LicenseContext';
-import { useWishlist } from '../context/WishlistContext'; // Add wishlist context
+import { useWishlist } from '../context/WishlistContext';
 import styles from '../css/SingleBeatModal.module.css';
 import { 
   FaPlay, 
   FaPause, 
   FaCartPlus, 
-  FaHeart, 
-  FaShareAlt, 
-  FaDownload,
+  FaHeart,  
   FaTimes,
   FaMusic,
   FaClock,
   FaCalendarAlt,
   FaHashtag,
   FaPlus,
-  FaMinus,
-  FaCheck
+  FaMinus
 } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
@@ -25,7 +22,6 @@ const SingleBeatModal = ({
   isOpen,
   onClose,
   onAddToCart,
-  // Removed: onToggleWishlist, isInWishlist (using context now)
   isInCart,
   isPlaying,
   onPlayPause,
@@ -36,51 +32,166 @@ const SingleBeatModal = ({
   const [selectedLicense, setSelectedLicense] = useState('basic');
   const [audioContext, setAudioContext] = useState(null);
   const [audioSource, setAudioSource] = useState(null);
+  const [audioBuffer, setAudioBuffer] = useState(null);
+  const [isTransposing, setIsTransposing] = useState(false);
   const navigate = useNavigate();
   const { openLicenseModal } = useLicense();
-  const { toggleWishlist, isInWishlist } = useWishlist(); // Use wishlist context
+  const { toggleWishlist, isInWishlist } = useWishlist();
   
   // Check if this beat is in wishlist using context
   const isInWishlistState = isInWishlist(beat);
   
-  // Initialize audio context for transposition
+  // Initialize audio context and load audio buffer
   useEffect(() => {
-    // Create AudioContext only when needed (user interaction)
-    const initAudioContext = () => {
-      // Use standard AudioContext or the webkit prefix for Safari
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (AudioCtx && !audioContext) {
-        setAudioContext(new AudioCtx());
+    const initAudio = async () => {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx && !audioContext && beat?.audioFile) {
+          const ctx = new AudioCtx();
+          setAudioContext(ctx);
+          
+          // Load and decode audio file for transposition
+          const response = await fetch(beat.audioFile);
+          const arrayBuffer = await response.arrayBuffer();
+          const buffer = await ctx.decodeAudioData(arrayBuffer);
+          setAudioBuffer(buffer);
+        }
+      } catch (error) {
+        console.error('Error initializing audio:', error);
       }
     };
-    
-    // Add event listener to initialize audio context on user interaction
-    document.addEventListener('click', initAudioContext, { once: true });
-    
+
+    if (isOpen && beat) {
+      initAudio();
+    }
+
     return () => {
-      document.removeEventListener('click', initAudioContext);
-      // Clean up audio context when component unmounts
-      if (audioContext) {
+      if (audioSource) {
+        audioSource.stop();
+        audioSource.disconnect();
+      }
+      if (audioContext && audioContext.state !== 'closed') {
         audioContext.close();
       }
     };
-  }, [audioContext]);
+  }, [isOpen, beat]);
+
+  // Reset transposition when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setSemitones(0);
+      if (audioSource) {
+        audioSource.stop();
+        audioSource.disconnect();
+        setAudioSource(null);
+      }
+    }
+  }, [isOpen]);
   
   // Exit early if no beat data or modal not open
   if (!beat || !isOpen) return null;
   
-  // Handle transposition
-  const handleTranspose = (direction) => {
-    if (direction === 'up' && semitones < 12) {
-      setSemitones(semitones + 1);
-    } else if (direction === 'down' && semitones > -12) {
-      setSemitones(semitones - 1);
+  // Handle transposition with actual audio processing
+  const handleTranspose = async (direction) => {
+    if (!audioContext || !audioBuffer) {
+      console.warn('Audio context or buffer not ready');
+      return;
     }
-    
-    // Apply transposition effect
-    // Note: In a real implementation, this would modify the playback rate
-    // of the audio to achieve the semitone shift effect
-    console.log(`Transposed to ${semitones} semitones`);
+
+    try {
+      setIsTransposing(true);
+      
+      let newSemitones = semitones;
+      if (direction === 'up' && semitones < 2) {
+        newSemitones = semitones + 1;
+      } else if (direction === 'down' && semitones > -2) {
+        newSemitones = semitones - 1;
+      } else {
+        setIsTransposing(false);
+        return;
+      }
+
+      setSemitones(newSemitones);
+      
+      // Calculate pitch shift ratio (each semitone = 2^(1/12))
+      const pitchRatio = Math.pow(2, newSemitones / 12);
+      
+      // Stop current audio source if playing
+      if (audioSource) {
+        audioSource.stop();
+        audioSource.disconnect();
+        setAudioSource(null);
+      }
+
+      // Create new audio source with pitch shift
+      const source = audioContext.createBufferSource();
+      source.buffer = audioBuffer;
+      source.playbackRate.value = pitchRatio;
+      source.connect(audioContext.destination);
+      
+      // Start playing if currently playing
+      if (isPlaying) {
+        await audioContext.resume();
+        source.start();
+        setAudioSource(source);
+        
+        source.onended = () => {
+          setAudioSource(null);
+        };
+      } else {
+        setAudioSource(source);
+      }
+      
+      console.log(`Transposed to ${newSemitones} semitones (pitch ratio: ${pitchRatio.toFixed(3)})`);
+      
+    } catch (error) {
+      console.error('Error during transposition:', error);
+    } finally {
+      setIsTransposing(false);
+    }
+  };
+
+  // Handle play/pause with transposition support
+  const handlePlayPause = async () => {
+    if (!audioContext || !audioBuffer) {
+      // Fallback to original audio player
+      onPlayPause();
+      return;
+    }
+
+    try {
+      if (audioContext.state === 'suspended') {
+        await audioContext.resume();
+      }
+
+      if (isPlaying && audioSource) {
+        // Stop transposed audio
+        audioSource.stop();
+        audioSource.disconnect();
+        setAudioSource(null);
+      } else {
+        // Start transposed audio
+        const pitchRatio = Math.pow(2, semitones / 12);
+        const source = audioContext.createBufferSource();
+        source.buffer = audioBuffer;
+        source.playbackRate.value = pitchRatio;
+        source.connect(audioContext.destination);
+        source.start();
+        setAudioSource(source);
+        
+        source.onended = () => {
+          setAudioSource(null);
+        };
+      }
+      
+      // Update the parent component's play state
+      onPlayPause();
+      
+    } catch (error) {
+      console.error('Error playing transposed audio:', error);
+      // Fallback to original audio
+      onPlayPause();
+    }
   };
   
   // Handle license selection
@@ -127,7 +238,7 @@ const SingleBeatModal = ({
     });
   };
   
-  // UPDATED: Handle wishlist toggle using context
+  // Handle wishlist toggle using context
   const handleWishlistToggle = () => {
     // Check if user is logged in
     const isLoggedIn = localStorage.getItem('token');
@@ -166,7 +277,6 @@ const SingleBeatModal = ({
         'MP3 File',
         'No royalties',
         'Must credit producer'
-        
       ]
     },
     premium: {
@@ -246,9 +356,10 @@ const SingleBeatModal = ({
               
               <button 
                 className={styles.playButton}
-                onClick={onPlayPause}
+                onClick={handlePlayPause}
+                disabled={isTransposing}
               >
-                {isLoading ? (
+                {isLoading || isTransposing ? (
                   <div className={styles.loadingDots}></div>
                 ) : isPlaying ? (
                   <FaPause />
@@ -263,7 +374,7 @@ const SingleBeatModal = ({
               <button 
                 className={styles.transposeButton}
                 onClick={() => handleTranspose('down')}
-                disabled={semitones <= -2}
+                disabled={semitones <= -2 || isTransposing}
               >
                 <FaMinus />
               </button>
@@ -273,11 +384,18 @@ const SingleBeatModal = ({
               <button 
                 className={styles.transposeButton}
                 onClick={() => handleTranspose('up')}
-                disabled={semitones >= 2}
+                disabled={semitones >= 2 || isTransposing}
               >
                 <FaPlus />
               </button>
             </div>
+
+            {/* Processing indicator */}
+            {isTransposing && (
+              <div className={styles.transposingIndicator}>
+                Processing...
+              </div>
+            )}
             
             <div className={styles.actionButtons}>
               <button 
@@ -295,9 +413,7 @@ const SingleBeatModal = ({
                 <FaHeart /> {isInWishlistState ? 'Saved' : 'Save'}
               </button>
               
-              <button className={styles.shareButton}>
-                <FaShareAlt /> Share
-              </button>
+              
             </div>
           </div>
           
