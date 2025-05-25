@@ -28,6 +28,21 @@ const About = () => {
       </div>
     );
   }
+  const handleExploreBeatClick = () => {
+    // Navigate to creator community page
+    navigate("/BeatExplorePage");
+  };
+
+  // Show loading state if settings are still loading
+  if (loading) {
+    return (
+      <div className="about-section-container">
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Determine which image to use
   const aboutImage = settings?.aboutSection?.image && settings.aboutSection.image.trim() !== "" 
@@ -70,8 +85,10 @@ const About = () => {
           >
             Learn More
           </button>
-          <button className="watch-video-button">
-            <BsFillPlayCircleFill /> Watch Video
+          <button className="watch-video-button"
+          onClick={handleExploreBeatClick}
+          >
+            <BsFillPlayCircleFill /> Explore Beats
           </button>
         </div>
       </div>

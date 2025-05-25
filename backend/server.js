@@ -25,6 +25,8 @@ import adminWithdrawalRoutes from './routes/adminWithdrawalRoutes.js';
 import followRoutes from './routes/followRoutes.js';
 import settingsRoutes from './routes/settingsRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
+import creatorResourcesRoutes from './routes/creatorResourcesRoutes.js';
+
 
 // Get __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -107,6 +109,7 @@ app.use('/api/verification', verificationRoutes);
 app.use('/api/follow', followRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/creator-resources', creatorResourcesRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

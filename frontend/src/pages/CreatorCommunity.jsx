@@ -2,21 +2,19 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import NavbarBeatExplore from '../Components/NavbarBeatExplore';
 import styles from "../css/CreatorCommunity.module.css";
-import { FaPlay, FaPause, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaDownload, FaEye, FaChevronLeft, FaChevronRight, FaFileAlt, FaBook } from "react-icons/fa";
 import API from "../api/api";
 
 const CreatorCommunity = () => {
   const navigate = useNavigate();
   const [currentCategoryIndex, setCurrentCategoryIndex] = useState(0);
-  const [courses, setCourses] = useState([]);
+  const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [currentlyPlaying, setCurrentlyPlaying] = useState(null);
-  const [audioPlayer, setAudioPlayer] = useState(new Audio());
 
-  // Define course categories - add "All Courses" as the first option
+  // Define resource categories
   const categories = [
-    "All Courses", // Added this option
+    "All Courses",
     "Mixing & Mastering",
     "Beat Making",
     "Music Theory",
@@ -25,85 +23,27 @@ const CreatorCommunity = () => {
   ];
 
   useEffect(() => {
-    // Simulated courses data
-    // In a real app, you would fetch this from your API
-    const sampleCourses = [
-      {
-        id: "course1",
-        title: "Mixing Vocals Like a Pro",
-        instructor: "DJ Mixer",
-        category: "Mixing & Mastering",
-        image: "/default-cover.jpg",
-        previewAudio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-        duration: "1h 45m",
-        level: "Intermediate"
-      },
-      {
-        id: "course2",
-        title: "Beat Production Fundamentals",
-        instructor: "Beat Master",
-        category: "Beat Making",
-        image: "/default-cover.jpg",
-        previewAudio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-        duration: "2h 30m",
-        level: "Beginner"
-      },
-      {
-        id: "course3",
-        title: "Music Theory for Producers",
-        instructor: "Theory Expert",
-        category: "Music Theory",
-        image: "/default-cover.jpg",
-        previewAudio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
-        duration: "3h 15m",
-        level: "Intermediate"
-      },
-      {
-        id: "course4",
-        title: "Trap Beat Mastery",
-        instructor: "Trap King",
-        category: "Beat Making",
-        image: "/default-cover.jpg",
-        previewAudio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
-        duration: "2h 10m",
-        level: "Advanced"
-      },
-      {
-        id: "course5",
-        title: "Auto-Tune & Vocal Effects",
-        instructor: "Voice Master",
-        category: "Vocal Production",
-        image: "/default-cover.jpg",
-        previewAudio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
-        duration: "1h 30m",
-        level: "Intermediate"
-      },
-      {
-        id: "course6",
-        title: "Music Licensing 101",
-        instructor: "Legal Eagle",
-        category: "Music Business",
-        image: "/default-cover.jpg",
-        previewAudio: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3",
-        duration: "1h 15m",
-        level: "Beginner"
-      }
-    ];
+    fetchResources();
+  }, [currentCategoryIndex]);
 
-    // Simulate API fetch delay
-    setTimeout(() => {
-      setCourses(sampleCourses);
+  const fetchResources = async () => {
+    try {
+      setLoading(true);
+      const category = categories[currentCategoryIndex];
+      const response = await API.get(`/api/creator-resources?category=${encodeURIComponent(category)}`);
+      
+      if (response.data.success) {
+        setResources(response.data.resources);
+      } else {
+        throw new Error('Failed to fetch resources');
+      }
+    } catch (error) {
+      console.error('Error fetching resources:', error);
+      setError('Failed to load educational resources');
+    } finally {
       setLoading(false);
-    }, 1000);
-
-    // Cleanup audio when component unmounts
-    return () => {
-      if (audioPlayer) {
-        audioPlayer.pause();
-        audioPlayer.src = "";
-      }
-    };
-  }, []);
+    }
+  };
 
   // Functions to navigate carousel
   const nextCategory = () => {
@@ -118,41 +58,60 @@ const CreatorCommunity = () => {
     );
   };
 
-  // Get courses for the current category or all courses if "All Courses" is selected
-  const currentCategoryCourses = categories[currentCategoryIndex] === "All Courses" 
-    ? courses 
-    : courses.filter(course => course.category === categories[currentCategoryIndex]);
-
-  // Handle audio playback
-  const handlePlayPreview = (courseId, audioUrl) => {
-    if (currentlyPlaying === courseId) {
-      // If already playing this course, pause it
-      audioPlayer.pause();
-      setCurrentlyPlaying(null);
-    } else {
-      // If playing something else, stop that and play this
-      audioPlayer.pause();
-      audioPlayer.src = audioUrl;
-      audioPlayer.play()
-        .then(() => {
-          setCurrentlyPlaying(courseId);
-        })
-        .catch(error => {
-          console.error("Error playing audio:", error);
-        });
+  // Handle resource selection
+  const handleResourceSelect = (resource) => {
+    if (resource.type === 'pdf') {
+      // Open PDF in new tab or download
+      window.open(resource.downloadUrl, '_blank');
+    } else if (resource.type === 'blog') {
+      // Navigate to blog post or open URL
+      if (resource.blogUrl.startsWith('http')) {
+        window.open(resource.blogUrl, '_blank');
+      } else {
+        navigate(resource.blogUrl);
+      }
     }
-
-    // Add ended event listener to reset the currently playing state
-    audioPlayer.onended = () => {
-      setCurrentlyPlaying(null);
-    };
   };
 
-  // Handle course selection
-  const handleCourseSelect = (courseId) => {
-    // Navigate to course detail page (to be implemented)
-    console.log(`Navigating to course ${courseId}`);
-    // navigate(`/course/${courseId}`);
+  // Get icon based on resource type
+  const getResourceIcon = (type) => {
+    switch (type) {
+      case 'pdf':
+        return <FaFileAlt />;
+      case 'blog':
+        return <FaBook />;
+      default:
+        return <FaEye />;
+    }
+  };
+
+  // Get action button based on resource type
+  const getActionButton = (resource) => {
+    if (resource.type === 'pdf') {
+      return (
+        <button
+          className={styles.actionButton}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleResourceSelect(resource);
+          }}
+        >
+          <FaDownload /> Download
+        </button>
+      );
+    } else {
+      return (
+        <button
+          className={styles.actionButton}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleResourceSelect(resource);
+          }}
+        >
+          <FaEye /> Read
+        </button>
+      );
+    }
   };
 
   if (loading) {
@@ -161,7 +120,7 @@ const CreatorCommunity = () => {
         <NavbarBeatExplore />
         <div className={styles.loadingContainer}>
           <div className={styles.spinner}></div>
-          <p>Loading courses...</p>
+          <p>Loading educational resources...</p>
         </div>
       </div>
     );
@@ -184,12 +143,12 @@ const CreatorCommunity = () => {
       
       <div className={styles.heroSection}>
         <h1>Creator Community</h1>
-        <p>Learn, collaborate, and grow with our community of music producers and artists</p>
+        <p>Learn essential music production skills with our curated educational resources</p>
       </div>
       
       <div className={styles.categorySection}>
         <div className={styles.categoryNavigation}>
-          <h2>Explore Courses</h2>
+          <h2>Educational Resources</h2>
           <div className={styles.categoryButtons}>
             <button 
               className={styles.navButton} 
@@ -207,7 +166,7 @@ const CreatorCommunity = () => {
           </div>
         </div>
         
-        {/* Add category tabs for quick selection */}
+        {/* Category tabs for quick selection */}
         <div className={styles.categoryTabs}>
           {categories.map((category, index) => (
             <button
@@ -220,48 +179,49 @@ const CreatorCommunity = () => {
           ))}
         </div>
         
-        <div className={styles.coursesGrid}>
-          {currentCategoryCourses.length > 0 ? (
-            currentCategoryCourses.map((course) => (
+        <div className={styles.resourcesGrid}>
+          {resources.length > 0 ? (
+            resources.map((resource) => (
               <div 
-                key={course.id} 
-                className={styles.courseCard}
-                onClick={() => handleCourseSelect(course.id)}
+                key={resource.id} 
+                className={styles.resourceCard}
+                onClick={() => handleResourceSelect(resource)}
               >
-                <div className={styles.courseImageContainer}>
+                <div className={styles.resourceImageContainer}>
                   <img 
-                    src={course.image} 
-                    alt={course.title} 
-                    className={styles.courseImage} 
+                    src={resource.image} 
+                    alt={resource.title} 
+                    className={styles.resourceImage}
+                    onError={(e) => {
+                      e.target.src = 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop';
+                    }}
                   />
-                  <div className={styles.courseOverlay}>
-                    <button
-                      className={styles.playButton}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handlePlayPreview(course.id, course.previewAudio);
-                      }}
-                    >
-                      {currentlyPlaying === course.id ? <FaPause /> : <FaPlay />}
-                    </button>
+                  <div className={styles.resourceOverlay}>
+                    <div className={styles.resourceType}>
+                      {getResourceIcon(resource.type)}
+                      <span>{resource.type.toUpperCase()}</span>
+                    </div>
                   </div>
                 </div>
-                <div className={styles.courseInfo}>
-                  <h3 className={styles.courseTitle}>{course.title}</h3>
-                  <p className={styles.instructorName}>by {course.instructor}</p>
-                  <div className={styles.courseMetadata}>
-                    <span className={styles.duration}>{course.duration}</span>
-                    <span className={`${styles.level} ${styles[course.level.toLowerCase()]}`}>
-                      {course.level}
+                <div className={styles.resourceInfo}>
+                  <h3 className={styles.resourceTitle}>{resource.title}</h3>
+                  <p className={styles.instructorName}>by {resource.instructor}</p>
+                  <p className={styles.resourceDescription}>{resource.description}</p>
+                  <div className={styles.resourceMetadata}>
+                    <span className={styles.duration}>{resource.duration}</span>
+                    <span className={`${styles.level} ${styles[resource.level.toLowerCase()]}`}>
+                      {resource.level}
                     </span>
                   </div>
-                  <span className={styles.courseCategory}>{course.category}</span>
+                  <div className={styles.resourceActions}>
+                    {getActionButton(resource)}
+                  </div>
                 </div>
               </div>
             ))
           ) : (
-            <div className={styles.noCoursesMessage}>
-              <p>No courses available in this category yet.</p>
+            <div className={styles.noResourcesMessage}>
+              <p>No resources available in this category yet.</p>
               <button 
                 className={styles.browseButton}
                 onClick={nextCategory}
@@ -274,23 +234,23 @@ const CreatorCommunity = () => {
       </div>
       
       <div className={styles.communitySection}>
-        <h2>Join Our Community</h2>
-        <p>Connect with like-minded creators, share your work, and get feedback</p>
+        <h2>Learn & Grow</h2>
+        <p>Access professional knowledge to elevate your music production skills</p>
         <div className={styles.featureCards}>
           <div className={styles.featureCard}>
-            <div className={styles.featureIcon}>🎓</div>
+            <div className={styles.featureIcon}>📚</div>
             <h3>Learn</h3>
-            <p>Access courses from industry professionals</p>
+            <p>Access guides and tutorials from industry professionals</p>
           </div>
           <div className={styles.featureCard}>
-            <div className={styles.featureIcon}>👥</div>
-            <h3>Collaborate</h3>
-            <p>Find partners for your next hit track</p>
+            <div className={styles.featureIcon}>🎛️</div>
+            <h3>Practice</h3>
+            <p>Apply techniques with hands-on exercises and examples</p>
           </div>
           <div className={styles.featureCard}>
             <div className={styles.featureIcon}>🚀</div>
-            <h3>Grow</h3>
-            <p>Build your skills and your audience</p>
+            <h3>Master</h3>
+            <p>Build expertise through comprehensive learning resources</p>
           </div>
         </div>
       </div>
