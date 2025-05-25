@@ -26,7 +26,7 @@ import { getBeatId } from '../utils/audioUtils';
 import { showToast } from '../utils/toast';
 
 const BeatExplorePage = () => {
-  // State variables (REMOVED local wishlist state)
+  // State variables 
   const [beats, setBeats] = useState([]);
   const [errorMessage, setErrorMessage] = useState(null);
   const [loading, setLoading] = useState(true);

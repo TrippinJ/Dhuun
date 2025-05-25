@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { FaPlay, FaPause, FaShoppingCart, FaTrash, FaHeart } from "react-icons/fa";
 import styles from "../css/Favorites.module.css";
 import NavbarBeatExplore from '../Components/NavbarBeatExplore';
+import LicenseSelectionModal from '../Components/LicenseSelectionModal';
+import { getBeatId } from '../utils/audioUtils';
+import { showToast } from '../utils/toast';
 
 const Favorites = () => {
   const [favorites, setFavorites] = useState([]);
@@ -10,6 +13,10 @@ const Favorites = () => {
   const [currentlyPlaying, setCurrentlyPlaying] = useState(null);
   const [audioPlayer, setAudioPlayer] = useState(new Audio());
   const navigate = useNavigate();
+  const [cartItems, setCartItems] = useState([]);
+  const [selectedBeat, setSelectedBeat] = useState(null);
+  const [showLicenseModal, setShowLicenseModal] = useState(false);
+  const [selectedBeatForLicense, setSelectedBeatForLicense] = useState(null);
 
   // Load favorites from localStorage
   useEffect(() => {
@@ -68,29 +75,45 @@ const Favorites = () => {
   };
 
   // Add to cart
-  const addToCart = (beat) => {
-    try {
-      // Get current cart
-      const cartItems = JSON.parse(localStorage.getItem("cart") || "[]");
-      
-      // Check if beat is already in cart
-      const beatInCart = cartItems.some(item => item._id === beat._id);
-      
-      if (beatInCart) {
-        alert(`"${beat.title}" is already in your cart`);
-        return;
-      }
-      
-      // Add to cart
-      cartItems.push(beat);
-      localStorage.setItem("cart", JSON.stringify(cartItems));
-      
-      alert(`"${beat.title}" added to cart!`);
-    } catch (error) {
-      console.error("Error adding to cart:", error);
+
+  const handleAddToCart = (event, beat) => {
+    event.stopPropagation();
+
+    const isLoggedIn = localStorage.getItem('token');
+    if (!isLoggedIn) {
+      showToast.loginRequired();
+      navigate("/login");
+      return;
     }
+
+    setSelectedBeatForLicense(beat);
+    setShowLicenseModal(true);
   };
 
+  // Handle license selection
+  const handleLicenseSelect = (beatWithLicense) => {
+    const isInCart = cartItems.some(item =>
+      getBeatId(item) === getBeatId(beatWithLicense) &&
+      item.selectedLicense === beatWithLicense.selectedLicense
+    );
+
+    if (isInCart) {
+      showToast.warning(`"${beatWithLicense.title}" with ${beatWithLicense.licenseName} is already in your cart`);
+      return;
+    }
+
+    const updatedCart = [...cartItems, beatWithLicense];
+    setCartItems(updatedCart);
+    localStorage.setItem('cart', JSON.stringify(updatedCart));
+
+    setShowLicenseModal(false);
+    setSelectedBeatForLicense(null);
+    showToast.addedToCart(beatWithLicense.title, beatWithLicense.licenseName);
+  };
+  // Use context function to check wishlist status
+  const isInCart = (beatId) => {
+    return cartItems.some(item => getBeatId(item) === beatId);
+  };
   // Remove from favorites
   const removeFromFavorites = (beat) => {
     try {
@@ -117,12 +140,12 @@ const Favorites = () => {
   return (
     <div className={styles.container}>
       <NavbarBeatExplore />
-      
+
       <div className={styles.content}>
         <div className={styles.header}>
           <h1>Your Wishlist</h1>
           <p className={styles.subheading}>
-            <FaHeart className={styles.heartIcon} /> 
+            <FaHeart className={styles.heartIcon} />
             {favorites.length} {favorites.length === 1 ? 'beat' : 'beats'} saved to your wishlist
           </p>
         </div>
@@ -134,7 +157,7 @@ const Favorites = () => {
             </div>
             <h3>Your wishlist is empty</h3>
             <p>Save beats you like to listen to them later or keep track of your favorites.</p>
-            <button 
+            <button
               className={styles.exploreButton}
               onClick={() => navigate("/BeatExplorePage")}
             >
@@ -146,12 +169,12 @@ const Favorites = () => {
             {favorites.map((beat) => (
               <div key={beat._id} className={styles.beatCard}>
                 <div className={styles.imageContainer}>
-                  <img 
-                    src={beat.coverImage || "/default-cover.jpg"} 
+                  <img
+                    src={beat.coverImage || "/default-cover.jpg"}
                     alt={beat.title}
-                    className={styles.beatImage}  
+                    className={styles.beatImage}
                   />
-                  <button 
+                  <button
                     className={styles.playButton}
                     onClick={() => handlePlayPause(beat)}
                   >
@@ -166,13 +189,14 @@ const Favorites = () => {
                 </div>
 
                 <div className={styles.beatActions}>
-                  <button 
-                    className={styles.cartButton}
-                    onClick={() => addToCart(beat)}
+                  <button
+                    className={`${styles.cartButton} ${isInCart(getBeatId(beat)) ? styles.inCart : ''}`}
+                    onClick={(e) => handleAddToCart(e, beat)}
+                    disabled={isInCart(getBeatId(beat))}
                   >
-                    <FaShoppingCart /> Add to Cart
+                    <FaShoppingCart /> {isInCart(getBeatId(beat)) ? 'In Cart' : 'Add to Cart'}
                   </button>
-                  <button 
+                  <button
                     className={styles.removeButton}
                     onClick={() => removeFromFavorites(beat)}
                   >
@@ -182,6 +206,31 @@ const Favorites = () => {
               </div>
             ))}
           </div>
+        )}
+        {/* Single Beat Modal */}
+        {selectedBeat && (
+          <SingleBeatModal
+            beat={selectedBeat}
+            isOpen={!!selectedBeat}
+            onClose={handleCloseModal}
+            onAddToCart={(beat) => handleAddToCart({ stopPropagation: () => { } }, beat)}
+            onToggleWishlist={(beat) => handleToggleWishlist({ stopPropagation: () => { } }, beat)}
+            isInCart={isInCart(getBeatId(selectedBeat))}
+            isPlaying={isBeatPlaying(selectedBeat)}
+            onPlayPause={(e) => handlePlayPreview(e, selectedBeat)}
+            isLoading={false}
+          />
+        )}
+        {/* License Selection Modal */}
+        {showLicenseModal && selectedBeatForLicense && (
+          <LicenseSelectionModal
+            beat={selectedBeatForLicense}
+            onClose={() => {
+              setShowLicenseModal(false);
+              setSelectedBeatForLicense(null);
+            }}
+            onSelectLicense={handleLicenseSelect}
+          />
         )}
       </div>
     </div>
