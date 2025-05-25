@@ -13,6 +13,22 @@ const SettingsSchema = new mongoose.Schema({
     type: String,
     default: 'admin@dhuun.com'
   },
+  contactPhone: {              
+    type: String,
+    default: ''
+  },
+  websiteURL: {               
+    type: String,
+    default: ''
+  },
+  shortURL: {                 
+    type: String,
+    default: ''
+  },
+  heroTitle: {                
+    type: String,
+    default: ''
+  },
   logoUrl: {
     type: String,
     default: '/DHUUN.png'
@@ -38,14 +54,7 @@ const SettingsSchema = new mongoose.Schema({
     description: String,
     image: String
   },
-  testimonials: [
-    {
-      name: String,
-      text: String,
-      image: String,
-      rating: Number
-    }
-  ],
+  
   lastUpdated: {
     type: Date,
     default: Date.now

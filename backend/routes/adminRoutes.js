@@ -2,7 +2,7 @@ import express from 'express';
 import { authenticateUser } from './auth.js';
 import * as adminController from '../controllers/adminController.js';
 import * as verificationController from '../controllers/verificationController.js';
-import { updateLogo, updateAboutSection, updateTestimonials } from '../controllers/adminController.js';
+import { updateLogo, updateAboutSection } from '../controllers/adminController.js';
 import { upload } from '../utils/storageManger.js'
 
 
@@ -48,6 +48,9 @@ router.post('/verification/update', verificationController.updateVerificationSta
 // Admin Settings
 router.put('/settings/logo', upload.single('logo'), updateLogo);
 router.put('/settings/about', updateAboutSection);
-router.put('/settings/testimonials', updateTestimonials);
+
+
+// Image upload endpoint
+router.post('/upload', upload.single('image'), adminController.uploadImage);
 
 export default router;

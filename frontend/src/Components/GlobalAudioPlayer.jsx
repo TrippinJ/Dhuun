@@ -307,7 +307,7 @@ const GlobalAudioPlayer = () => {
                   max="1"
                   step="0.01"
                   value={volume}
-                  onChange={(e) => changeVolume(e.target.value)}
+                  onChange={(e) => changeVolume(parseFloat(e.target.value))}
                   aria-label="Volume"
                 />
               </div>

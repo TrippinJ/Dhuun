@@ -142,7 +142,8 @@ const Home = () => {
     if (heroBeats.length === 0) return;
 
     const currentBeat = heroBeats[currentBeatIndex];
-    
+    playTrack(currentBeat);
+     
     console.log('Home togglePlay - currentBeat:', getBeatId(currentBeat));
     console.log('Home togglePlay - is this beat playing:', isBeatPlaying(currentBeat));
     

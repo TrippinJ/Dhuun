@@ -667,13 +667,16 @@ export const updateSettings = async (req, res) => {
       siteName,
       siteDescription,
       contactEmail,
+      contactPhone,   
+      websiteURL,      
+      shortURL,
+       heroTitle = '',
       maxUploadSizeMB,
       commissionRate,
       featuredBeatsLimit,
       maintenanceMode,
       logoUrl,
-      aboutSection,
-      testimonials
+      aboutSection
     } = req.body;
 
     // Validation
@@ -690,11 +693,17 @@ export const updateSettings = async (req, res) => {
     // Update all fields
     settings.siteName = siteName;
     settings.siteDescription = siteDescription;
-    settings.contactEmail = contactEmail;
+    settings.contactEmail = contactEmail; 
     settings.maxUploadSizeMB = maxUploadSizeMB;
     settings.commissionRate = commissionRate;
     settings.featuredBeatsLimit = featuredBeatsLimit;
-    settings.maintenanceMode = maintenanceMode;
+    // settings.maintenanceMode = maintenanceMode;
+
+    // Update new fields only if they exist
+    if (contactPhone !== undefined) settings.contactPhone = contactPhone;
+    if (websiteURL !== undefined) settings.websiteURL = websiteURL;
+    if (shortURL !== undefined) settings.shortURL = shortURL;
+    if (heroTitle !== undefined) settings.heroTitle = heroTitle;
     
     // Only update logo if provided
     if (logoUrl) {
@@ -704,11 +713,6 @@ export const updateSettings = async (req, res) => {
     // Update about section if provided
     if (aboutSection) {
       settings.aboutSection = aboutSection;
-    }
-    
-    // Update testimonials if provided
-    if (testimonials) {
-      settings.testimonials = testimonials;
     }
     
     settings.lastUpdated = new Date();
@@ -835,15 +839,42 @@ export const updateAboutSection = async (req, res) => {
   }
 };
 
-// Update Testimonials
-export const updateTestimonials = async (req, res) => {
+
+// Add this function to adminController.js
+export const uploadImage = async (req, res) => {
   try {
-    const { testimonials } = req.body;
-    const settings = await Settings.findOneAndUpdate({}, {
-      testimonials
-    }, { new: true });
-    res.json({ success: true, testimonials: settings.testimonials });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    // Check if file was uploaded
+    if (!req.file) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'No image file uploaded' 
+      });
+    }
+
+    console.log('Uploading image:', req.file.path);
+
+    // Upload to Cloudinary
+    const uploadResult = await uploadFileToCloudinary(
+      req.file.path,
+      false, // Not audio
+      { folder: 'dhuun/admin-images' }
+    );
+
+    console.log('Image uploaded successfully:', uploadResult.url);
+
+    // Return success response
+    res.json({
+      success: true,
+      message: 'Image uploaded successfully',
+      url: uploadResult.url,
+      publicId: uploadResult.publicId
+    });
+  } catch (error) {
+    console.error('Image upload error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to upload image',
+      error: error.message
+    });
   }
 };

@@ -57,10 +57,10 @@ const AdminSettings = () => {
         aboutTitle: globalSettings.aboutSection?.title || '',
         aboutDescription: globalSettings.aboutSection?.description || '',
         aboutImage: globalSettings.aboutSection?.image || '',
-        heroTitle: '',
-        contactPhone: '',
-        websiteURL: '',
-        // shortURL: '',
+        heroTitle: globalSettings.heroTitle || '',           
+        contactPhone: globalSettings.contactPhone || '',     
+        websiteURL: globalSettings.websiteURL || '',         
+        // shortURL: globalSettings.shortURL || '',
       });
 
 
@@ -162,17 +162,19 @@ const AdminSettings = () => {
         siteName: formData.siteName,
         siteDescription: formData.siteDescription,
         contactEmail: formData.contactEmail,
-        contactPhone: formData.contactPhone,
-        // shortURL: formData.shortURL,
+        contactPhone: formData.contactPhone || '',
+        websiteURL: formData.websiteURL || '',
+        shortURL: formData.shortURL || '',
+        heroTitle: formData.heroTitle || '',
         maxUploadSizeMB: parseFloat(formData.maxUploadSizeMB),
         commissionRate: parseFloat(formData.commissionRate),
         featuredBeatsLimit: parseInt(formData.featuredBeatsLimit),
-        // maintenanceMode: formData.maintenanceMode,
+        maintenanceMode: formData.maintenanceMode,
         logoUrl: logoUrl,
         aboutSection: {
-          title: formData.aboutTitle,
-          description: formData.aboutDescription,
-          image: aboutImageUrl
+          title: formData.aboutTitle || '',
+          description: formData.aboutDescription || '',
+          image: aboutImageUrl || ''
         },
       };
 

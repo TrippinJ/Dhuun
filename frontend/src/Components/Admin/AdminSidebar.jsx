@@ -41,7 +41,8 @@ const AdminSidebar = ({ activeSection, setActiveSection }) => {
   return (
     <div className={styles.sidebar}>
       <div className={styles.logoContainer}>
-        <img src={Logo} alt="Dhuun Logo" />
+        <img src={Logo} alt="Dhuun Logo" style={{ cursor: "pointer", width: "100px", height: "auto" }}/>
+        
         {/* <h3>Admin Panel</h3> */}
       </div>
 
