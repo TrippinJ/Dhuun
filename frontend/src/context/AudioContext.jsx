@@ -15,7 +15,7 @@ export const AudioProvider = ({ children }) => {
   const [volume, setVolume] = useState(0.8);
   const [audioError, setAudioError] = useState(null);
   const [audioInitialized, setAudioInitialized] = useState(false);
-  
+
   // New state for random track functionality
   const [availableBeats, setAvailableBeats] = useState([]);
   const [isLoadingBeats, setIsLoadingBeats] = useState(false);
@@ -26,33 +26,33 @@ export const AudioProvider = ({ children }) => {
   // Fetch all available beats for random selection
   const fetchAvailableBeats = async () => {
     if (isLoadingBeats || availableBeats.length > 0) return; // Prevent multiple calls
-    
+
     try {
       setIsLoadingBeats(true);
       console.log('Fetching all available beats for random selection...');
-      
+
       const response = await API.get('/api/beats');
       let beats = [];
-      
+
       if (response.data && response.data.data) {
         beats = response.data.data;
       } else if (Array.isArray(response.data)) {
         beats = response.data;
       }
-      
+
       // Filter out exclusively sold beats and ensure they have audio
-      const validBeats = beats.filter(beat => 
-        !beat.isExclusiveSold && 
-        getBeatAudioUrl(beat) && 
+      const validBeats = beats.filter(beat =>
+        !beat.isExclusiveSold &&
+        getBeatAudioUrl(beat) &&
         beat.title
       );
-      
+
       setAvailableBeats(validBeats);
       console.log(`Loaded ${validBeats.length} beats for random selection`);
-      
+
     } catch (error) {
       console.error('Error fetching beats for random selection:', error);
-      
+
       // Fallback beats for development
       const fallbackBeats = [
         {
@@ -89,7 +89,7 @@ export const AudioProvider = ({ children }) => {
           likes: 120
         }
       ];
-      
+
       setAvailableBeats(fallbackBeats);
     } finally {
       setIsLoadingBeats(false);
@@ -104,7 +104,7 @@ export const AudioProvider = ({ children }) => {
   // Normalize beat object to ensure consistent ID format
   const normalizeBeat = (beat) => {
     if (!beat) return null;
-    
+
     return {
       ...beat,
       // Ensure we always have an id property for consistency
@@ -130,21 +130,21 @@ export const AudioProvider = ({ children }) => {
       console.log('No available beats for random selection');
       return null;
     }
-    
+
     // Filter out current track to avoid repeating
     const availableForRandom = availableBeats.filter(beat => {
       if (!currentTrack) return true;
       return getBeatId(beat) !== getBeatId(currentTrack);
     });
-    
+
     if (availableForRandom.length === 0) {
       // If all beats are filtered out, use all available beats
       availableForRandom.push(...availableBeats);
     }
-    
+
     const randomIndex = Math.floor(Math.random() * availableForRandom.length);
     const selectedBeat = availableForRandom[randomIndex];
-    
+
     console.log(`Selected random beat: ${selectedBeat.title} by ${selectedBeat.producer?.name}`);
     return selectedBeat;
   };
@@ -152,7 +152,7 @@ export const AudioProvider = ({ children }) => {
   // Play a random track
   const playRandomTrack = () => {
     console.log('playRandomTrack called');
-    
+
     if (availableBeats.length === 0) {
       console.log('No beats available for random play, fetching...');
       fetchAvailableBeats().then(() => {
@@ -163,7 +163,7 @@ export const AudioProvider = ({ children }) => {
       });
       return;
     }
-    
+
     const randomBeat = getRandomBeat();
     if (randomBeat) {
       playTrack(randomBeat);
@@ -189,7 +189,7 @@ export const AudioProvider = ({ children }) => {
       console.log('Track ended, isAutoPlayEnabled:', autoPlayEnabled);
       setIsPlaying(false);
       setCurrentTime(0);
-      
+
       // Auto-play next random track if enabled
       if (autoPlayEnabled) {
         console.log('Auto-playing next track...');
@@ -204,7 +204,7 @@ export const AudioProvider = ({ children }) => {
       console.error("Audio error:", e);
       setAudioError(`Error loading audio: ${audio.error?.message || 'Unknown error'}`);
       setIsPlaying(false);
-      
+
       // If auto-play is enabled and we get an error, try next track
       if (autoPlayEnabled) {
         console.log('Audio error occurred, trying next track...');
@@ -249,7 +249,7 @@ export const AudioProvider = ({ children }) => {
       if (audioUrl && audioUrl !== audio.src) {
         setAudioError(null);
         setCurrentTime(0);
-        
+
         // Set new source
         audio.src = audioUrl;
         audio.load();
@@ -261,7 +261,7 @@ export const AudioProvider = ({ children }) => {
               console.error("Error playing audio:", err);
               setIsPlaying(false);
               setAudioError(`Failed to play: ${err.message}`);
-              
+
               // If auto-play is enabled and playback fails, try next track
               if (autoPlayEnabled) {
                 setTimeout(() => {
@@ -292,8 +292,10 @@ export const AudioProvider = ({ children }) => {
     }
 
     const normalizedTrack = normalizeBeat(track);
-    const isSameTrack = currentTrack && normalizedTrack && 
+    const isSameTrack = currentTrack && normalizedTrack &&
       getBeatId(currentTrack) === getBeatId(normalizedTrack);
+
+    const audio = audioRef.current;
 
     console.log('PlayTrack called:', {
       newTrack: getBeatId(normalizedTrack),
@@ -303,16 +305,26 @@ export const AudioProvider = ({ children }) => {
     });
 
     if (isSameTrack) {
-      // Toggle play/pause for current track
-      setIsPlaying(!isPlaying);
+    if (isPlaying) {
+      audio.pause();
+      setIsPlaying(false);
     } else {
-      // Set new track and play it
-      setCurrentTrack(normalizedTrack);
+      audio.play().catch(err => {
+        console.error("Error playing audio:", err);
+        setIsPlaying(false);
+      });
       setIsPlaying(true);
     }
-  };
+  } else {
+    setCurrentTrack(normalizedTrack);
+    setIsPlaying(true);
+  }
+};
 
   const pauseTrack = () => {
+    const audio = audioRef.current;
+    audio.pause();
+    setIsPlaying(false);
     setIsPlaying(false);
   };
 
@@ -335,10 +347,10 @@ export const AudioProvider = ({ children }) => {
     const newAutoPlayState = !autoPlayEnabled;
     setAutoPlayEnabled(newAutoPlayState);
     console.log(`Auto-play ${newAutoPlayState ? 'enabled' : 'disabled'}`);
-    
+
     // Store preference in localStorage
     localStorage.setItem('audioAutoPlay', JSON.stringify(newAutoPlayState));
-    
+
     return newAutoPlayState;
   };
 
@@ -359,10 +371,10 @@ export const AudioProvider = ({ children }) => {
     if (!isPlaying || !currentTrack || !beat) {
       return false;
     }
-    
+
     const currentId = getBeatId(currentTrack);
     const beatId = getBeatId(beat);
-    
+
     return currentId && beatId && currentId === beatId;
   };
 
