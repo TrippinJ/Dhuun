@@ -137,25 +137,29 @@ const AdminSettings = () => {
 
       // Upload about image if a new one was selected
       if (aboutImageFile) {
-        const imageFormData = new FormData();
-        imageFormData.append('image', aboutImageFile);
+      const imageFormData = new FormData();
+      imageFormData.append('image', aboutImageFile);
 
-        try {
-          const imageResponse = await API.post('/api/admin/upload', imageFormData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-          });
+      try {
+        console.log('Uploading about image...');
+        const imageResponse = await API.post('/api/admin/upload', imageFormData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
 
-          if (imageResponse.data && imageResponse.data.url) {
-            aboutImageUrl = imageResponse.data.url;
-          } else {
-            throw new Error('Failed to upload about image');
-          }
-        } catch (imageError) {
-          console.error('Image upload error:', imageError);
-          // Don't block the form submission if image upload fails
-          console.warn('Continuing with settings update despite image upload failure');
+        if (imageResponse.data && imageResponse.data.success && imageResponse.data.url) {
+          aboutImageUrl = imageResponse.data.url;
+          console.log('About image uploaded successfully:', aboutImageUrl);
+        } else {
+          console.error('Image upload response:', imageResponse.data);
+          throw new Error('Failed to upload about image - invalid response');
         }
+      } catch (imageError) {
+        console.error('Image upload error:', imageError);
+        // ✅ FIX: Don't continue if image upload fails when user specifically uploaded an image
+        throw new Error('Failed to upload about image: ' + (imageError.response?.data?.message || imageError.message));
       }
+    }
+
 
       // Prepare complete settings object
       const updatedSettings = {
@@ -310,18 +314,6 @@ const AdminSettings = () => {
                     placeholder="trippinjbeatz.com"
                   />
                 </div>
-
-                {/* <div className={styles.formGroup}>
-                  <label htmlFor="shortURL">Short URL</label>
-                  <input
-                    type="text"
-                    id="shortURL"
-                    name="shortURL"
-                    value={formData.shortURL}
-                    onChange={handleInputChange}
-                    placeholder="tj.com"
-                  />
-                </div> */}
               </div>
             </div>
           )}

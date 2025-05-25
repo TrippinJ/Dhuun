@@ -96,7 +96,7 @@ const Testimonial = () => {
     return (
       <div className="work-section-wrapper">
         <div className="work-section-top">
-          <p className="primary-subheading">Testimonial</p>
+          {/* <p className="primary-subheading">Testimonial</p> */}
           <h1 className="primary-heading">What They Are Saying</h1>
           <p className="primary-text">
             Real reviews from real customers who found their perfect beats on our platform.
@@ -114,7 +114,7 @@ const Testimonial = () => {
   return (
     <div className="work-section-wrapper">
       <div className="work-section-top">
-        <p className="primary-subheading">Testimonial</p>
+        {/* <p className="primary-subheading">Testimonial</p> */}
         <h1 className="primary-heading">What They Are Saying</h1>
         <p className="primary-text">
           Reviews from customers who found their perfect beats on our platform.
