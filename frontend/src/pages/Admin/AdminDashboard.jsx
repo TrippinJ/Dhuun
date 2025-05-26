@@ -2,11 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminSidebar from '../../Components/Admin/AdminSidebar';
-import AdminOverview from '../../Components/Admin/AdminOverview';
 import AdminUsers from '../../Components/Admin/AdminUsers';
 import AdminBeats from '../../Components/Admin/AdminBeats';
 import AdminSales from '../../Components/Admin/AdminSales';
-import AdminAnalytics from '../../Components/Admin/AdminAnalytics';
+import AdminDashboardComponent from '../../Components/Admin/AdminDashboard';
 import AdminSettings from '../../Components/Admin/AdminSettings';
 import AdminWithdrawals from '../../Components/Admin/AdminWithdrawals';
 import AdminDocumentVerification from '../../Components/Admin/AdminDocumentVerification';
@@ -68,20 +67,18 @@ const AdminDashboard = () => {
         return <AdminBeats />;
       case 'sales':
         return <AdminSales />;
-        case 'reviews':
+      case 'reviews':
         return <AdminReviews />;
-      case 'analytics':
-        return <AdminAnalytics />;
       case 'settings':
         return <AdminSettings />;
       case 'verifications': 
         return <AdminDocumentVerification />;
       case 'withdrawals':
         return <AdminWithdrawals />;
-        case 'creator-resources':  
-      return <AdminCreatorResources />;
+      case 'creator-resources':  
+        return <AdminCreatorResources />;
       default:
-        return <AdminOverview />;
+        return <AdminDashboardComponent  />;
     }
   };
 

@@ -36,7 +36,6 @@ const AdminSidebar = ({ activeSection, setActiveSection }) => {
     { id: 'creator-resources', label: 'Creator Resources', icon: <FaGraduationCap /> }, 
     { id: 'verifications', label: 'Document Verification', icon: <FaIdCard /> },
     { id: 'withdrawals', label: 'Withdrawals', icon: <FaMoneyBillWave /> },
-    { id: 'analytics', label: 'Analytics', icon: <FaChartLine /> },
     { id: 'settings', label: 'Settings', icon: <FaCog /> },
   ];
 

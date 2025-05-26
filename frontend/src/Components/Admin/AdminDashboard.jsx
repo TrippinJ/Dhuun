@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { FaUsers, FaMusic, FaShoppingCart, FaDollarSign, FaArrowUp, FaArrowDown } from 'react-icons/fa';
 import { 
@@ -16,7 +15,8 @@ import {
 import API from '../../api/api';
 import styles from '../../css/Admin/AdminAnalytics.module.css';
 
-const AdminAnalytics = () => {
+
+const AdminDashboard = () => {
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalBeats: 0,
@@ -87,7 +87,7 @@ const AdminAnalytics = () => {
   };
 
   if (loading) {
-    return <div className={styles.loading}>Loading analytics...</div>;
+    return <div className={styles.loading}>Loading dashboard...</div>;
   }
 
   if (error) {
@@ -196,7 +196,7 @@ const AdminAnalytics = () => {
               <Tooltip />
               <Legend />
               <Bar yAxisId="left" dataKey="sales" name="Sales" fill="#7B2CBF" />
-              <Bar yAxisId="right" dataKey="revenue" name="Revenue ($)" fill="#FF1A1A" />
+              <Bar yAxisId="right" dataKey="revenue" name="Revenue (Rs)" fill="#FF1A1A" />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -269,4 +269,4 @@ const AdminAnalytics = () => {
   );
 };
 
-export default AdminAnalytics;
+export default AdminDashboard;
