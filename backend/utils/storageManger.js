@@ -16,7 +16,8 @@ const IMAGES_FOLDER = 'dhuun/images';
 // Resource types for Cloudinary
 const RESOURCE_TYPES = {
   AUDIO: 'video', // Cloudinary handles audio files under "video" resource type
-  IMAGE: 'image'
+  IMAGE: 'image',
+  RAW: 'raw' // For PDFs and other documents
 };
 
 // Ensure the temporary upload directory exists
@@ -78,15 +79,27 @@ const storage = multer.diskStorage({
   }
 });
 
-// File filter for multer
+// FIXED: Updated file filter to support PDFs and other document types
 const fileFilter = (req, file, cb) => {
+  console.log('File filter check:', {
+    fieldname: file.fieldname,
+    mimetype: file.mimetype,
+    originalname: file.originalname
+  });
+
   const allowedAudioTypes = ['audio/mpeg', 'audio/wav', 'audio/mp3'];
   const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  const allowedDocumentTypes = ['application/pdf']; // ✅ ADDED PDF SUPPORT
 
-  if (allowedAudioTypes.includes(file.mimetype) || allowedImageTypes.includes(file.mimetype)) {
+  // Check if it's an allowed file type
+  if (allowedAudioTypes.includes(file.mimetype) || 
+      allowedImageTypes.includes(file.mimetype) || 
+      allowedDocumentTypes.includes(file.mimetype)) {
+    console.log('✅ File type allowed:', file.mimetype);
     cb(null, true);
   } else {
-    cb(new Error(`Unsupported file type: ${file.mimetype}. Allowed types: MP3, WAV, JPG, PNG, WEBP`), false);
+    console.log('❌ File type rejected:', file.mimetype);
+    cb(new Error(`Unsupported file type: ${file.mimetype}. Allowed types: MP3, WAV, JPG, PNG, WEBP, PDF`), false);
   }
 };
 
@@ -95,7 +108,7 @@ const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB
+    fileSize: 50 * 1024 * 1024 // Increased to 50MB for PDFs
   }
 });
 
@@ -105,11 +118,24 @@ const uploadFileToCloudinary = async (filePath, isAudio = false, options = {}) =
     const folder = isAudio ? AUDIO_FOLDER : IMAGES_FOLDER;
     const uploadOptions = { ...options };
 
-    if (isAudio) {
+    // Determine resource type based on file extension
+    const fileExt = path.extname(filePath).toLowerCase();
+    
+    if (isAudio || ['.mp3', '.wav', '.ogg'].includes(fileExt)) {
       uploadOptions.resource_type = 'video';
+    } else if (['.pdf', '.doc', '.docx', '.txt'].includes(fileExt)) {
+      uploadOptions.resource_type = 'raw'; // ✅ ADDED RAW RESOURCE TYPE FOR DOCUMENTS
+    } else {
+      uploadOptions.resource_type = 'image';
     }
 
-    const result = await uploadToCloudinary(filePath, folder, uploadOptions);
+    console.log(`Uploading file to Cloudinary:`, {
+      filePath,
+      resourceType: uploadOptions.resource_type,
+      folder: uploadOptions.folder || folder
+    });
+
+    const result = await uploadToCloudinary(filePath, uploadOptions.folder || folder, uploadOptions);
     removeTempFile(filePath);
 
     return {

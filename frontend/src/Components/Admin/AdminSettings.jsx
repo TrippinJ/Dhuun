@@ -54,6 +54,7 @@ const AdminSettings = () => {
         commissionRate: globalSettings.commissionRate || 10,
         featuredBeatsLimit: globalSettings.featuredBeatsLimit || 8,
         // maintenanceMode: globalSettings.maintenanceMode || false,
+        featuredProducersLimit: globalSettings.featuredProducersLimit || 6,
 
         aboutTitle: globalSettings.aboutSection?.title || '',
         aboutDescription: globalSettings.aboutSection?.description || '',
@@ -173,7 +174,7 @@ const AdminSettings = () => {
         heroTitle: formData.heroTitle || '',
         maxUploadSizeMB: parseFloat(formData.maxUploadSizeMB),
         commissionRate: parseFloat(formData.commissionRate),
-        featuredProducersLimit: parseInt(formData.featuredBeatsLimit),
+        featuredProducersLimit: parseInt(formData.featuredProducersLimit),
         featuredBeatsLimit: parseInt(formData.featuredBeatsLimit),
         maintenanceMode: formData.maintenanceMode,
         logoUrl: logoUrl,
