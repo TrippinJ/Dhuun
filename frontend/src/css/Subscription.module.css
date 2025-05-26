@@ -301,7 +301,7 @@
   background-color: #FF1A1A;
 }
 
-/* Also add a traditional button at the bottom */
+
 .secondaryPlanButton {
   display: block;
   width: 100%;
@@ -309,12 +309,14 @@
   border: none;
   border-radius: 6px;
   color: #FFFFFF;
+  background-color: #7B2CBF;
   font-size: 1rem;
   font-weight: bold;
   cursor: pointer;
   transition: all 0.3s ease;
   margin-top: 20px;
 }
+
 
 .secondaryPlanButton:hover:not(:disabled) {
   filter: brightness(110%);
@@ -561,16 +563,22 @@
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideIn {
-  from { 
+  from {
     opacity: 0;
     transform: translateY(-20px) scale(0.95);
   }
-  to { 
+
+  to {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
@@ -583,42 +591,55 @@
     margin: 20px;
     width: calc(100% - 40px);
   }
-  
+
   .paymentMethod {
     padding: 15px;
   }
-  
+
   .methodIcon {
     font-size: 1.5rem;
     min-width: 35px;
     margin-right: 12px;
   }
-  
+
   .methodInfo h4 {
     font-size: 1.1rem;
   }
-  
+
   .methodInfo p {
     font-size: 0.85rem;
   }
-  
+
   .modalActions {
     flex-direction: column;
   }
-  
+
   .cancelButton,
   .confirmButton {
     width: 100%;
   }
 }
+
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Responsive styles */
@@ -626,24 +647,24 @@
   .subscriptionContainer {
     padding: 20px;
   }
-  
+
   .header h1 {
     font-size: 2rem;
   }
-  
+
   .subscriptionDetails {
     grid-template-columns: 1fr;
   }
-  
+
   .plansContainer {
     grid-template-columns: 1fr;
   }
-  
+
   .backButton {
     position: relative;
     margin-bottom: 20px;
   }
-  
+
   .faqGrid {
     grid-template-columns: 1fr;
   }

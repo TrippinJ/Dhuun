@@ -39,7 +39,7 @@ import Transactions from "./pages/Transactions";
 import PurchasedBeats from "./Components/PurchasedBeats";
 import SellerWallet from "./Components/SellerWallet";
 import DocumentVerification from './Components/DocumentVerification';
-import SalesComponent from './Components/SoldBeats';
+
 
 // Toastify
 import { ToastContainer } from 'react-toastify';
@@ -97,7 +97,7 @@ function App() {
                         <Route path="purchases" element={<PurchasedBeats />} />
                         <Route path="verification" element={<DocumentVerification />} />
                         <Route path="/dashboard" element={<Dashboard />}/>
-                          <Route path="sales" element={<SalesComponent />} />
+                    
                         </Route>
 
                         {/* Other Protected Routes */}

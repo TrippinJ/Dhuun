@@ -24,7 +24,7 @@ export const createCheckoutSession = async ({
     // Create line items for Stripe checkout
     const lineItems = items.map(item => ({
       price_data: {
-        currency: 'usd',
+        currency: 'npr',
         product_data: {
           name: `${item.licenseName || 'Beat'} - ${item.beatName || 'Untitled'}`,
           description: `License: ${item.licenseName || 'Basic License'}`,

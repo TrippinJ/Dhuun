@@ -23,7 +23,6 @@ import UploadBeat from "../Components/UploadBeat";
 import PurchasedBeats from "../Components/PurchasedBeats";
 import SellerWallet from "../Components/SellerWallet";
 import EditProfile from "../Components/EditProfile";
-import SoldBeats from "../Components/SoldBeats";
 import DocumentVerification from '../Components/DocumentVerification';
 import { showToast } from '../utils/toast';
 
@@ -51,7 +50,6 @@ const Dashboard = () => {
     if (path === '/dashboard/wallet') return 'wallet';
     if (path === '/dashboard/purchases') return 'purchases';
     if (path === '/dashboard/verification') return 'verification';
-    if (path === '/dashboard/sales') return 'sales';
     return 'dashboard'; // default
   };
 
@@ -322,10 +320,6 @@ const Dashboard = () => {
       return <DocumentVerification />;
     }
 
-    if (activePage === "sales") {
-      return <SoldBeats />;
-    }
-
     // Return different content based on user role
     if (user?.role === "seller") {
       return (
@@ -580,13 +574,6 @@ const Dashboard = () => {
                 </li>
               )}
 
-              {user?.role === "seller" && (
-                <li className={activePage === "sales" ? styles.active : ""}>
-                  <Link to="/dashboard/sales" className={styles.navLink}>
-                    <FaChartLine /> Sales & Analytics
-                  </Link>
-                </li>
-              )}
             </ul>
           </nav>
         </aside>
@@ -632,10 +619,6 @@ const Dashboard = () => {
 
                 {activePage === "wallet" && (
                   <h2>Seller Wallet</h2>
-                )}
-
-                {activePage === "sales" && (
-                  <h2>Sales & Analytics</h2>
                 )}
 
                 {activePage === "verification" && (
