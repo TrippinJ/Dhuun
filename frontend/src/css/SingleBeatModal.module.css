@@ -355,7 +355,7 @@
   flex-direction: column;
 }
 
-.licenseOption:hover {
+/* .licenseOption:hover {
   transform: translateY(-5px);
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
@@ -363,7 +363,7 @@
 .licenseOption.selectedLicense {
   border: 2px solid #7B2CBF;
   box-shadow: 0 5px 15px rgba(123, 44, 191, 0.3);
-}
+} */
 
 .licenseTop {
   display: flex;
@@ -874,6 +874,26 @@
   box-shadow: 0 4px 15px rgba(255, 26, 26, 0.4);
 }
 
+.audioStatusIndicator {
+  text-align: center;
+  color: #7B2CBF;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 6px;
+  background-color: rgba(123, 44, 191, 0.1);
+  border-radius: 6px;
+  margin-bottom: 15px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
 /* Animations */
 @keyframes modalFadeIn {
   from {

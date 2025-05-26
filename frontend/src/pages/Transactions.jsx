@@ -110,7 +110,7 @@ const Transactions = () => {
       {error && <div className={styles.errorMessage}>{error}</div>}
       
       <div className={styles.controls}>
-        <div className={styles.filterControl}>
+        {/* <div className={styles.filterControl}>
           <label>Filter:</label>
           <select value={filter} onChange={handleFilterChange}>
             <option value="all">All Transactions</option>
@@ -119,7 +119,7 @@ const Transactions = () => {
             <option value="refund">Refunds</option>
             <option value="adjustment">Adjustments</option>
           </select>
-        </div>
+        </div> */}
         
         <button 
           className={styles.exportButton}
