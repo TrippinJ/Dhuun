@@ -41,10 +41,15 @@ const SettingsSchema = new mongoose.Schema({
     type: Number,
     default: 10
   },
+  featuredProducersLimit: {
+    type: Number,
+    default: 6
+  },
   featuredBeatsLimit: {
     type: Number,
     default: 8
   },
+  
   maintenanceMode: {
     type: Boolean,
     default: false

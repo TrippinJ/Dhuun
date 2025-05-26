@@ -17,6 +17,7 @@ export const SettingsProvider = ({ children }) => {
     shortUrl: '',
     maxUploadSizeMB: 20,
     commissionRate: 10,
+    featuredProducersLimit: 6, 
     featuredBeatsLimit: 8,
     maintenanceMode: false,
     aboutSection: {

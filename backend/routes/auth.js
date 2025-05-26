@@ -547,7 +547,7 @@ router.post("/delete-account", authenticateUser, async (req, res) => {
           }
         } catch (deleteError) {
           console.error(`Error deleting files for beat ${beat._id}:`, deleteError);
-          // Continue with other deletions even if one fails
+
         }
       }
 
@@ -593,7 +593,7 @@ router.delete("/delete-account", authenticateUser, async (req, res) => {
 
     res.json({ message: "Account deleted successfully" });
   } catch (error) {
-    console.error("Account deletion error:", error);
+    
     res.status(500).json({ message: "Failed to delete account" });
   }
 });
@@ -630,24 +630,20 @@ router.post("/forgot-password", async (req, res) => {
       const emailResult = await sendPasswordResetEmail(user.email, resetToken, user.name);
       
       if (emailResult.success) {
-        console.log(`Password reset email sent successfully to ${email}`);
-        return res.status(200).json({
+         return res.status(200).json({
           message: "Password reset link has been sent to your email address."
         });
       } else {
-        console.error("Failed to send password reset email:", emailResult.error);
-        return res.status(500).json({
+       return res.status(500).json({
           message: "Failed to send password reset email. Please try again later."
         });
       }
     } catch (emailError) {
-      console.error("Email service error:", emailError);
-      return res.status(500).json({
+     return res.status(500).json({
         message: "Failed to send password reset email. Please try again later."
       });
     }
   } catch (error) {
-    console.error("Forgot password error:", error);
     res.status(500).json({ message: "Server error. Please try again later." });
   }
 });

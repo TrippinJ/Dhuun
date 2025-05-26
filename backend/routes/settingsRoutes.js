@@ -7,10 +7,10 @@ const router = express.Router();
 router.get('/public', async (req, res) => {
   try {
     const settings = await Settings.findOne();
-    
+
     if (!settings) {
       // Return comprehensive default settings
-      return res.json({ 
+      return res.json({
         settings: {
           siteName: 'Dhuun',
           logoUrl: '/DHUUN.png',
@@ -20,6 +20,8 @@ router.get('/public', async (req, res) => {
           websiteURL: '',
           shortURL: '',
           heroTitle: '',
+          featuredBeatsLimit: 8,
+          featuredProducersLimit: 6,
           aboutSection: {
             title: '',
             description: '',
@@ -28,9 +30,9 @@ router.get('/public', async (req, res) => {
         }
       });
     }
-    
+
     // Return ALL settings for public use
-    return res.json({ 
+    return res.json({
       settings: {
         siteName: settings.siteName || 'Dhuun',
         logoUrl: settings.logoUrl || '/DHUUN.png',
@@ -40,6 +42,8 @@ router.get('/public', async (req, res) => {
         websiteURL: settings.websiteURL || '',
         shortURL: settings.shortURL || '',
         heroTitle: settings.heroTitle || '',
+        featuredBeatsLimit: settings.featuredBeatsLimit || 8,
+        featuredProducersLimit: settings.featuredProducersLimit || 6,
         aboutSection: settings.aboutSection || {
           title: '',
           description: '',
@@ -48,7 +52,7 @@ router.get('/public', async (req, res) => {
         testimonials: settings.testimonials || []
       }
     });
-    
+
   } catch (error) {
     console.error('Error fetching public settings:', error);
     return res.status(500).json({ message: 'Server error' });

@@ -648,6 +648,7 @@ export const getSettings = async (req, res) => {
         contactEmail: 'admin@dhuun.com',
         maxUploadSizeMB: 20,
         commissionRate: 10,
+        featuredProducersLimit: 10,
         featuredBeatsLimit: 8,
         maintenanceMode: false
       });
@@ -667,12 +668,13 @@ export const updateSettings = async (req, res) => {
       siteName,
       siteDescription,
       contactEmail,
-      contactPhone,   
-      websiteURL,      
+      contactPhone,
+      websiteURL,
       shortURL,
-       heroTitle = '',
+      heroTitle = '',
       maxUploadSizeMB,
       commissionRate,
+      featuredProducersLimit,
       featuredBeatsLimit,
       maintenanceMode,
       logoUrl,
@@ -693,9 +695,10 @@ export const updateSettings = async (req, res) => {
     // Update all fields
     settings.siteName = siteName;
     settings.siteDescription = siteDescription;
-    settings.contactEmail = contactEmail; 
+    settings.contactEmail = contactEmail;
     settings.maxUploadSizeMB = maxUploadSizeMB;
     settings.commissionRate = commissionRate;
+    settings.featuredProducersLimit = featuredProducersLimit;
     settings.featuredBeatsLimit = featuredBeatsLimit;
     // settings.maintenanceMode = maintenanceMode;
 
@@ -704,17 +707,17 @@ export const updateSettings = async (req, res) => {
     if (websiteURL !== undefined) settings.websiteURL = websiteURL;
     if (shortURL !== undefined) settings.shortURL = shortURL;
     if (heroTitle !== undefined) settings.heroTitle = heroTitle;
-    
+
     // Only update logo if provided
     if (logoUrl) {
       settings.logoUrl = logoUrl;
     }
-    
+
     // Update about section if provided
     if (aboutSection) {
       settings.aboutSection = aboutSection;
     }
-    
+
     settings.lastUpdated = new Date();
     settings.updatedBy = req.user.id;
 
@@ -728,7 +731,7 @@ export const updateSettings = async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating settings:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       message: 'Failed to update settings',
       error: error.message
@@ -750,12 +753,12 @@ export const toggleFeaturedStatus = async (req, res) => {
 
     // Toggle featured status
     beat.isFeatured = !beat.isFeatured;
-     // Check isPublished status - this is critical!
+    // Check isPublished status - this is critical!
     console.log(`Beat ${id} - Title: "${beat.title}" - Publishing status check:`);
     console.log(`- isFeatured will be: ${beat.isFeatured}`);
     console.log(`- isPublished is: ${beat.isPublished}`);
     console.log(`- isExclusiveSold is: ${beat.isExclusiveSold}`);
-    
+
     // If not published, there might be a problem with featured beats display
     if (!beat.isPublished) {
       console.log(`WARNING: Beat is being featured, but isPublished=false!`);
@@ -769,8 +772,8 @@ export const toggleFeaturedStatus = async (req, res) => {
       isFeatured: beat.isFeatured,
       isPublished: beat.isPublished,
       isExclusiveSold: beat.isExclusiveSold,
-      note: beat.isPublished ? 
-        "Beat will appear in featured section" : 
+      note: beat.isPublished ?
+        "Beat will appear in featured section" :
         "Beat won't appear in featured section because isPublished=false"
 
     });
@@ -788,7 +791,7 @@ export const updateLogo = async (req, res) => {
       return res.status(400).json({ success: false, message: 'No logo file uploaded' });
     }
 
- 
+
 
     // Use your existing storage manager to upload to Cloudinary
     const uploadResult = await uploadFileToCloudinary(
@@ -807,7 +810,7 @@ export const updateLogo = async (req, res) => {
     settings.logoUrl = uploadResult.url;
     settings.lastUpdated = new Date();
     settings.updatedBy = req.user.id;
-    
+
     await settings.save();
 
     // Return success response
@@ -818,8 +821,8 @@ export const updateLogo = async (req, res) => {
     });
   } catch (error) {
     console.error('Logo upload error:', error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Failed to update logo',
       error: error.message
     });
@@ -845,9 +848,9 @@ export const uploadImage = async (req, res) => {
   try {
     // Check if file was uploaded
     if (!req.file) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'No image file uploaded' 
+      return res.status(400).json({
+        success: false,
+        message: 'No image file uploaded'
       });
     }
 
@@ -871,8 +874,8 @@ export const uploadImage = async (req, res) => {
     });
   } catch (error) {
     console.error('Image upload error:', error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Failed to upload image',
       error: error.message
     });

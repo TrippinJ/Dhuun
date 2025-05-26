@@ -15,6 +15,7 @@ const AdminSettings = () => {
     contactEmail: '',
     maxUploadSizeMB: 20,
     commissionRate: 10,
+    featuredProducersLimit: 6,
     featuredBeatsLimit: 8,
     // maintenanceMode: false,
 
@@ -57,9 +58,9 @@ const AdminSettings = () => {
         aboutTitle: globalSettings.aboutSection?.title || '',
         aboutDescription: globalSettings.aboutSection?.description || '',
         aboutImage: globalSettings.aboutSection?.image || '',
-        heroTitle: globalSettings.heroTitle || '',           
-        contactPhone: globalSettings.contactPhone || '',     
-        websiteURL: globalSettings.websiteURL || '',         
+        heroTitle: globalSettings.heroTitle || '',
+        contactPhone: globalSettings.contactPhone || '',
+        websiteURL: globalSettings.websiteURL || '',
         // shortURL: globalSettings.shortURL || '',
       });
 
@@ -137,28 +138,28 @@ const AdminSettings = () => {
 
       // Upload about image if a new one was selected
       if (aboutImageFile) {
-      const imageFormData = new FormData();
-      imageFormData.append('image', aboutImageFile);
+        const imageFormData = new FormData();
+        imageFormData.append('image', aboutImageFile);
 
-      try {
-        console.log('Uploading about image...');
-        const imageResponse = await API.post('/api/admin/upload', imageFormData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        try {
+          console.log('Uploading about image...');
+          const imageResponse = await API.post('/api/admin/upload', imageFormData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          });
 
-        if (imageResponse.data && imageResponse.data.success && imageResponse.data.url) {
-          aboutImageUrl = imageResponse.data.url;
-          console.log('About image uploaded successfully:', aboutImageUrl);
-        } else {
-          console.error('Image upload response:', imageResponse.data);
-          throw new Error('Failed to upload about image - invalid response');
+          if (imageResponse.data && imageResponse.data.success && imageResponse.data.url) {
+            aboutImageUrl = imageResponse.data.url;
+            console.log('About image uploaded successfully:', aboutImageUrl);
+          } else {
+            console.error('Image upload response:', imageResponse.data);
+            throw new Error('Failed to upload about image - invalid response');
+          }
+        } catch (imageError) {
+          console.error('Image upload error:', imageError);
+          // ✅ FIX: Don't continue if image upload fails when user specifically uploaded an image
+          throw new Error('Failed to upload about image: ' + (imageError.response?.data?.message || imageError.message));
         }
-      } catch (imageError) {
-        console.error('Image upload error:', imageError);
-        // ✅ FIX: Don't continue if image upload fails when user specifically uploaded an image
-        throw new Error('Failed to upload about image: ' + (imageError.response?.data?.message || imageError.message));
       }
-    }
 
 
       // Prepare complete settings object
@@ -172,6 +173,7 @@ const AdminSettings = () => {
         heroTitle: formData.heroTitle || '',
         maxUploadSizeMB: parseFloat(formData.maxUploadSizeMB),
         commissionRate: parseFloat(formData.commissionRate),
+        featuredProducersLimit: parseInt(formData.featuredBeatsLimit),
         featuredBeatsLimit: parseInt(formData.featuredBeatsLimit),
         maintenanceMode: formData.maintenanceMode,
         logoUrl: logoUrl,
@@ -471,8 +473,8 @@ const AdminSettings = () => {
                     type="number"
                     id="featuredBeatsLimit"
                     name="featuredBeatsLimit"
-                    min="1"
-                    max="20"
+                    min="4"
+                    max="15"
                     value={formData.featuredBeatsLimit}
                     onChange={handleInputChange}
                     required
@@ -481,7 +483,25 @@ const AdminSettings = () => {
                     Maximum number of beats to show in featured sections
                   </p>
                 </div>
-
+                {/* Featured Producers Limit */}
+                <div className={styles.formGroup}>
+                  <label htmlFor="featuredProducerLimit">
+                    Featured Producers Limit
+                  </label>
+                  <input
+                    type="number"
+                    id="featuredProducersLimit"
+                    name="featuredProducersLimit"
+                    min="4"
+                    max="15"
+                    value={formData.featuredProducersLimit}
+                    onChange={handleInputChange}
+                    required
+                  />
+                  <p className={styles.fieldHelp}>
+                    Maximum number of producers to show in featured sections
+                  </p>
+                </div>
                 {/* <div className={styles.formGroup}>
                   <div className={styles.checkboxControl}>
                     <input

@@ -1,6 +1,7 @@
-// In backend/controllers/producerController.js
+// backend/controllers/producerController.js
 
 import User from "../models/user.js";
+import Settings from "../models/settings.js"; // NEW: Import Settings
 
 /**
  * Get featured producers
@@ -9,6 +10,10 @@ import User from "../models/user.js";
  */
 export const getFeaturedProducers = async (req, res) => {
   try {
+    // NEW: Get the featured producers limit from settings
+    const settings = await Settings.findOne();
+    const limit = settings?.featuredProducersLimit || 10; // Default to 10 if not set
+    
     // Find users with role 'seller' that have the most beats
     const featuredProducers = await User.aggregate([
       { $match: { role: 'seller' } },
@@ -32,8 +37,8 @@ export const getFeaturedProducers = async (req, res) => {
       },
       // Sort by most beats
       { $sort: { beats: -1 } },
-      // Limit to 10 producers
-      { $limit: 10 },
+      // Use dynamic limit from settings instead of hardcoded 6
+      { $limit: limit },
       // Project only the fields we need
       {
         $project: {
@@ -51,6 +56,7 @@ export const getFeaturedProducers = async (req, res) => {
     res.status(200).json({
       success: true,
       count: featuredProducers.length,
+      limit: limit, 
       data: featuredProducers
     });
   } catch (error) {
@@ -62,4 +68,3 @@ export const getFeaturedProducers = async (req, res) => {
     });
   }
 };
-
