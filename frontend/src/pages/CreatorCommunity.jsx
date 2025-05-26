@@ -1,124 +1,88 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import NavbarBeatExplore from '../Components/NavbarBeatExplore';
-import styles from "../css/CreatorCommunity.module.css";
-import { FaDownload, FaEye, FaChevronLeft, FaChevronRight, FaFileAlt, FaBook } from "react-icons/fa";
-import API from "../api/api";
+// CreatorCommunity.jsx - Fixed version with proper key props
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { FaPlay, FaDownload, FaExternalLinkAlt, FaGraduationCap, FaUser, FaClock } from 'react-icons/fa';
+import API from '../api/api';
+import styles from '../css/CreatorCommunity.module.css';
 
 const CreatorCommunity = () => {
-  const navigate = useNavigate();
-  const [currentCategoryIndex, setCurrentCategoryIndex] = useState(0);
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState('All Courses');
 
-  // Define resource categories
   const categories = [
-    "All Courses",
-    "Mixing & Mastering",
-    "Beat Making",
-    "Music Theory",
-    "Vocal Production",
-    "Music Business"
+    'All Courses',
+    'Beat Making',
+    'Mixing & Mastering',
+    'Music Theory',
+    'Vocal Production',
+    'Music Business'
   ];
 
   useEffect(() => {
     fetchResources();
-  }, [currentCategoryIndex]);
+  }, [selectedCategory]);
 
   const fetchResources = async () => {
     try {
       setLoading(true);
-      const category = categories[currentCategoryIndex];
-      const response = await API.get(`/api/creator-resources?category=${encodeURIComponent(category)}`);
+      const params = selectedCategory !== 'All Courses' ? `?category=${selectedCategory}` : '';
+      const response = await API.get(`/api/creator-resources${params}`);
       
       if (response.data.success) {
         setResources(response.data.resources);
       } else {
-        throw new Error('Failed to fetch resources');
+        setError('Failed to load resources');
       }
     } catch (error) {
-      console.error('Error fetching resources:', error);
-      setError('Failed to load educational resources');
+      console.error('Error fetching creator resources:', error);
+      setError('Failed to load resources');
     } finally {
       setLoading(false);
     }
   };
 
-  // Functions to navigate carousel
-  const nextCategory = () => {
-    setCurrentCategoryIndex((prevIndex) => 
-      prevIndex === categories.length - 1 ? 0 : prevIndex + 1
-    );
-  };
-
-  const prevCategory = () => {
-    setCurrentCategoryIndex((prevIndex) => 
-      prevIndex === 0 ? categories.length - 1 : prevIndex - 1
-    );
-  };
-
-  // Handle resource selection
-  const handleResourceSelect = (resource) => {
-    if (resource.type === 'pdf') {
-      // Open PDF in new tab or download
-      window.open(resource.downloadUrl, '_blank');
-    } else if (resource.type === 'blog') {
-      // Navigate to blog post or open URL
-      if (resource.blogUrl.startsWith('http')) {
-        window.open(resource.blogUrl, '_blank');
-      } else {
-        navigate(resource.blogUrl);
-      }
-    }
-  };
-
-  // Get icon based on resource type
-  const getResourceIcon = (type) => {
+  const getTypeIcon = (type) => {
     switch (type) {
       case 'pdf':
-        return <FaFileAlt />;
+        return <FaDownload />;
+      case 'video':
+        return <FaPlay />;
       case 'blog':
-        return <FaBook />;
+        return <FaExternalLinkAlt />;
       default:
-        return <FaEye />;
+        return <FaGraduationCap />;
     }
   };
 
-  // Get action button based on resource type
-  const getActionButton = (resource) => {
-    if (resource.type === 'pdf') {
-      return (
-        <button
-          className={styles.actionButton}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleResourceSelect(resource);
-          }}
-        >
-          <FaDownload /> Download
-        </button>
-      );
-    } else {
-      return (
-        <button
-          className={styles.actionButton}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleResourceSelect(resource);
-          }}
-        >
-          <FaEye /> Read
-        </button>
-      );
+  const getLevelColor = (level) => {
+    switch (level) {
+      case 'Beginner':
+        return '#1DB954';
+      case 'Intermediate':
+        return '#FFBA00';
+      case 'Advanced':
+        return '#FF1A1A';
+      default:
+        return '#7B2CBF';
+    }
+  };
+
+  const handleResourceClick = (resource) => {
+    if (resource.type === 'pdf' && resource.downloadUrl) {
+      window.open(resource.downloadUrl, '_blank');
+    } else if (resource.type === 'blog' && resource.blogUrl) {
+      window.open(resource.blogUrl, '_blank');
+    } else if (resource.type === 'video' && resource.videoUrl) {
+      window.open(resource.videoUrl, '_blank');
     }
   };
 
   if (loading) {
     return (
       <div className={styles.container}>
-        <NavbarBeatExplore />
-        <div className={styles.loadingContainer}>
+        <div className={styles.loading}>
           <div className={styles.spinner}></div>
           <p>Loading educational resources...</p>
         </div>
@@ -129,9 +93,12 @@ const CreatorCommunity = () => {
   if (error) {
     return (
       <div className={styles.container}>
-        <NavbarBeatExplore />
-        <div className={styles.errorContainer}>
-          <p className={styles.errorMessage}>{error}</p>
+        <div className={styles.error}>
+          <h3>Oops! Something went wrong</h3>
+          <p>{error}</p>
+          <button onClick={fetchResources} className={styles.retryButton}>
+            Try Again
+          </button>
         </div>
       </div>
     );
@@ -139,118 +106,113 @@ const CreatorCommunity = () => {
 
   return (
     <div className={styles.container}>
-      <NavbarBeatExplore />
-      
-      <div className={styles.heroSection}>
-        <h1>Creator Community</h1>
-        <p>Learn essential music production skills with our curated educational resources</p>
-      </div>
-      
-      <div className={styles.categorySection}>
-        <div className={styles.categoryNavigation}>
-          <h2>Educational Resources</h2>
-          <div className={styles.categoryButtons}>
-            <button 
-              className={styles.navButton} 
-              onClick={prevCategory}
-            >
-              <FaChevronLeft />
-            </button>
-            <span className={styles.categoryName}>{categories[currentCategoryIndex]}</span>
-            <button 
-              className={styles.navButton} 
-              onClick={nextCategory}
-            >
-              <FaChevronRight />
-            </button>
+      {/* Header Section */}
+      <div className={styles.header}>
+        <div className={styles.headerContent}>
+          <FaGraduationCap className={styles.headerIcon} />
+          <div>
+            <h1>Creator Community</h1>
+            <p>Level up your music production skills with our educational resources</p>
           </div>
         </div>
-        
-        {/* Category tabs for quick selection */}
+      </div>
+
+      {/* Category Filter */}
+      <div className={styles.categoryFilter}>
         <div className={styles.categoryTabs}>
-          {categories.map((category, index) => (
+          {categories.map((category) => (
             <button
-              key={category}
-              className={`${styles.categoryTab} ${index === currentCategoryIndex ? styles.activeTab : ''}`}
-              onClick={() => setCurrentCategoryIndex(index)}
+              key={category} // ✅ FIXED: Added unique key prop
+              className={`${styles.categoryTab} ${
+                selectedCategory === category ? styles.activeCategory : ''
+              }`}
+              onClick={() => setSelectedCategory(category)}
             >
               {category}
             </button>
           ))}
         </div>
-        
-        <div className={styles.resourcesGrid}>
-          {resources.length > 0 ? (
-            resources.map((resource) => (
-              <div 
-                key={resource.id} 
+      </div>
+
+      {/* Resources Grid */}
+      <div className={styles.resourcesSection}>
+        {resources.length === 0 ? (
+          <div className={styles.emptyState}>
+            <FaGraduationCap className={styles.emptyIcon} />
+            <h3>No resources found</h3>
+            <p>
+              {selectedCategory === 'All Courses'
+                ? 'No educational resources are currently available.'
+                : `No resources found for ${selectedCategory}.`}
+            </p>
+          </div>
+        ) : (
+          <div className={styles.resourcesGrid}>
+            {resources.map((resource) => (
+              <div
+                key={resource._id} // ✅ FIXED: Added unique key prop
                 className={styles.resourceCard}
-                onClick={() => handleResourceSelect(resource)}
+                onClick={() => handleResourceClick(resource)}
               >
-                <div className={styles.resourceImageContainer}>
-                  <img 
-                    src={resource.image} 
-                    alt={resource.title} 
-                    className={styles.resourceImage}
+                <div className={styles.resourceImage}>
+                  <img
+                    src={resource.image}
+                    alt={resource.title}
                     onError={(e) => {
-                      e.target.src = 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop';
+                      e.target.src = '/default-resource.jpg';
                     }}
                   />
-                  <div className={styles.resourceOverlay}>
-                    <div className={styles.resourceType}>
-                      {getResourceIcon(resource.type)}
-                      <span>{resource.type.toUpperCase()}</span>
-                    </div>
+                  <div className={styles.resourceType}>
+                    {getTypeIcon(resource.type)}
+                    <span>{resource.type.toUpperCase()}</span>
                   </div>
                 </div>
-                <div className={styles.resourceInfo}>
-                  <h3 className={styles.resourceTitle}>{resource.title}</h3>
-                  <p className={styles.instructorName}>by {resource.instructor}</p>
-                  <p className={styles.resourceDescription}>{resource.description}</p>
-                  <div className={styles.resourceMetadata}>
-                    <span className={styles.duration}>{resource.duration}</span>
-                    <span className={`${styles.level} ${styles[resource.level.toLowerCase()]}`}>
+
+                <div className={styles.resourceContent}>
+                  <div className={styles.resourceHeader}>
+                    <h3 className={styles.resourceTitle}>{resource.title}</h3>
+                    <div className={styles.resourceMeta}>
+                      <span className={styles.instructor}>
+                        <FaUser /> {resource.instructor}
+                      </span>
+                      <span className={styles.duration}>
+                        <FaClock /> {resource.duration}
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className={styles.resourceDescription}>
+                    {resource.description}
+                  </p>
+
+                  <div className={styles.resourceFooter}>
+                    <span className={styles.category}>{resource.category}</span>
+                    <span
+                      className={styles.level}
+                      style={{ backgroundColor: getLevelColor(resource.level) }}
+                    >
                       {resource.level}
                     </span>
                   </div>
-                  <div className={styles.resourceActions}>
-                    {getActionButton(resource)}
-                  </div>
                 </div>
               </div>
-            ))
-          ) : (
-            <div className={styles.noResourcesMessage}>
-              <p>No resources available in this category yet.</p>
-              <button 
-                className={styles.browseButton}
-                onClick={nextCategory}
-              >
-                Browse other categories
-              </button>
-            </div>
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
-      
-      <div className={styles.communitySection}>
-        <h2>Learn & Grow</h2>
-        <p>Access professional knowledge to elevate your music production skills</p>
-        <div className={styles.featureCards}>
-          <div className={styles.featureCard}>
-            <div className={styles.featureIcon}>📚</div>
-            <h3>Learn</h3>
-            <p>Access guides and tutorials from industry professionals</p>
-          </div>
-          <div className={styles.featureCard}>
-            <div className={styles.featureIcon}>🎛️</div>
-            <h3>Practice</h3>
-            <p>Apply techniques with hands-on exercises and examples</p>
-          </div>
-          <div className={styles.featureCard}>
-            <div className={styles.featureIcon}>🚀</div>
-            <h3>Master</h3>
-            <p>Build expertise through comprehensive learning resources</p>
+
+      {/* Call to Action */}
+      <div className={styles.ctaSection}>
+        <div className={styles.ctaContent}>
+          <h2>Ready to Create Your Next Hit?</h2>
+          <p>Apply what you've learned and start making beats on Dhuun</p>
+          <div className={styles.ctaButtons}>
+            <Link to="/BeatExplorePage" className={styles.primaryButton}>
+              Explore Beats
+            </Link>
+            <Link to="/dashboard" className={styles.secondaryButton}>
+              Start Creating
+            </Link>
           </div>
         </div>
       </div>

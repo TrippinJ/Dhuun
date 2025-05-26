@@ -27,9 +27,17 @@ const uploadToCloudinary = (filePath, folder, options = {}) => {
       folder: folder,        // organize files in folders
       use_filename: true,    // Use original filename as part of public ID
       unique_filename: true, // Add unique identifier to prevent overwriting
-      overwrite: false,      // Don't overwrite existing files
+      overwrite: false,
+      access_mode: "public",     // Don't overwrite existing files
       ...options             // Allow additional options to be passed
     };
+
+    // SPECIAL HANDLING FOR PDF FILES
+    if (options.resource_type === 'raw') {
+      uploadOptions.access_mode = "public";
+      uploadOptions.delivery_type = "upload";
+      console.log('📄 Uploading PDF with public access');
+    }
 
     // Upload the file to Cloudinary
     cloudinary.uploader.upload(filePath, uploadOptions, (error, result) => {
@@ -71,29 +79,64 @@ const deleteFromCloudinary = async (publicId, resourceType = 'image') => {
 const getPublicIdFromUrl = (url) => {
   try {
     if (!url || typeof url !== 'string') return null;
-    
+
     // Check if it's a Cloudinary URL
     if (!url.includes('cloudinary.com')) return null;
-    
+
     // Extract public ID from URL
     // Example URL: https://res.cloudinary.com/cloud-name/image/upload/v1234567890/folder/filename.jpg
     const urlParts = url.split('/');
     const uploadIndex = urlParts.indexOf('upload');
-    
+
     if (uploadIndex === -1) return null;
-    
+
     // Get everything after "upload" except the version number
     const publicIdWithVersion = urlParts.slice(uploadIndex + 1).join('/');
-    
+
     // Remove file extension
     const publicIdWithoutExt = publicIdWithVersion.replace(/\.[^/.]+$/, '');
-    
+
     // Remove version number if present (v1234567890/)
     const publicId = publicIdWithoutExt.replace(/^v\d+\//, '');
-    
+
     return publicId;
   } catch (error) {
     console.error('Error extracting public ID:', error);
+    return null;
+  }
+};
+
+/**
+ * ✅ NEW: Generate a secure download URL for PDFs
+ * @param {string} publicId - Public ID of the PDF
+ * @returns {string} - Secure download URL
+ */
+const generatePDFDownloadUrl = (publicId) => {
+  try {
+    return cloudinary.url(publicId, {
+      resource_type: 'raw',
+      secure: true,
+      flags: 'attachment' // This forces download instead of inline view
+    });
+  } catch (error) {
+    console.error('Error generating PDF download URL:', error);
+    return null;
+  }
+};
+
+/**
+ * Generate a secure view URL for PDFs
+ * @param {string} publicId - Public ID of the PDF
+ * @returns {string} - Secure view URL
+ */
+const generatePDFViewUrl = (publicId) => {
+  try {
+    return cloudinary.url(publicId, {
+      resource_type: 'raw',
+      secure: true
+    });
+  } catch (error) {
+    console.error('Error generating PDF view URL:', error);
     return null;
   }
 };
@@ -102,5 +145,7 @@ export {
   cloudinary,
   uploadToCloudinary,
   deleteFromCloudinary,
-  getPublicIdFromUrl
+  getPublicIdFromUrl,
+  generatePDFDownloadUrl,
+  generatePDFViewUrl
 };

@@ -104,25 +104,7 @@ const AdminOverview = () => {
         </div>
       </div>
       
-      <div className={styles.recentActivity}>
-        <h3>Recent Activity</h3>
-        <div className={styles.activityList}>
-          {recentActivity.map((activity, index) => (
-            <div key={index} className={styles.activityItem}>
-              <div className={styles.activityIcon}>
-                {activity.type === 'user' && <FaUsers />}
-                {activity.type === 'beat' && <FaMusic />}
-                {activity.type === 'sale' && <FaShoppingCart />}
-              </div>
-              <div className={styles.activityInfo}>
-                <div className={styles.activityTitle}>{activity.action}</div>
-                <div className={styles.activityDesc}>{activity.details}</div>
-                <div className={styles.activityTime}>{activity.time}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+     
     </div>
   );
 };
