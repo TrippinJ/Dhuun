@@ -37,7 +37,7 @@ const PORT = process.env.PORT || 8080;
 
 // Middleware
 app.use(cors({
-  origin: ["http://localhost:3000", "http://localhost:5173", "https://accounts.google.com", "http://localhost:3000/admin/*"],
+  origin: ["http://localhost:3000", "http://localhost:5173", "https://accounts.google.com", "http://localhost:3000/admin/*","https://dhuun.vercel.app",  "https://dhuun-frontend.vercel.app"],
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   credentials: true
 }));
