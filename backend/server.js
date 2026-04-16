@@ -42,7 +42,7 @@ app.use(cors({
     "http://localhost:5173",
     "https://accounts.google.com",
     "http://localhost:3000/admin/*",
-    "https://dhuun-psi.vercel.app/"],
+    "https://dhuun-psi.vercel.app"],
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   credentials: true
 }));
