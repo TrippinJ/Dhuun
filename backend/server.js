@@ -37,7 +37,12 @@ const PORT = process.env.PORT || 8080;
 
 // Middleware
 app.use(cors({
-  origin: ["http://localhost:3000", "http://localhost:5173", "https://accounts.google.com", "http://localhost:3000/admin/*","https://dhuun.vercel.app",  "https://dhuun-frontend.vercel.app"],
+  origin: [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "https://accounts.google.com",
+    "http://localhost:3000/admin/*",
+    "https://dhuun-psi.vercel.app/"],
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   credentials: true
 }));
@@ -47,7 +52,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Enhanced request logging
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`, 
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`,
     req.method === 'POST' ? `Body: ${JSON.stringify(req.body)}` : '');
   next();
 });
@@ -87,9 +92,9 @@ app.get("/", (req, res) => {
 });
 
 app.get("/test", (req, res) => {
-  res.json({ 
-    message: "Dhuun Backend API is working!", 
-    timestamp: new Date().toISOString() 
+  res.json({
+    message: "Dhuun Backend API is working!",
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -114,8 +119,8 @@ app.use('/api/creator-resources', creatorResourcesRoutes);
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('ERROR:', err.stack);
-  res.status(500).json({ 
-    message: 'Server error', 
+  res.status(500).json({
+    message: 'Server error',
     error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
   });
 });
