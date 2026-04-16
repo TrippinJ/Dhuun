@@ -130,7 +130,7 @@ const EditProfile = () => {
 
       // Use axios directly instead of your API helper to ensure proper configuration
       const token = localStorage.getItem("token"); // Still need token for the API call
-      const apiBaseUrl = import.meta.env.VITE_APP_BACKEND_URL || "http://localhost:8080";
+      const apiBaseUrl = import.meta.env.VITE_APP_BACKEND_URL || "https://dhuun-backend.onrender.com";
       const response = await axios.put(
         `${apiBaseUrl}/api/profile/update`, 
         formData, 
@@ -192,7 +192,7 @@ const EditProfile = () => {
       
       // Call the delete account endpoint
       const token = localStorage.getItem("token");
-      const apiBaseUrl = import.meta.env.VITE_APP_BACKEND_URL || "http://localhost:8080";
+      const apiBaseUrl = import.meta.env.VITE_APP_BACKEND_URL || "https://dhuun-backend.onrender.com";
       await axios.delete(
         `${apiBaseUrl}/api/auth/delete-account`, 
         {
