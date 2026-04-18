@@ -11,16 +11,16 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
  * @param {Object} options - Payment session options
  * @returns {Promise<Object>} - Session URL and ID
  */
-export const createCheckoutSession = async ({ 
-  amount, 
-  items, 
-  successUrl, 
+export const createCheckoutSession = async ({
+  amount,
+  items,
+  successUrl,
   cancelUrl,
-  userId 
+  userId
 }) => {
   try {
     const unitAmount = Math.round(amount * 100); // Convert to cents
-    
+
     // Create line items for Stripe checkout
     const lineItems = items.map(item => ({
       price_data: {
@@ -33,14 +33,14 @@ export const createCheckoutSession = async ({
       },
       quantity: 1,
     }));
-    
+
     // Create the checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
-      success_url: successUrl,
-      cancel_url: cancelUrl,
+      successUrl: `${process.env.CLIENT_URL}/checkout-success`,
+      cancelUrl: `${process.env.CLIENT_URL}/checkout`,
       client_reference_id: userId,
       metadata: {
         orderId: `order-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
@@ -51,7 +51,7 @@ export const createCheckoutSession = async ({
         }))),
       },
     });
-    
+
     return {
       sessionUrl: session.url,
       sessionId: session.id,
@@ -70,7 +70,7 @@ export const createCheckoutSession = async ({
 export const verifyCheckoutSession = async (sessionId) => {
   try {
     const session = await stripe.checkout.sessions.retrieve(sessionId);
-    
+
     return {
       status: session.payment_status,
       amountTotal: session.amount_total / 100, // Convert from cents
@@ -86,22 +86,22 @@ export const verifyCheckoutSession = async (sessionId) => {
 // Webhook handler for Stripe events
 export const handleStripeWebhook = async (req) => {
   const sig = req.headers['stripe-signature'];
-  
+
   try {
     const event = stripe.webhooks.constructEvent(
       req.body,
       sig,
       process.env.STRIPE_WEBHOOK_SECRET
     );
-    
+
     // Handle the event
     switch (event.type) {
       case 'checkout.session.completed':
         const session = event.data.object;
-        
+
         // Extract order details from metadata
         const { orderId, items } = session.metadata;
-        
+
         return {
           success: true,
           eventType: event.type,
@@ -109,7 +109,7 @@ export const handleStripeWebhook = async (req) => {
           orderId,
           items: JSON.parse(items),
         };
-        
+
       default:
         return {
           success: true,
