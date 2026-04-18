@@ -422,6 +422,24 @@ export const sendBeatPurchased = async (saleDetails) => {
   }
 };
 
+export const sendContractEmail = async ({
+  buyerEmail, buyerName, sellerEmail, beatTitle, licenseType, pdfBuffer
+}) => {
+  const mailOptions = {
+    from: process.env.EMAIL_FROM,
+    to: [buyerEmail, sellerEmail],  // sends to both buyer and seller
+    subject: `Your Dhuun License Agreement — ${beatTitle}`,
+    text: `Hi ${buyerName}, attached is your license agreement for "${beatTitle}" (${licenseType}). Keep this for your records.`,
+    attachments: [{
+      filename: `dhuun-license-${beatTitle.replace(/\s+/g, "-")}.pdf`,
+      content: pdfBuffer,
+      contentType: "application/pdf"
+    }]
+  };
+
+  await transporter.sendMail(mailOptions);
+};
+
 
 /**
  * Send password reset email

@@ -5,6 +5,9 @@ import User from '../models/user.js';
 import { verifyPayment } from '../utils/khaltiPayment.js';
 import { sendOrderConfirmation, sendBeatPurchased } from '../utils/emailService.js';
 import { addTransaction } from './walletController.js';
+import { LICENSE_CONFIG, REVENUE_SHARE } from "../utils/licenseConfig.js";
+import { generateLicenseContract } from "../utils/contractGenerator.js";
+import { sendContractEmail } from "../utils/emailService.js";
 
 // Create a new order
 export const createOrder = async (req, res) => {
@@ -124,7 +127,7 @@ export const createOrder = async (req, res) => {
         }
       } catch (itemError) {
         console.error(`Error processing order item ${item.beatId}:`, itemError);
-        
+
       }
     }
 
@@ -230,6 +233,78 @@ export const verifyPaymentOrder = async (req, res) => {
   }
 };
 
+export const finalizeOrder = async (orderId) => {
+  const order = await Order.findById(orderId)
+    .populate("user")
+    .populate({ path: "items.beat", populate: { path: "producer" } });
+
+  if (!order || order.paymentStatus !== "Completed") return;
+
+  for (const item of order.items) {
+    const licenseKey = item.license.toLowerCase();
+    const config = LICENSE_CONFIG[licenseKey];
+    if (!config) continue;
+
+    // 1. Store license details on the order item
+    item.licenseDetails = {
+      streamLimit: config.streamLimit,
+      fileFormats: config.fileFormats,
+      isExclusive: config.isExclusive,
+      commercialUse: config.commercialUse,
+      creditRequired: config.creditRequired,
+      distributionLimit: config.distributionLimit
+    };
+
+    // 2. Calculate revenue split based on seller's subscription plan
+    const sellerPlan = item.beat.producer.subscription?.plan || "Free";
+    const sellerShare = REVENUE_SHARE[sellerPlan];
+    item.sellerRevenue = parseFloat((item.price * sellerShare).toFixed(2));
+    item.platformRevenue = parseFloat((item.price * (1 - sellerShare)).toFixed(2));
+
+    // 3. Retire beat if exclusive
+    if (config.isExclusive) {
+      await Beat.findByIdAndUpdate(item.beat._id, {
+        isExclusiveSold: true,
+        exclusiveSoldTo: order.user._id,
+        exclusiveSoldDate: new Date(),
+        exclusiveOrderId: order._id
+      });
+    }
+
+    // 4. Generate and email contract PDF
+    try {
+      const pdfBuffer = await generateLicenseContract({
+        buyerName: order.user.name,
+        buyerEmail: order.user.email,
+        sellerName: item.beat.producer.name,
+        beatTitle: item.beat.title,
+        licenseType: licenseKey,
+        licenseDetails: item.licenseDetails,
+        amountPaid: item.price,
+        transactionId: order.paymentId || order.paymentPidx,
+        orderId: order._id.toString(),
+        purchaseDate: order.createdAt
+      });
+
+      await sendContractEmail({
+        buyerEmail: order.user.email,
+        buyerName: order.user.name,
+        sellerEmail: item.beat.producer.email,
+        beatTitle: item.beat.title,
+        licenseType: config.name,
+        pdfBuffer
+      });
+
+      order.contractGenerated = true;
+      order.contractSentAt = new Date();
+    } catch (err) {
+      console.error("Contract generation failed:", err);
+    }
+  }
+
+  await order.save();
+};
+
 // NEW: Get sales analytics for producer
 export const getProducerSalesAnalytics = async (req, res) => {
   try {
@@ -243,7 +318,7 @@ export const getProducerSalesAnalytics = async (req, res) => {
     });
 
     // Filter orders that actually contain beats by this producer
-    const producerOrders = orders.filter(order => 
+    const producerOrders = orders.filter(order =>
       order.items.some(item => item.beat && item.beat.producer.toString() === req.user.id)
     );
 
@@ -255,21 +330,21 @@ export const getProducerSalesAnalytics = async (req, res) => {
 
     for (const order of producerOrders) {
       const month = order.createdAt.toISOString().slice(0, 7); // YYYY-MM format
-      
+
       for (const item of order.items) {
         if (item.beat && item.beat.producer.toString() === req.user.id) {
           totalSales++;
-          
+
           // Calculate earnings (assuming revenue share from user subscription)
           const user = await User.findById(req.user.id);
           const revenueShare = user?.subscription?.revenueShare || 60;
           const earnings = (item.price * revenueShare) / 100;
           totalEarnings += earnings;
-          
+
           // Track beat sales
           const beatTitle = item.beat.title;
           beatSales[beatTitle] = (beatSales[beatTitle] || 0) + 1;
-          
+
           // Track monthly sales
           monthlySales[month] = (monthlySales[month] || 0) + 1;
         }
@@ -278,7 +353,7 @@ export const getProducerSalesAnalytics = async (req, res) => {
 
     // Get top performing beat
     const topBeat = Object.entries(beatSales)
-      .sort(([,a], [,b]) => b - a)[0];
+      .sort(([, a], [, b]) => b - a)[0];
 
     res.json({
       totalSales,

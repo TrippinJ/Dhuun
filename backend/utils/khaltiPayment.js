@@ -2,6 +2,7 @@
 
 import axios from 'axios';
 import dotenv from 'dotenv';
+import { finalizeOrder } from "../controllers/orderController.js";
 dotenv.config();
 
 // Define the base URL depending on environment
