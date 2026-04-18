@@ -65,8 +65,8 @@ export const initiatePayment = async ({ userId, amount, purchaseOrderName, retur
     };
 
     const payload = {
-      return_url: returnUrl || "http://localhost:3000/checkout-success",
-      website_url: websiteUrl || "http://localhost:3000/",
+      return_url: returnUrl || `${process.env.CLIENT_URL}/checkout-success`,
+      website_url: websiteUrl || process.env.CLIENT_URL,
       amount: amountInPaisa,
       purchase_order_id: orderId,
       purchase_order_name: purchaseOrderName || "Product Purchase",
