@@ -2,28 +2,20 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  FaUsers, 
-  FaMusic, 
-  FaChartLine, 
-  FaShoppingCart, 
-  FaCog, 
-  FaTachometerAlt,
-  FaSignOutAlt,
-  FaMoneyBillWave,
-  FaIdCard,
-  FaStar,
-  FaGraduationCap
+  FaUsers, FaMusic, FaChartLine, FaShoppingCart, FaCog,
+  FaTachometerAlt, FaSignOutAlt, FaMoneyBillWave, FaIdCard,
+  FaStar, FaGraduationCap
 } from 'react-icons/fa';
 import styles from '../../css/Admin/AdminSidebar.module.css';
 import Logo from '../../Assets/DHUUN.png';
-
+import { useAuth } from '../../context/AuthContext';
 
 const AdminSidebar = ({ activeSection, setActiveSection }) => {
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+  const handleLogout = async () => {
+    await logout(); // AuthContext clears tokens, state, and cart
     navigate("/login");
   };
 
@@ -33,7 +25,7 @@ const AdminSidebar = ({ activeSection, setActiveSection }) => {
     { id: 'beats', label: 'Beats', icon: <FaMusic /> },
     { id: 'sales', label: 'Sales', icon: <FaShoppingCart /> },
     { id: 'reviews', label: 'Reviews', icon: <FaStar /> },
-    { id: 'creator-resources', label: 'Creator Resources', icon: <FaGraduationCap /> }, 
+    { id: 'creator-resources', label: 'Creator Resources', icon: <FaGraduationCap /> },
     { id: 'verifications', label: 'Document Verification', icon: <FaIdCard /> },
     { id: 'withdrawals', label: 'Withdrawals', icon: <FaMoneyBillWave /> },
     { id: 'settings', label: 'Settings', icon: <FaCog /> },
@@ -42,15 +34,13 @@ const AdminSidebar = ({ activeSection, setActiveSection }) => {
   return (
     <div className={styles.sidebar}>
       <div className={styles.logoContainer}>
-        <img src={Logo} alt="Dhuun Logo" style={{ cursor: "pointer", width: "100px", height: "auto" }}/>
-        
-        {/* <h3>Admin Panel</h3> */}
+        <img src={Logo} alt="Dhuun Logo" style={{ cursor: "pointer", width: "100px", height: "auto" }} />
       </div>
 
       <nav className={styles.navigation}>
         <ul>
           {menuItems.map((item) => (
-            <li 
+            <li
               key={item.id}
               className={activeSection === item.id ? styles.active : ''}
               onClick={() => setActiveSection(item.id)}

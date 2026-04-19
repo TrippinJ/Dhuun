@@ -3,7 +3,6 @@ import { FaCheck, FaTimes, FaEye, FaMoneyBillWave } from 'react-icons/fa';
 import API from '../../api/api';
 import styles from '../../css/Admin/AdminWithdrawals.module.css';
 
-
 const AdminWithdrawals = () => {
   const [withdrawals, setWithdrawals] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,7 +22,6 @@ const AdminWithdrawals = () => {
       setLoading(true);
       setError(null);
 
-      // Get authentication token
       const token = localStorage.getItem("token");
       if (!token) {
         setError("Authentication required");
@@ -31,9 +29,8 @@ const AdminWithdrawals = () => {
         return;
       }
 
-      // Use the correct API endpoint with authentication token
+      // Interceptor handles Authorization header
       const response = await API.get('/api/admin/withdrawals/pending');
-
 
       if (response.data.success) {
         setWithdrawals(response.data.withdrawals);
@@ -42,7 +39,6 @@ const AdminWithdrawals = () => {
       }
     } catch (error) {
       console.error('Error fetching withdrawals:', error);
-      console.error('Error details:', error.response?.data || error.message);
       setError('Failed to load withdrawal requests');
     } finally {
       setLoading(false);
@@ -67,7 +63,6 @@ const AdminWithdrawals = () => {
     try {
       setProcessingAction(true);
 
-      // Get authentication token
       const token = localStorage.getItem("token");
       if (!token) {
         alert("Authentication required. Please log in again.");
@@ -75,51 +70,37 @@ const AdminWithdrawals = () => {
         return;
       }
 
-      // Use the correct API endpoint with authentication token
+      // Interceptor handles Authorization header
       const response = await API.post('/api/admin/withdrawals/process', {
         withdrawalId: selectedWithdrawal._id,
         status,
         payoutReference: status === 'paid' ? payoutReference : undefined,
         adminNotes
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
       });
 
       if (response.data.success) {
-        // Remove processed withdrawal from the list
         setWithdrawals(withdrawals.filter(w => w._id !== selectedWithdrawal._id));
         handleCloseModal();
-
-        // Show success message
         alert(`Withdrawal ${status} successfully`);
       } else {
         throw new Error(response.data.message || `Failed to ${status} withdrawal`);
       }
     } catch (error) {
       console.error(`Error ${status} withdrawal:`, error);
-      console.error('Error details:', error.response?.data || error.message);
       alert(error.response?.data?.message || error.message || `Failed to ${status} withdrawal`);
     } finally {
       setProcessingAction(false);
     }
   };
 
-  if (loading) {
-    return <div className={styles.loading}>Loading withdrawal requests...</div>;
-  }
-
-  if (error) {
-    return <div className={styles.error}>{error}</div>;
-  }
+  if (loading) return <div className={styles.loading}>Loading withdrawal requests...</div>;
+  if (error) return <div className={styles.error}>{error}</div>;
 
   return (
     <div className={styles.withdrawalsContainer}>
       <div className={styles.withdrawalsHeader}>
         <h2>Pending Withdrawal Requests</h2>
-        <button
-          className={styles.refreshButton}
-          onClick={fetchWithdrawals}
-        >
+        <button className={styles.refreshButton} onClick={fetchWithdrawals}>
           Refresh
         </button>
       </div>
@@ -146,19 +127,15 @@ const AdminWithdrawals = () => {
                   <span className={styles.sellerEmail}>{withdrawal.user.email}</span>
                 </div>
               </div>
-
               <div className={styles.amountColumn}>
                 Rs {withdrawal.amount.toFixed(2)}
               </div>
-
               <div className={styles.methodColumn}>
                 {withdrawal.paymentMethod}
               </div>
-
               <div className={styles.dateColumn}>
                 {new Date(withdrawal.requestDate).toLocaleDateString()}
               </div>
-
               <div className={styles.actionsColumn}>
                 <button
                   className={styles.actionButton}
@@ -178,10 +155,7 @@ const AdminWithdrawals = () => {
           <div className={styles.modalContent}>
             <div className={styles.modalHeader}>
               <h3>Withdrawal Request Details</h3>
-              <button
-                className={styles.closeButton}
-                onClick={handleCloseModal}
-              >
+              <button className={styles.closeButton} onClick={handleCloseModal}>
                 &times;
               </button>
             </div>
@@ -243,14 +217,12 @@ const AdminWithdrawals = () => {
                     </div>
                   </>
                 )}
-
                 {selectedWithdrawal.paymentMethod === "paypal" && (
                   <div className={styles.detailRow}>
                     <span className={styles.detailLabel}>PayPal Email:</span>
                     <span className={styles.detailValue}>{selectedWithdrawal.payoutDetails?.paypalEmail || 'Not provided'}</span>
                   </div>
                 )}
-
                 {selectedWithdrawal.paymentMethod === "khalti" && (
                   <div className={styles.detailRow}>
                     <span className={styles.detailLabel}>Khalti ID:</span>
@@ -259,7 +231,6 @@ const AdminWithdrawals = () => {
                 )}
               </div>
 
-              {/* Wallet Information Section */}
               {selectedWithdrawal.walletInfo && (
                 <div className={styles.detailsSection}>
                   <h4>Wallet Information</h4>
@@ -279,7 +250,6 @@ const AdminWithdrawals = () => {
                       </div>
                     </div>
 
-                    {/* Warning if insufficient balance */}
                     {selectedWithdrawal.walletInfo.balance < selectedWithdrawal.amount && (
                       <div className={styles.withdrawWarning}>
                         <span>⚠️</span>
@@ -290,7 +260,6 @@ const AdminWithdrawals = () => {
                       </div>
                     )}
 
-                    {/* Recent Transactions */}
                     <div className={styles.recentTransactions}>
                       <h5>Recent Transactions</h5>
                       <div className={styles.transactionsList}>
@@ -320,7 +289,6 @@ const AdminWithdrawals = () => {
                     rows={3}
                   />
                 </div>
-
                 <div className={styles.formField}>
                   <label>Payout Reference (for completed withdrawals):</label>
                   <input
@@ -334,14 +302,6 @@ const AdminWithdrawals = () => {
             </div>
 
             <div className={styles.modalFooter}>
-              {/* <button
-                className={styles.rejectButton}
-                onClick={() => handleProcessWithdrawal('rejected')}
-                disabled={processingAction}
-              >
-                <FaTimes /> Reject
-              </button> */}
-
               <button
                 className={styles.approveButton}
                 onClick={() => handleProcessWithdrawal('approved')}
@@ -349,7 +309,6 @@ const AdminWithdrawals = () => {
               >
                 <FaCheck /> Approve
               </button>
-
               <button
                 className={styles.completeButton}
                 onClick={() => handleProcessWithdrawal('paid')}

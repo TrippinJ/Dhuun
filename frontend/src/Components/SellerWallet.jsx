@@ -9,57 +9,49 @@ const SellerWallet = () => {
   const navigate = useNavigate();
   const [wallet, setWallet] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null); // Added missing state
-  const [successMessage, setSuccessMessage] = useState(""); // Added missing state
+  const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [withdrawMethod, setWithdrawMethod] = useState("bank");
   const [withdrawLoading, setWithdrawLoading] = useState(false);
 
-  // Fetch wallet data
+  const fetchWalletData = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      showToast.error("Authentication required. Please log in.");
+      return null;
+    }
+    // Interceptor handles Authorization header
+    const response = await API.get("/api/wallet");
+    return response.data?.wallet || null;
+  };
+
   useEffect(() => {
-    const fetchWallet = async () => {
+    const loadWallet = async () => {
       try {
         setLoading(true);
         setError(null);
-        const token = localStorage.getItem("token");
-
-        if (!token) {
-          showToast.error("Authentication required. Please log in.");
-          setLoading(false);
-          return;
-        }
-
-        const response = await API.get("/api/wallet", {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-
-        console.log("Wallet data:", response.data);
-
-        if (response.data && response.data.wallet) {
-          setWallet(response.data.wallet);
-          // Remove this toast as it's too frequent for normal loading
-          // showToast.success("Wallet data loaded successfully");
+        const walletData = await fetchWalletData();
+        if (walletData) {
+          setWallet(walletData);
         } else {
           throw new Error("Invalid wallet data format");
         }
-
-        setLoading(false);
       } catch (error) {
         console.error("Error fetching wallet:", error);
         setError("Failed to load wallet information. Please try again.");
         showToast.error("Failed to load wallet information. Please try again.");
+      } finally {
         setLoading(false);
       }
     };
 
-    fetchWallet();
+    loadWallet();
   }, []);
 
-  // Handle withdraw request
   const handleWithdraw = async (e) => {
     e.preventDefault();
 
-    // Validate amount
     const amount = parseFloat(withdrawAmount);
     if (isNaN(amount) || amount <= 0) {
       showToast.error("Please enter a valid withdrawal amount");
@@ -73,7 +65,7 @@ const SellerWallet = () => {
 
     try {
       setWithdrawLoading(true);
-      setError(null); // Fixed: was showToast.error(null)
+      setError(null);
 
       const token = localStorage.getItem("token");
       if (!token) {
@@ -82,30 +74,21 @@ const SellerWallet = () => {
         return;
       }
 
-      const response = await API.post("/api/wallet/withdraw", {
+      // Interceptor handles Authorization header
+      await API.post("/api/wallet/withdraw", {
         amount,
         paymentMethod: withdrawMethod
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
       });
 
       showToast.success(`Withdrawal request of Rs ${amount.toFixed(2)} submitted successfully!`);
       setWithdrawAmount("");
-      setSuccessMessage(`Withdrawal request submitted successfully!`);
+      setSuccessMessage("Withdrawal request submitted successfully!");
 
-      // Refresh wallet data after successful withdrawal request
-      const walletResponse = await API.get("/api/wallet", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      // Refresh wallet data
+      const walletData = await fetchWalletData();
+      if (walletData) setWallet(walletData);
 
-      if (walletResponse.data && walletResponse.data.wallet) {
-        setWallet(walletResponse.data.wallet);
-      }
-
-      // Clear success message after 5 seconds
-      setTimeout(() => {
-        setSuccessMessage("");
-      }, 5000);
+      setTimeout(() => setSuccessMessage(""), 5000);
     } catch (error) {
       console.error("Error requesting withdrawal:", error);
       const errorMessage = error.response?.data?.message || "Failed to submit withdrawal request";
@@ -116,37 +99,25 @@ const SellerWallet = () => {
     }
   };
 
-  const formatCurrency = (amount) => {
-    return `Rs ${(amount || 0).toFixed(2)}`;
-  };
+  const formatCurrency = (amount) => `Rs ${(amount || 0).toFixed(2)}`;
 
-  // Format date
   const formatDate = (dateString) => {
-    const options = { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric', 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    const options = {
+      year: 'numeric', month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit'
     };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
-  // Filter out duplicate transactions
   const getUniqueTransactions = (transactions) => {
     if (!Array.isArray(transactions)) return [];
-    
-    // Create a Map using transaction description and date as composite key
     const uniqueTransactionsMap = new Map();
-
     transactions.forEach(transaction => {
       const key = `${transaction.description}-${transaction.createdAt}-${transaction.amount}`;
       if (!uniqueTransactionsMap.has(key)) {
         uniqueTransactionsMap.set(key, transaction);
       }
     });
-
-    // Convert map values back to array and return
     return Array.from(uniqueTransactionsMap.values());
   };
 
@@ -166,9 +137,9 @@ const SellerWallet = () => {
     );
   }
 
-  // Get unique transactions for display
-  const uniqueTransactions = wallet.transactions ?
-    getUniqueTransactions(wallet.transactions) : [];
+  const uniqueTransactions = wallet.transactions
+    ? getUniqueTransactions(wallet.transactions)
+    : [];
 
   return (
     <div className={styles.walletContainer}>
@@ -177,9 +148,7 @@ const SellerWallet = () => {
 
       <div className={styles.balanceCards}>
         <div className={styles.balanceCard}>
-          <div className={styles.balanceIcon}>
-            <FaWallet />
-          </div>
+          <div className={styles.balanceIcon}><FaWallet /></div>
           <div className={styles.balanceInfo}>
             <h3>Available Balance</h3>
             <div className={styles.balanceAmount}>
@@ -190,9 +159,7 @@ const SellerWallet = () => {
         </div>
 
         <div className={styles.balanceCard}>
-          <div className={styles.balanceIcon}>
-            <FaMoneyBillWave />
-          </div>
+          <div className={styles.balanceIcon}><FaMoneyBillWave /></div>
           <div className={styles.balanceInfo}>
             <h3>Pending Balance</h3>
             <div className={styles.balanceAmount}>
@@ -230,7 +197,6 @@ const SellerWallet = () => {
                 <option value="khalti">Khalti</option>
                 <option value="bank">Bank Transfer</option>
                 <option value="paypal">PayPal</option>
-                
               </select>
             </div>
 
@@ -258,13 +224,11 @@ const SellerWallet = () => {
           {uniqueTransactions.length > 0 ? (
             <div className={styles.transactionsList}>
               {uniqueTransactions.map((transaction, index) => (
-                <div 
-                  key={`${transaction.description}-${transaction.createdAt}-${index}`} 
+                <div
+                  key={`${transaction.description}-${transaction.createdAt}-${index}`}
                   className={styles.transactionItem}
                 >
-                  <div className={styles.transactionIcon}>
-                    <FaExchangeAlt />
-                  </div>
+                  <div className={styles.transactionIcon}><FaExchangeAlt /></div>
                   <div className={styles.transactionInfo}>
                     <div className={styles.transactionDescription}>
                       {transaction.description || `${transaction.type?.charAt(0).toUpperCase() + transaction.type?.slice(1)}`}
