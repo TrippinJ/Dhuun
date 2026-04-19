@@ -1,8 +1,6 @@
-// frontend/src/context/AuthContext.jsx
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import API from '../api/api';
+import API, { setAuthTokens, clearAuthTokens, onUnauthorized } from '../api/api';
 
-// Create context
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -10,142 +8,123 @@ export const AuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-  // Initialize auth state on app load
+
+  // ─── Shared setter used by all login paths ────────────────────────────
+  const applyAuth = (accessToken, refreshToken, userData) => {
+    // Persist tokens (access + refresh) to survive page refresh
+    localStorage.setItem("token", accessToken);
+    localStorage.setItem("refreshToken", refreshToken);
+
+    // Prime the API layer — no more reading localStorage in interceptors
+    setAuthTokens(accessToken, refreshToken);
+
+    setUser(userData);
+    setIsLoggedIn(true);
+    setError(null);
+  };
+
+  // ─── On mount: restore session from localStorage ──────────────────────
   useEffect(() => {
-    const verifyAuth = async () => {
+    const restoreSession = async () => {
       try {
-        setLoading(true);
-        const token = localStorage.getItem("token");
-        
-        if (!token) {
-          // No token found
-          setIsLoggedIn(false);
-          setUser(null);
+        const accessToken = localStorage.getItem("token");
+        const refreshToken = localStorage.getItem("refreshToken");
+
+        if (!accessToken || !refreshToken) {
           setLoading(false);
           return;
         }
-        
-        // Verify token with backend
-        try {
-          const response = await API.get("/api/auth/verify", {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          
-          // Token is valid, set user data from localStorage
-          const storedUser = JSON.parse(localStorage.getItem("user") || "null");
-          if (storedUser) {
-            setUser(storedUser);
-            setIsLoggedIn(true);
-            console.log("Auth verification successful:", storedUser.role);
-          } else {
-            // Token valid but no stored user - clear everything
-            localStorage.removeItem("token");
-            setIsLoggedIn(false);
-            setUser(null);
-          }
-        } catch (verifyError) {
-          console.error("Token verification failed:", verifyError);
-          // Clear invalid auth data
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
-          setIsLoggedIn(false);
-          setUser(null);
-        }
-      } catch (error) {
-        console.error("Auth initialization error:", error);
+
+        // Prime the API layer so the verify call carries the token
+        setAuthTokens(accessToken, refreshToken);
+
+        // Verify with server and get FRESH user data from DB
+        const response = await API.get("/api/auth/verify");
+        const freshUser = response.data.user;
+
+        setUser(freshUser);
+        setIsLoggedIn(true);
+      } catch (err) {
+        // verify failed — interceptor will attempt refresh automatically.
+        // If refresh also fails, onUnauthorized fires and clears everything.
+        console.warn("Session restore failed:", err.message);
+        clearAuthTokens();
+        localStorage.removeItem("token");
+        localStorage.removeItem("refreshToken");
         setIsLoggedIn(false);
         setUser(null);
       } finally {
         setLoading(false);
       }
     };
-    
-    verifyAuth();
+
+    // Wire 401 → logout so the UI always reflects real auth state
+    onUnauthorized(() => logout());
+
+    restoreSession();
   }, []);
-  
-  // Login function
+
+  // ─── Login ────────────────────────────────────────────────────────────
   const login = async (email, password) => {
     try {
       setLoading(true);
       const response = await API.post("/api/auth/login", { email, password });
-      
-      const { token, user } = response.data;
-      
-      // Save to localStorage
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
-      
-      // Update state immediately
-      setIsLoggedIn(true);
-      setUser(user);
-      setError(null);
-      
-      console.log("Login successful, auth state updated:", user.role);
-      
+      const { accessToken, refreshToken, user } = response.data;
+
+      applyAuth(accessToken, refreshToken, user);
       return { success: true, user };
-    } catch (error) {
-      const errorMessage = error.response?.data?.message || "Login failed";
-      setError(errorMessage);
-      return { 
-        success: false, 
-        error: errorMessage
-      };
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  // Google login function
-  const googleLogin = async (googleData) => {
-    try {
-      setLoading(true);
-      const response = await API.post("/api/auth/google-login", googleData);
-      
-      const { token, user, isNewUser } = response.data;
-      
-      // Save to localStorage
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
-      
-      // Update state immediately
-      setIsLoggedIn(true);
-      setUser(user);
-      setError(null);
-      
-      console.log("Google login successful, auth state updated:", user.role);
-      
-      return { success: true, user, isNewUser };
-    } catch (error) {
-      const errorMessage = error.response?.data?.error || "Google login failed";
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || "Login failed";
       setError(errorMessage);
       return { success: false, error: errorMessage };
     } finally {
       setLoading(false);
     }
   };
-  
-  // Logout function
-  const logout = () => {
-    // Clear localStorage
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    
-    // Update state
-    setIsLoggedIn(false);
-    setUser(null);
-    setError(null);
-    
-    console.log("User logged out, auth state cleared");
+
+  // ─── Google Login ─────────────────────────────────────────────────────
+  const googleLogin = async (googleData) => {
+    try {
+      setLoading(true);
+      const response = await API.post("/api/auth/google-login", googleData);
+      const { accessToken, refreshToken, user, isNewUser } = response.data;
+
+      applyAuth(accessToken, refreshToken, user);
+      return { success: true, user, isNewUser };
+    } catch (err) {
+      const errorMessage = err.response?.data?.error || "Google login failed";
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    } finally {
+      setLoading(false);
+    }
   };
-  
-  // Update user state (for profile updates, etc.)
+
+  // ─── Logout ───────────────────────────────────────────────────────────
+  const logout = async () => {
+    try {
+      // Tell server to invalidate the refresh token
+      await API.post("/api/auth/logout");
+    } catch {
+      // Ignore — we still clear locally
+    } finally {
+      clearAuthTokens();
+      localStorage.removeItem("token");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("cart");
+
+      setIsLoggedIn(false);
+      setUser(null);
+      setError(null);
+    }
+  };
+
+  // ─── Update user in state only (no localStorage) ─────────────────────
   const updateUser = (updatedUser) => {
     setUser(updatedUser);
-    localStorage.setItem("user", JSON.stringify(updatedUser));
+    // Server is source of truth — don't cache user object in localStorage
   };
-  
-  // Context value
+
   const value = {
     user,
     isLoggedIn,
@@ -154,9 +133,9 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     googleLogin,
-    updateUser
+    updateUser,
   };
-  
+
   return (
     <AuthContext.Provider value={value}>
       {children}
@@ -164,11 +143,8 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// Custom hook to use the auth context
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };
