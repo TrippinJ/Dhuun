@@ -39,8 +39,8 @@ export const createCheckoutSession = async ({
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
-      success_Url: `${process.env.CLIENT_URL}/checkout-success`,
-      cancel_Url: `${process.env.CLIENT_URL}/checkout`,
+      success_url: successUrl || `${process.env.CLIENT_URL}/checkout-success`, 
+      cancel_url: cancelUrl || `${process.env.CLIENT_URL}/checkout`,
       client_reference_id: userId,
       metadata: {
         orderId: `order-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
