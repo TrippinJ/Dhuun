@@ -64,6 +64,8 @@ const UserSchema = new mongoose.Schema({
   resetPasswordToken: { type: String },
   resetPasswordExpires: { type: Date },
 
+  refreshToken: { type: String, default: null },
+
   //verification status field
   verificationStatus: {
     type: String,

@@ -259,6 +259,9 @@ router.get("/verify", async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        isVerified: user.isVerified,   // ← add
+        subscription: user.subscription, // ← add
+        avatar: user.avatar
       },
       tokenDetails: {
         issued: decoded.iat ? new Date(decoded.iat * 1000).toISOString() : 'Unknown',
@@ -333,8 +336,8 @@ router.post("/google-login", async (req, res) => {
         }
       });
       await profile.save();
-      console.log("New user object created:", user); 
-      console.log("New user profile created:", user._id); 
+      console.log("New user object created:", user);
+      console.log("New user profile created:", user._id);
       await user.save();
       console.log("New user saved to database");
     } else if (!user.googleId) {
@@ -593,7 +596,7 @@ router.delete("/delete-account", authenticateUser, async (req, res) => {
 
     res.json({ message: "Account deleted successfully" });
   } catch (error) {
-    
+
     res.status(500).json({ message: "Failed to delete account" });
   }
 });
@@ -628,18 +631,18 @@ router.post("/forgot-password", async (req, res) => {
     // Send password reset email
     try {
       const emailResult = await sendPasswordResetEmail(user.email, resetToken, user.name);
-      
+
       if (emailResult.success) {
-         return res.status(200).json({
+        return res.status(200).json({
           message: "Password reset link has been sent to your email address."
         });
       } else {
-       return res.status(500).json({
+        return res.status(500).json({
           message: "Failed to send password reset email. Please try again later."
         });
       }
     } catch (emailError) {
-     return res.status(500).json({
+      return res.status(500).json({
         message: "Failed to send password reset email. Please try again later."
       });
     }
