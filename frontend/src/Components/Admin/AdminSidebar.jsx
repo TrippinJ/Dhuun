@@ -15,7 +15,7 @@ const AdminSidebar = ({ activeSection, setActiveSection }) => {
   const { logout } = useAuth();
 
   const handleLogout = async () => {
-    await logout(); // AuthContext clears tokens, state, and cart
+    await logout(); 
     navigate("/login");
   };
 
