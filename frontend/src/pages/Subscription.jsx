@@ -13,81 +13,57 @@ const Subscription = () => {
   const navigate = useNavigate();
   const [processingPayment, setProcessingPayment] = useState(false);
   const [verifyingPayment, setVerifyingPayment] = useState(false);
-  
-  // NEW: Payment method selection states
+
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [selectedPrice, setSelectedPrice] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('khalti');
 
-  // Handle Khalti payment initiation
+  // Handle Khalti payment — interceptor handles Authorization header
   const handleKhaltiPayment = async (plan, price) => {
     if (!plan || !price) {
       setError("Invalid subscription plan");
       return;
     }
-  
+
     try {
       setProcessingPayment(true);
       setError(null);
-  
+
       const token = localStorage.getItem("token");
       if (!token) {
         setError("You must be logged in to purchase a subscription");
         navigate("/login");
         return;
       }
-  
-      // Store plan information in localStorage
+
       localStorage.setItem("selectedPlan", plan);
       localStorage.setItem("planPrice", price.toString());
-      
-      // Prepare the items for payment
-      const items = [
-        {
-          type: "subscription",
-          name: `${plan} Subscription`,
-          price: price
-        }
-      ];
-  
-      // Initiate payment through backend
-      const response = await API.post(
-        "/api/payments/initiate",
-        {
-          amount: price,
-          items,
-          customerEmail: "", // Backend will use user's email
-          returnUrl: window.location.origin + "/subscription"  // Explicitly set return URL
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
-  
+
+      const items = [{ type: "subscription", name: `${plan} Subscription`, price }];
+
+      const response = await API.post("/api/payments/initiate", {
+        amount: price,
+        items,
+        customerEmail: "",
+        returnUrl: window.location.origin + "/subscription"
+      });
+
       if (response.data && response.data.payment_url && response.data.pidx) {
-        // Save payment ID for verification when returning
         localStorage.setItem("pidx", response.data.pidx);
-  
-        // Redirect to Khalti payment page
         window.location.href = response.data.payment_url;
       } else {
         setError("Failed to initiate payment. Please try again.");
       }
     } catch (error) {
       console.error("Khalti payment error:", error);
-      setError(
-        error.response?.data?.message ||
-          "Payment failed. Please try again later."
-      );
+      setError(error.response?.data?.message || "Payment failed. Please try again later.");
     } finally {
       setProcessingPayment(false);
     }
   };
 
-  // NEW: Handle Stripe payment initiation
+  // Handle Stripe payment — interceptor handles Authorization header
   const handleStripePayment = async (plan, price) => {
     if (!plan || !price) {
       setError("Invalid subscription plan");
@@ -105,64 +81,43 @@ const Subscription = () => {
         return;
       }
 
-      // Store plan information in localStorage
       localStorage.setItem("selectedPlan", plan);
       localStorage.setItem("planPrice", price.toString());
 
-      // Prepare the items for Stripe payment
-      const items = [
-        {
-          beatId: null, // Not applicable for subscriptions
-          license: plan,
-          licenseName: `${plan} Subscription Plan`,
-          beatName: `${plan} Monthly Subscription`,
-          price: price
-        }
-      ];
+      const items = [{
+        beatId: null,
+        license: plan,
+        licenseName: `${plan} Subscription Plan`,
+        beatName: `${plan} Monthly Subscription`,
+        price
+      }];
 
-      // Initiate Stripe payment session
-      const response = await API.post(
-        "/api/payments/create-stripe-session",
-        {
-          amount: price,
-          items,
-          successUrl: window.location.origin + "/subscription?payment=success",
-          cancelUrl: window.location.origin + "/subscription?payment=cancelled"
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      const response = await API.post("/api/payments/create-stripe-session", {
+        amount: price,
+        items,
+        successUrl: window.location.origin + "/subscription?payment=success",
+        cancelUrl: window.location.origin + "/subscription?payment=cancelled"
+      });
 
       if (response.data.success && response.data.sessionUrl) {
-        // Store session ID for verification
         localStorage.setItem("stripeSessionId", response.data.sessionId);
-
-        // Redirect to Stripe checkout
         window.location.href = response.data.sessionUrl;
       } else {
         setError("Failed to initiate Stripe payment. Please try again.");
       }
     } catch (error) {
       console.error("Stripe payment error:", error);
-      setError(
-        error.response?.data?.message ||
-          "Stripe payment failed. Please try again later."
-      );
+      setError(error.response?.data?.message || "Stripe payment failed. Please try again later.");
     } finally {
       setProcessingPayment(false);
     }
   };
 
-  // Handle payment verification when returning from Khalti
+  // Handle payment verification when returning from payment gateway
   useEffect(() => {
     const handlePaymentReturn = async () => {
       const params = new URLSearchParams(window.location.search);
       const returnedPidx = params.get("pidx");
-      const txnId = params.get("txnId") || params.get("transaction_id");
-      const status = params.get("status");
       const paymentStatus = params.get("payment");
       const sessionId = params.get("session_id");
 
@@ -173,12 +128,7 @@ const Subscription = () => {
           setLoading(true);
 
           const storedSessionId = localStorage.getItem("stripeSessionId") || sessionId;
-          const selectedPlan = localStorage.getItem("selectedPlan");
-          
-          console.log("Stripe payment return detected:", { 
-            sessionId: storedSessionId, 
-            selectedPlan 
-          });
+          const storedPlan = localStorage.getItem("selectedPlan");
 
           const token = localStorage.getItem("token");
           if (!token) {
@@ -187,27 +137,19 @@ const Subscription = () => {
             return;
           }
 
-          // Verify Stripe payment
-          const verifyResponse = await API.post(
-            "/api/payments/verify-stripe-session",
-            { sessionId: storedSessionId },
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-
-          console.log("Stripe verification response:", verifyResponse.data);
+          // Interceptor handles Authorization header
+          const verifyResponse = await API.post("/api/payments/verify-stripe-session", {
+            sessionId: storedSessionId
+          });
 
           if (verifyResponse.data.success && verifyResponse.data.status === "complete") {
-            // Payment was successful, update subscription
-            const updateResponse = await API.post(
-              "/api/subscription/update",
-              { plan: selectedPlan },
-              { headers: { Authorization: `Bearer ${token}` } }
-            );
+            const updateResponse = await API.post("/api/subscription/update", {
+              plan: storedPlan
+            });
 
             setSubscription(updateResponse.data.subscription);
-            setSuccessMessage(`${selectedPlan} plan activated successfully via Stripe!`);
-            
-            // Clean up localStorage
+            setSuccessMessage(`${storedPlan} plan activated successfully via Stripe!`);
+
             localStorage.removeItem("selectedPlan");
             localStorage.removeItem("stripeSessionId");
             localStorage.removeItem("planPrice");
@@ -215,7 +157,6 @@ const Subscription = () => {
             setError("Stripe payment verification failed. Please contact support.");
           }
 
-          // Clean up URL parameters
           window.history.replaceState({}, document.title, "/subscription");
         } catch (error) {
           console.error("Error processing Stripe return:", error);
@@ -225,25 +166,15 @@ const Subscription = () => {
           setLoading(false);
         }
       }
-      // Handle Khalti return (existing logic)
+      // Handle Khalti return
       else if (returnedPidx) {
         try {
           setVerifyingPayment(true);
           setLoading(true);
-          
-          // Get stored values from localStorage
+
           const storedPidx = localStorage.getItem("pidx");
-          const selectedPlan = localStorage.getItem("selectedPlan");
-          
-          console.log("Khalti payment return detected:", { 
-            returnedPidx, 
-            txnId, 
-            status, 
-            storedPidx, 
-            selectedPlan 
-          });
-          
-          // Basic validation
+          const storedPlan = localStorage.getItem("selectedPlan");
+
           if (returnedPidx !== storedPidx) {
             setError("Invalid payment session. Please try again.");
             setVerifyingPayment(false);
@@ -258,36 +189,26 @@ const Subscription = () => {
             return;
           }
 
-          // Verify payment with backend
-          const verifyResponse = await API.post(
-            "/api/payments/verify",
-            { pidx: returnedPidx },
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-
-          console.log("Khalti verification response:", verifyResponse.data);
+          // Interceptor handles Authorization header
+          const verifyResponse = await API.post("/api/payments/verify", {
+            pidx: returnedPidx
+          });
 
           if (verifyResponse.data.success || verifyResponse.data.status === "Completed") {
-            // Payment was successful, update subscription
-            const updateResponse = await API.post(
-              "/api/subscription/update",
-              { plan: selectedPlan },
-              { headers: { Authorization: `Bearer ${token}` } }
-            );
+            const updateResponse = await API.post("/api/subscription/update", {
+              plan: storedPlan
+            });
 
             setSubscription(updateResponse.data.subscription);
-            setSuccessMessage(`${selectedPlan} plan activated successfully via Khalti!`);
-            
-            // Clean up localStorage
+            setSuccessMessage(`${storedPlan} plan activated successfully via Khalti!`);
+
             localStorage.removeItem("selectedPlan");
             localStorage.removeItem("pidx");
             localStorage.removeItem("planPrice");
           } else {
-            // Payment verification failed
             setError("Payment verification failed. Please try again or contact support.");
           }
 
-          // Clean up URL parameters
           window.history.replaceState({}, document.title, "/subscription");
         } catch (error) {
           console.error("Error processing Khalti return:", error);
@@ -299,20 +220,17 @@ const Subscription = () => {
       }
     };
 
-    // Execute payment return handler
     handlePaymentReturn();
   }, [navigate]);
 
   // Fetch current subscription data
   const fetchSubscription = useCallback(async () => {
-    if (verifyingPayment) {
-      return; // Don't fetch if we're currently verifying a payment
-    }
-    
+    if (verifyingPayment) return;
+
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
 
+      const token = localStorage.getItem("token");
       if (!token) {
         setError("You must be logged in to view subscription details");
         setLoading(false);
@@ -320,71 +238,56 @@ const Subscription = () => {
         return;
       }
 
-      const response = await API.get("/api/subscription", {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      // Interceptor handles Authorization header
+      const response = await API.get("/api/subscription");
 
-      console.log("Subscription data:", response.data);
       setSubscription(response.data.subscription);
       setLoading(false);
     } catch (err) {
       console.error("Error fetching subscription:", err);
-
-      if (err.response && err.response.status === 401) {
+      if (err.response?.status === 401) {
         setError("Authentication required. Please log in again.");
         setTimeout(() => navigate("/login"), 2000);
       } else {
         setError("Failed to load subscription details. Please try again later.");
       }
-
       setLoading(false);
     }
   }, [navigate, verifyingPayment]);
 
-  // Fetch subscription on component mount
   useEffect(() => {
     fetchSubscription();
   }, [fetchSubscription]);
 
-  // NEW: Handle plan selection with payment method choice
+  // Handle plan selection
   const handleSelectPlan = async (plan, price) => {
     try {
       setError(null);
       setSuccessMessage("");
-  
-      // If selecting the same plan as current
+
       if (subscription && subscription.plan === plan) {
         setSuccessMessage("You are already on this plan.");
         setTimeout(() => setSuccessMessage(""), 3000);
         return;
       }
-  
-      // For free plan, update directly
+
+      // Free plan — update directly, no payment needed
       if (plan === "Free") {
         const token = localStorage.getItem("token");
-        const res = await API.post(
-          "/api/subscription/update",
-          { plan },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          }
-        );
-  
+        if (!token) { navigate("/login"); return; }
+
+        // Interceptor handles Authorization header
+        const res = await API.post("/api/subscription/update", { plan });
         setSubscription(res.data.subscription);
         setSuccessMessage("Free plan activated successfully!");
         setTimeout(() => setSuccessMessage(""), 3000);
         return;
       }
-  
-      // For paid plans, show payment method selection modal
+
+      // Paid plans — show payment method modal
       setSelectedPlan(plan);
       setSelectedPrice(price);
       setShowPaymentModal(true);
-  
     } catch (err) {
       console.error("Error selecting plan:", err);
       setError("Failed to select plan. Please try again later.");
@@ -392,10 +295,8 @@ const Subscription = () => {
     }
   };
 
-  // NEW: Handle payment method selection
   const handlePaymentMethodSelect = async () => {
     setShowPaymentModal(false);
-    
     if (paymentMethod === 'khalti') {
       await handleKhaltiPayment(selectedPlan, selectedPrice);
     } else if (paymentMethod === 'stripe') {
@@ -403,7 +304,6 @@ const Subscription = () => {
     }
   };
 
-  // Subscription plans data
   const plans = [
     {
       name: "Free",
@@ -463,10 +363,7 @@ const Subscription = () => {
       <NavbarBeatExplore />
       <div className={styles.subscriptionContainer}>
         <div className={styles.header}>
-          <button 
-            className={styles.backButton} 
-            onClick={() => navigate("/dashboard")}
-          >
+          <button className={styles.backButton} onClick={() => navigate("/dashboard")}>
             <FaArrowLeft /> Back to Dashboard
           </button>
           <h1>Choose Your Subscription Plan</h1>
@@ -508,8 +405,8 @@ const Subscription = () => {
               <div className={styles.detail}>
                 <span className={styles.label}>Upload Limit:</span>
                 <span className={styles.value}>
-                  {subscription.uploadLimit === Infinity || subscription.uploadLimit === "Unlimited" 
-                    ? "Unlimited" 
+                  {subscription.uploadLimit === Infinity || subscription.uploadLimit === "Unlimited"
+                    ? "Unlimited"
                     : subscription.uploadLimit}
                 </span>
               </div>
@@ -539,28 +436,25 @@ const Subscription = () => {
                 <div className={styles.currentPlanBadge}>Current Plan</div>
               )}
               <div className={styles.planHeader}>
-                <div className={styles.planIcon}>
-                  <FaCrown />
-                </div>
+                <div className={styles.planIcon}><FaCrown /></div>
                 <h3>{plan.name}</h3>
                 <div className={styles.price}>
-                  Rs {plan.price}
-                  <span>/mo</span>
+                  Rs {plan.price}<span>/mo</span>
                 </div>
               </div>
               <button
-                  className={`${styles.secondaryPlanButton} ${plan.name === "Pro" ? styles.proPlanButton : ""}`}
-                  onClick={() => handleSelectPlan(plan.name, plan.price)}
-                  disabled={processingPayment || (subscription && subscription.plan === plan.name)}
-                >
-                  {processingPayment
-                    ? "Processing..."
-                    : subscription && subscription.plan === plan.name
-                    ? "Current Plan"
-                    : plan.price === 0
-                    ? "Choose Plan"
-                    : `Subscribe Rs ${plan.price}/mo`}
-                </button>
+                className={`${styles.secondaryPlanButton} ${plan.name === "Pro" ? styles.proPlanButton : ""}`}
+                onClick={() => handleSelectPlan(plan.name, plan.price)}
+                disabled={processingPayment || (subscription && subscription.plan === plan.name)}
+              >
+                {processingPayment
+                  ? "Processing..."
+                  : subscription && subscription.plan === plan.name
+                  ? "Current Plan"
+                  : plan.price === 0
+                  ? "Choose Plan"
+                  : `Subscribe Rs ${plan.price}/mo`}
+              </button>
               <div className={styles.planFeatures}>
                 <ul>
                   <li>
@@ -577,21 +471,20 @@ const Subscription = () => {
                     </li>
                   ))}
                 </ul>
-                
               </div>
             </div>
           ))}
         </div>
 
-        {/* NEW: Payment Method Selection Modal */}
+        {/* Payment Method Selection Modal */}
         {showPaymentModal && (
           <div className={styles.modalOverlay}>
             <div className={styles.paymentModal}>
               <h3>Choose Payment Method</h3>
               <p>Select how you'd like to pay for your {selectedPlan} subscription (Rs {selectedPrice}/month)</p>
-              
+
               <div className={styles.paymentMethods}>
-                <div 
+                <div
                   className={`${styles.paymentMethod} ${paymentMethod === 'khalti' ? styles.selected : ''}`}
                   onClick={() => setPaymentMethod('khalti')}
                 >
@@ -601,8 +494,8 @@ const Subscription = () => {
                     <p>Pay using Khalti digital wallet (Nepal)</p>
                   </div>
                 </div>
-                
-                <div 
+
+                <div
                   className={`${styles.paymentMethod} ${paymentMethod === 'stripe' ? styles.selected : ''}`}
                   onClick={() => setPaymentMethod('stripe')}
                 >
@@ -615,13 +508,10 @@ const Subscription = () => {
               </div>
 
               <div className={styles.modalActions}>
-                <button 
-                  className={styles.cancelButton}
-                  onClick={() => setShowPaymentModal(false)}
-                >
+                <button className={styles.cancelButton} onClick={() => setShowPaymentModal(false)}>
                   Cancel
                 </button>
-                <button 
+                <button
                   className={styles.confirmButton}
                   onClick={handlePaymentMethodSelect}
                   disabled={processingPayment}
@@ -655,12 +545,6 @@ const Subscription = () => {
                 You can cancel anytime by downgrading to the Free plan. Your paid features will remain active until the end of your current billing period.
               </p>
             </div>
-            {/* <div className={styles.faqItem}>
-              <h3>What payment methods are accepted?</h3>
-              <p>
-                We accept payments through Khalti (for Nepal users) and Stripe (international credit/debit cards). Both methods are secure and encrypted.
-              </p>
-            </div> */}
           </div>
         </div>
       </div>

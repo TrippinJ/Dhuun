@@ -47,7 +47,7 @@ const VerifyOTP = () => {
 
   const handleVerify = async (e) => {
     e.preventDefault();
-    
+
     if (!otp || otp.length !== 6) {
       setErrorMessage("Please enter a valid 6-digit OTP");
       return;
@@ -62,12 +62,11 @@ const VerifyOTP = () => {
         otp
       });
 
-      console.log("Verification successful:", response.data);
-
       // Store token and user data
-      localStorage.setItem("token", response.data.token);
-      localStorage.setItem("user", JSON.stringify(response.data.user));
+      localStorage.setItem("token", response.data.accessToken);
+      localStorage.setItem("refreshToken", response.data.refreshToken);
       
+
       // Remove the pending verification email
       localStorage.removeItem("pendingVerificationEmail");
 
@@ -78,7 +77,6 @@ const VerifyOTP = () => {
         navigate("/BeatExplorePage");
       }
     } catch (error) {
-      console.error("Verification error:", error);
       setErrorMessage(error.response?.data?.message || "Verification failed. Please try again.");
     } finally {
       setIsLoading(false);
@@ -91,10 +89,10 @@ const VerifyOTP = () => {
       setErrorMessage("");
 
       const response = await API.post("/api/auth/resend-otp", { email });
-      
+
       // Reset the timer
       setTimeLeft(600);
-      
+
       alert("A new verification code has been sent to your email.");
     } catch (error) {
       console.error("Resend OTP error:", error);
@@ -111,7 +109,7 @@ const VerifyOTP = () => {
         <p className={styles.instructions}>
           We've sent a verification code to <strong>{email}</strong>
         </p>
-        
+
         <form onSubmit={handleVerify} className={styles.verifyForm}>
           <div className={styles.inputGroup}>
             <div className={styles.otpInput}>
@@ -126,15 +124,15 @@ const VerifyOTP = () => {
               />
             </div>
           </div>
-          
+
           {errorMessage && <div className={styles.errorMessage}>{errorMessage}</div>}
-          
+
           <div className={styles.timerSection}>
             <p className={styles.timer}>
               Code expires in: <span>{formatTime(timeLeft)}</span>
             </p>
           </div>
-          
+
           <button
             type="submit"
             className={styles.verifyButton}
@@ -143,7 +141,7 @@ const VerifyOTP = () => {
             {isLoading ? "Verifying..." : "Verify Code"} {!isLoading && <FaArrowRight />}
           </button>
         </form>
-        
+
         <div className={styles.resendSection}>
           <p>Didn't receive a code?</p>
           <button

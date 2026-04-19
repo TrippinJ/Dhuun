@@ -13,49 +13,35 @@ const ChooseRole = () => {
 
   // Handle role selection
   const handleRoleSelection = async (role) => {
-    // Check if there's a token (user is authenticated)
+    // No need to read token from localStorage — API interceptor handles it
     const token = localStorage.getItem("token");
-    
+
     if (!token) {
-      // If not logged in, redirect to register with role as query param
       navigate(`/register?role=${role}`);
       return;
     }
-    
-    // User is logged in via Google, update their role
+
     try {
       setIsLoading(true);
       setError("");
-      
-      console.log(`Updating role to: ${role}`);
-      
-      // Call the backend API to update role
-      const response = await API.post(
-        "/api/auth/update-role", 
-        { role },
-        { headers: { Authorization: `Bearer ${token}` }}
-      );
-      
-      console.log("Role update response:", response.data);
-      
-      // Update the user object in localStorage with new role
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
-      user.role = role;
-      localStorage.setItem("user", JSON.stringify(user));
-      
-      // Redirect based on the selected role
+
+      // No need to manually pass Authorization header — interceptor does it
+      const response = await API.post("/api/auth/update-role", { role });
+
+      // Don't update user in localStorage — AuthContext holds the truth
+      // Just navigate based on role
       if (role === "seller") {
         navigate("/dashboard");
       } else {
         navigate("/BeatExplorePage");
       }
     } catch (error) {
-      console.error("Error updating role:", error);
       setError(error.response?.data?.message || "Failed to update role. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
+
 
   return (
     <div className={styles.roleContainer}>
@@ -69,7 +55,7 @@ const ChooseRole = () => {
         />
         <h1>Welcome To Dhuun</h1>
         <p>"Where words fail, music speaks" - Hans Christian Andersen</p>
-        
+
         {error && <div className={styles.errorMessage}>{error}</div>}
 
         <div className={styles.roleCards}>
@@ -93,7 +79,7 @@ const ChooseRole = () => {
             <p>Upload and sell your beats to artists worldwide.</p>
           </div>
         </div>
-        
+
         {isLoading && <div className={styles.loading}>Processing your selection...</div>}
       </div>
     </div>

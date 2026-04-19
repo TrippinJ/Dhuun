@@ -14,20 +14,15 @@ const Checkout = () => {
   const [error, setError] = useState(null);
   const [total, setTotal] = useState(0);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
-  const [processingState, setProcessingState] = useState('idle'); // idle, loading, success, error
-  const [paymentMethod, setPaymentMethod] = useState('khalti'); // 'khalti' or 'stripe'
+  const [processingState, setProcessingState] = useState('idle');
+  const [paymentMethod, setPaymentMethod] = useState('khalti');
 
-  // Fetch cart items from localStorage
   useEffect(() => {
     try {
-      // Get cart from localStorage
       const cart = JSON.parse(localStorage.getItem("cart") || "[]");
       setCartItems(cart);
-
-      // Calculate total
       const cartTotal = cart.reduce((sum, item) => sum + (item.licensePrice || item.price), 0);
       setTotal(cartTotal);
-
       setLoading(false);
     } catch (error) {
       console.error("Error loading cart:", error);
@@ -55,7 +50,6 @@ const Checkout = () => {
         return;
       }
 
-      // Prepare the items data
       const itemsData = cartItems.map(item => ({
         beatId: item._id,
         license: item.selectedLicense || "Basic",
@@ -63,29 +57,21 @@ const Checkout = () => {
         price: item.licensePrice || item.price
       }));
 
-      // Store cart info in localStorage for later retrieval
       localStorage.setItem("pendingOrder", JSON.stringify({
         items: itemsData,
         totalAmount: total,
         timestamp: Date.now()
       }));
 
-      // Initiate payment through backend API
+      // Interceptor handles Authorization header automatically
       const response = await API.post("/api/payments/initiate", {
         amount: total,
         items: itemsData,
         returnUrl: window.location.origin + "/checkout-success"
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
       });
 
-      console.log("Payment initiation response:", response.data);
-
       if (response.data.success && response.data.payment_url) {
-        // Store payment ID for verification
         localStorage.setItem("pidx", response.data.pidx);
-
-        // Redirect to Khalti payment page
         window.location.href = response.data.payment_url;
       } else {
         setError("Failed to initialize payment. Please try again.");
@@ -119,7 +105,6 @@ const Checkout = () => {
         return;
       }
 
-      // Prepare the items data
       const itemsData = cartItems.map(item => ({
         beatId: item._id,
         license: item.selectedLicense || "Basic",
@@ -127,30 +112,22 @@ const Checkout = () => {
         price: item.licensePrice || item.price
       }));
 
-      // Store cart info for later use
       localStorage.setItem("pendingOrder", JSON.stringify({
         items: itemsData,
         totalAmount: total,
         timestamp: Date.now()
       }));
 
-      // Initiate Stripe payment session
+      // Interceptor handles Authorization header automatically
       const response = await API.post("/api/payments/create-stripe-session", {
         amount: total,
         items: itemsData,
         successUrl: window.location.origin + "/checkout-success",
         cancelUrl: window.location.origin + "/cart"
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
       });
 
-      console.log("Stripe session response:", response.data);
-
       if (response.data.success && response.data.sessionUrl) {
-        // Store session ID for verification
         localStorage.setItem("stripeSessionId", response.data.sessionId);
-
-        // Redirect to Stripe checkout
         window.location.href = response.data.sessionUrl;
       } else {
         setError("Failed to initialize payment. Please try again.");
@@ -251,9 +228,9 @@ const Checkout = () => {
 
             <div className={styles.paymentOptions}>
               <h3>Select Payment Method</h3>
-              
+
               <div className={styles.paymentMethods}>
-                <div 
+                <div
                   className={`${styles.paymentMethod} ${paymentMethod === 'khalti' ? styles.selected : ''}`}
                   onClick={() => setPaymentMethod('khalti')}
                 >
@@ -263,8 +240,8 @@ const Checkout = () => {
                     <p>Pay using Khalti digital wallet (Nepal)</p>
                   </div>
                 </div>
-                
-                <div 
+
+                <div
                   className={`${styles.paymentMethod} ${paymentMethod === 'stripe' ? styles.selected : ''}`}
                   onClick={() => setPaymentMethod('stripe')}
                 >

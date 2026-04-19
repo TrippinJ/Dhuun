@@ -16,26 +16,17 @@ const CheckoutSuccess = () => {
   const [verifyingPayment, setVerifyingPayment] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Confetti effect state
   const [showConfetti, setShowConfetti] = useState(false);
-
-  // Get cart items for display
   const [cartItems, setCartItems] = useState([]);
-
-  // ref to track if payment has been processed
   const hasProcessedPayment = useRef(false);
 
-  // state for managing reviews
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [selectedBeatToReview, setSelectedBeatToReview] = useState(null);
   const [reviewedBeats, setReviewedBeats] = useState([]);
 
-  // Handler for the "Write a Review" button
   const handleReviewClick = (beat) => {
     setSelectedBeatToReview(beat);
     setShowReviewForm(true);
-
-    // Scroll to the review form
     setTimeout(() => {
       window.scrollTo({
         top: document.getElementById('review-section').offsetTop,
@@ -44,30 +35,23 @@ const CheckoutSuccess = () => {
     }, 100);
   };
 
-  // Handler for when a review is submitted
   const handleReviewSubmitted = (review) => {
-    // Add the beat ID to the list of reviewed beats
     setReviewedBeats([...reviewedBeats, review.beat]);
-
-    // Hide the form after a short delay
     setTimeout(() => {
       setShowReviewForm(false);
       setSelectedBeatToReview(null);
     }, 3000);
   };
 
-  // Add this before your return statement in the component
-  const isAlreadyReviewed = (beatId) => {
-    return reviewedBeats.includes(beatId);
-  };
+  const isAlreadyReviewed = (beatId) => reviewedBeats.includes(beatId);
 
   useEffect(() => {
     const items = JSON.parse(localStorage.getItem("cart") || "[]");
     setCartItems(items);
   }, []);
 
-  // Helper functions for processing different payment methods
-  const processKhaltiPayment = async (pidx, token, pendingOrderData) => {
+  // Handle Khalti payment — interceptor handles Authorization header
+  const processKhaltiPayment = async (pidx, pendingOrderData) => {
     try {
       const storedPidx = localStorage.getItem("pidx");
       if (pidx !== storedPidx) {
@@ -75,17 +59,9 @@ const CheckoutSuccess = () => {
         return;
       }
 
-      // Step 1: Verify payment with backend
-      const verifyResponse = await API.post(
-        "/api/orders/verify-payment",
-        { pidx: pidx },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      console.log("Khalti payment verification response:", verifyResponse.data);
+      const verifyResponse = await API.post("/api/orders/verify-payment", { pidx });
 
       if (verifyResponse.data.success) {
-        // Step 2: Create order if payment verification was successful
         const orderData = {
           items: pendingOrderData.items,
           totalAmount: pendingOrderData.totalAmount,
@@ -95,28 +71,17 @@ const CheckoutSuccess = () => {
         };
 
         try {
-          const orderResponse = await API.post(
-            "/api/orders",
-            orderData,
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
+          const orderResponse = await API.post("/api/orders", orderData);
 
-          console.log("Order created successfully:", orderResponse.data);
-
-          // Set success state
           setOrderDetails({
             orderId: orderResponse.data.orderId,
             items: pendingOrderData.items,
             totalAmount: pendingOrderData.totalAmount
           });
-
           setSuccessMessage("Your order has been processed successfully!");
           setPaymentStatus("Completed");
-
-          // Show confetti for a good experience
           setShowConfetti(true);
 
-          // Clear cart and pending order data
           localStorage.setItem("cart", "[]");
           localStorage.removeItem("pendingOrder");
           localStorage.removeItem("pidx");
@@ -126,7 +91,6 @@ const CheckoutSuccess = () => {
           setPaymentStatus("Completed");
         }
       } else {
-        // Payment verification failed
         setError("Payment verification failed. Please try again or contact support.");
         setPaymentStatus("Failed");
       }
@@ -136,20 +100,12 @@ const CheckoutSuccess = () => {
     }
   };
 
-  // Add Stripe payment processing
-  const processStripePayment = async (sessionId, token, pendingOrderData) => {
+  // Handle Stripe payment — interceptor handles Authorization header
+  const processStripePayment = async (sessionId, pendingOrderData) => {
     try {
-      // Verify Stripe session
-      const verifyResponse = await API.post(
-        "/api/payments/verify-stripe-session",
-        { sessionId },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      console.log("Stripe session verification response:", verifyResponse.data);
+      const verifyResponse = await API.post("/api/payments/verify-stripe-session", { sessionId });
 
       if (verifyResponse.data.success && verifyResponse.data.status === 'paid') {
-        // Create order
         const orderData = {
           items: pendingOrderData.items,
           totalAmount: pendingOrderData.totalAmount,
@@ -158,28 +114,17 @@ const CheckoutSuccess = () => {
         };
 
         try {
-          const orderResponse = await API.post(
-            "/api/orders",
-            orderData,
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
+          const orderResponse = await API.post("/api/orders", orderData);
 
-          console.log("Order created successfully:", orderResponse.data);
-
-          // Set success state
           setOrderDetails({
             orderId: orderResponse.data.orderId,
             items: pendingOrderData.items,
             totalAmount: pendingOrderData.totalAmount
           });
-
           setSuccessMessage("Your order has been processed successfully!");
           setPaymentStatus("Completed");
-
-          // Show confetti for a good experience
           setShowConfetti(true);
 
-          // Clear cart and pending order data
           localStorage.setItem("cart", "[]");
           localStorage.removeItem("pendingOrder");
           localStorage.removeItem("stripeSessionId");
@@ -189,7 +134,6 @@ const CheckoutSuccess = () => {
           setPaymentStatus("Completed");
         }
       } else {
-        // Payment verification failed
         setError("Payment verification failed. Please try again or contact support.");
         setPaymentStatus("Failed");
       }
@@ -201,34 +145,23 @@ const CheckoutSuccess = () => {
 
   useEffect(() => {
     const processPayment = async () => {
-      // Add guard to prevent duplicate processing
-      if (hasProcessedPayment.current) {
-        console.log("Payment already processed, skipping...");
-        return;
-      }
+      if (hasProcessedPayment.current) return;
 
       try {
-        // Get URL parameters from Khalti redirect
         const params = new URLSearchParams(window.location.search);
         const returnedPidx = params.get("pidx");
-        const status = params.get("status");
-
-        // Check for Stripe return (look for session_id)
         const stripeSessionId = localStorage.getItem("stripeSessionId");
 
-        // Only proceed if we have a payment identifier
         if (!returnedPidx && !stripeSessionId) {
           setLoading(false);
           return;
         }
 
-        // Set flag to prevent duplicate processing
         hasProcessedPayment.current = true;
-
         setVerifyingPayment(true);
         setLoading(true);
 
-        // Get stored values from localStorage
+        // Check login via localStorage — API interceptor handles the actual header
         const token = localStorage.getItem("token");
         if (!token) {
           setError("Authentication required. Please log in again.");
@@ -244,16 +177,12 @@ const CheckoutSuccess = () => {
           return;
         }
 
-        // Process based on payment method
         if (returnedPidx) {
-          // Khalti payment processing
-          await processKhaltiPayment(returnedPidx, token, pendingOrderData);
+          await processKhaltiPayment(returnedPidx, pendingOrderData);
         } else if (stripeSessionId) {
-          // Stripe payment processing
-          await processStripePayment(stripeSessionId, token, pendingOrderData);
+          await processStripePayment(stripeSessionId, pendingOrderData);
         }
 
-        // Clean up URL parameters
         window.history.replaceState({}, document.title, "/checkout-success");
       } catch (error) {
         console.error("Error processing payment:", error);
@@ -265,21 +194,16 @@ const CheckoutSuccess = () => {
       }
     };
 
-    // Execute payment processing
     processPayment();
-  }, [location]); // Remove showConfetti from dependencies
+  }, [location]);
 
-  // Separate effect for confetti cleanup
   useEffect(() => {
     if (showConfetti) {
-      const timer = setTimeout(() => {
-        setShowConfetti(false);
-      }, 5000);
+      const timer = setTimeout(() => setShowConfetti(false), 5000);
       return () => clearTimeout(timer);
     }
   }, [showConfetti]);
 
-  // Rest of your component remains the same...
   if (loading) {
     return (
       <div className={styles.successContainer}>
@@ -298,7 +222,6 @@ const CheckoutSuccess = () => {
     <div className={styles.successContainer}>
       <NavbarBeatExplore />
 
-      {/* Confetti effect */}
       {showConfetti && (
         <div className={styles.confetti}>
           {[...Array(50)].map((_, index) => (
@@ -373,9 +296,8 @@ const CheckoutSuccess = () => {
                       <h3>{item.title}</h3>
                       <p>{item.licenseName || item.selectedLicense || 'Basic License'}</p>
                       <p className={styles.itemPrice}>
-                        ${(item.licensePrice || item.price).toFixed(2)}
+                        Rs {(item.licensePrice || item.price).toFixed(2)}
                       </p>
-
                       {paymentStatus === "Completed" && (
                         <button
                           className={styles.reviewButton}
@@ -385,7 +307,6 @@ const CheckoutSuccess = () => {
                           {isAlreadyReviewed(item._id) ? 'Reviewed' : 'Write a Review'}
                         </button>
                       )}
-
                     </div>
                   </div>
                 ))}
@@ -402,19 +323,15 @@ const CheckoutSuccess = () => {
             </div>
           )}
 
-
-          {/* Review Section */}
-          {paymentStatus === "Completed" && (
-            <div id="review-section" className={styles.reviewSection}>
-              {showReviewForm && selectedBeatToReview && orderDetails && (
-                <ReviewForm
-                  beat={selectedBeatToReview}
-                  orderId={orderDetails.orderId || orderDetails._id}
-                  onReviewSubmitted={handleReviewSubmitted}
-                />
-              )}
-            </div>
-          )}
+          <div id="review-section" className={styles.reviewSection}>
+            {showReviewForm && selectedBeatToReview && orderDetails && (
+              <ReviewForm
+                beat={selectedBeatToReview}
+                orderId={orderDetails.orderId || orderDetails._id}
+                onReviewSubmitted={handleReviewSubmitted}
+              />
+            )}
+          </div>
 
           {paymentStatus === "Completed" ? (
             <p className={styles.successMessage}>
@@ -435,9 +352,7 @@ const CheckoutSuccess = () => {
           {paymentStatus === "Completed" && (
             <div className={styles.nextSteps}>
               <div className={styles.stepItem}>
-                <div className={styles.stepIcon}>
-                  <FaInbox />
-                </div>
+                <div className={styles.stepIcon}><FaInbox /></div>
                 <p>A confirmation email has been sent to your registered email address</p>
               </div>
             </div>
@@ -475,7 +390,6 @@ const CheckoutSuccess = () => {
                 </button>
               </>
             )}
-
             <button
               className={styles.actionButton}
               onClick={() => navigate("/")}
@@ -484,16 +398,12 @@ const CheckoutSuccess = () => {
             </button>
           </div>
 
-          {/* Add recovery options for failed payments */}
           {paymentStatus === "Failed" && (
             <div className={styles.recoveryOptions}>
               <h3>Payment Failed</h3>
               <p>We couldn't complete your payment. You can:</p>
               <div className={styles.recoveryButtons}>
-                <button
-                  className={styles.retryButton}
-                  onClick={() => navigate("/cart")}
-                >
+                <button className={styles.retryButton} onClick={() => navigate("/cart")}>
                   Return to Cart
                 </button>
                 <button
