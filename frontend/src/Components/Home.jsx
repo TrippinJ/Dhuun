@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import BannerBackground from "../Assets/home-banner-background.png";
 import { FaSearch, FaPlay, FaPause, FaChevronRight, FaChevronLeft } from "react-icons/fa";
@@ -6,218 +6,241 @@ import TrendingBeats from "./TrendingBeats";
 import ProducersCarousel from "./ProducersCarousel";
 import API from "../api/api";
 import "../css/Home.css";
-import { useAudio } from "../context/AudioContext"; 
-import { useSettings } from '../context/SettingsContext';
-import { getBeatId } from '../utils/audioUtils';
+import { useAudio } from "../context/AudioContext";
+import { useSettings } from "../context/SettingsContext";
+import { getBeatId } from "../utils/audioUtils";
+
+// ---------------------------------------------------------------------------
+// Constants — easy to update without touching component logic
+// ---------------------------------------------------------------------------
+
+const CAROUSEL_INTERVAL_MS = 5000;
+
+const HERO_BEAT_DEFAULTS = {
+  audioFile: "",
+  coverImage: "/default-cover.jpg",
+  producer: { name: "Unknown Producer" },
+};
+
+const FALLBACK_BEATS = [
+  {
+    _id: "sample1",
+    title: "Summer Vibes",
+    producer: { name: "DJ Beats", verified: true },
+    genre: "Trap",
+    coverImage: "/default-cover.jpg",
+    audioFile: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+    price: 19.99,
+    plays: 1200,
+  },
+  {
+    _id: "sample2",
+    title: "Midnight Feels",
+    producer: { name: "Beat Master", verified: false },
+    genre: "Hip-Hop",
+    coverImage: "/default-cover.jpg",
+    audioFile: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+    price: 24.99,
+    plays: 820,
+  },
+  {
+    _id: "sample3",
+    title: "Cloudy Dreams",
+    producer: { name: "Cloud Beatz", verified: true },
+    genre: "Lo-Fi",
+    coverImage: "/default-cover.jpg",
+    audioFile: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+    price: 14.99,
+    plays: 650,
+  },
+];
+
+// Trending tags config — add/remove entries here without touching JSX
+const TRENDING_TAGS = [
+  { label: "pop",     value: "Pop",    isGenre: true },
+  { label: "hip hop", value: "Hip-Hop", isGenre: true },
+  { label: "trap",    value: "Trap",   isGenre: true },
+  { label: "rnb",     value: "R&B",    isGenre: true },
+];
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Normalize a raw beat object so every field the UI needs is guaranteed. */
+const normalizeBeat = (beat) => ({
+  ...HERO_BEAT_DEFAULTS,
+  ...beat,
+  _id: beat._id || beat.id || `temp-${Math.random()}`,
+  audioFile: beat.audioFile || beat.audioUrl || HERO_BEAT_DEFAULTS.audioFile,
+  coverImage: beat.coverImage || HERO_BEAT_DEFAULTS.coverImage,
+  producer: beat.producer || HERO_BEAT_DEFAULTS.producer,
+});
+
+// ---------------------------------------------------------------------------
+// Sub-component: Carousel skeleton shown while loading
+// ---------------------------------------------------------------------------
+
+const HeroCarouselSkeleton = () => (
+  <div className="hero-carousel hero-carousel--skeleton">
+    <div className="hero-carousel-slide hero-carousel-slide--skeleton" />
+  </div>
+);
+
+// ---------------------------------------------------------------------------
+// Main component
+// ---------------------------------------------------------------------------
 
 const Home = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [heroBeats, setHeroBeats] = useState([]);
   const [currentBeatIndex, setCurrentBeatIndex] = useState(0);
-  const [audioLoading, setAudioLoading] = useState(false);
-  
-  // Use global audio context instead of local audio ref
-  const { currentTrack, isPlaying, playTrack, isBeatPlaying } = useAudio();
+  const [heroLoading, setHeroLoading] = useState(true);
+  const [heroError, setHeroError] = useState(null);
+
+  const { playTrack, isBeatPlaying } = useAudio();
   const { settings } = useSettings();
 
-  // In the useEffect for fetching hero beats
+  // -------------------------------------------------------------------------
+  // Data fetching
+  // -------------------------------------------------------------------------
+
   useEffect(() => {
     const fetchHeroBeats = async () => {
+      setHeroLoading(true);
+      setHeroError(null);
+
       try {
-        console.log("Fetching featured beats for hero section...");
-        const response = await API.get("/api/beats/featured");
+        // 1. Try featured beats
+        const featuredRes = await API.get("/api/beats/featured");
+        const featuredData = featuredRes.data?.data;
 
-        console.log("Featured beats response:", response.data);
-
-        // Check if we have featured beats
-        if (response.data?.data && response.data.data.length > 0) {
-          const processedBeats = response.data.data.map(beat => ({
-            ...beat,
-            // Ensure required properties exist
-            _id: beat._id || beat.id || `temp-${Math.random()}`,
-            audioFile: beat.audioFile || beat.audioUrl || "",
-            coverImage: beat.coverImage || "/default-cover.jpg",
-            producer: beat.producer || { name: "Unknown Producer" }
-          }));
-
-          setHeroBeats(processedBeats);
-          console.log("Successfully set hero beats from API:", processedBeats);
-        } else {
-          console.log("No featured beats found in API response, using fallback data");
-
-          // Try to get trending beats as a fallback
-          try {
-            const trendingResponse = await API.get("/api/beats/trending");
-            if (trendingResponse.data?.data && trendingResponse.data.data.length > 0) {
-              const processedTrendingBeats = trendingResponse.data.data.slice(0, 5).map(beat => ({
-                ...beat,
-                _id: beat._id || beat.id || `temp-${Math.random()}`,
-                audioFile: beat.audioFile || beat.audioUrl || "",
-                coverImage: beat.coverImage || "/default-cover.jpg",
-                producer: beat.producer || { name: "Unknown Producer" }
-              }));
-
-              setHeroBeats(processedTrendingBeats);
-              console.log("Set hero beats from trending instead:", processedTrendingBeats);
-              return;
-            }
-          } catch (trendingError) {
-            console.error("Error fetching trending beats as fallback:", trendingError);
-          }
-
-          // If both featured and trending fail, fallback to hardcoded data
-          setHeroBeats([
-            {
-              _id: "sample1",
-              title: "Summer Vibes",
-              producer: { name: "DJ Beats", verified: true },
-              genre: "Trap",
-              coverImage: "/default-cover.jpg",
-              audioFile: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-              price: 19.99,
-              plays: 1200
-            },
-            {
-              _id: "sample2",
-              title: "Midnight Feels",
-              producer: { name: "Beat Master", verified: false },
-              genre: "Hip-Hop",
-              coverImage: "/default-cover.jpg",
-              audioFile: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-              price: 24.99,
-              plays: 820
-            },
-            {
-              _id: "sample3",
-              title: "Cloudy Dreams",
-              producer: { name: "Cloud Beatz", verified: true },
-              genre: "Lo-Fi",
-              coverImage: "/default-cover.jpg",
-              audioFile: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
-              price: 14.99,
-              plays: 650
-            }
-          ]);
+        if (featuredData?.length > 0) {
+          setHeroBeats(featuredData.map(normalizeBeat));
+          return;
         }
+
+        // 2. Fall back to trending beats
+        const trendingRes = await API.get("/api/beats/trending");
+        const trendingData = trendingRes.data?.data;
+
+        if (trendingData?.length > 0) {
+          setHeroBeats(trendingData.slice(0, 5).map(normalizeBeat));
+          return;
+        }
+
+        // 3. Nothing from the API — use hardcoded samples
+        setHeroBeats(FALLBACK_BEATS);
       } catch (error) {
         console.error("Error fetching hero beats:", error);
-        // Fallback data in case of error
-        setHeroBeats([
-          {
-            _id: "sample1",
-            title: "Summer Vibes",
-            producer: { name: "DJ Beats", verified: true },
-            genre: "Trap",
-            coverImage: "/default-cover.jpg",
-            audioFile: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-            price: 19.99,
-            plays: 1200
-          }
-        ]);
+        setHeroError("Could not load featured beats.");
+        setHeroBeats(FALLBACK_BEATS); // still show something
+      } finally {
+        setHeroLoading(false);
       }
     };
 
     fetchHeroBeats();
   }, []);
 
-  // Auto-advance carousel only when not playing current beat
+  // -------------------------------------------------------------------------
+  // Auto-advance carousel (pauses while the current beat is playing)
+  // -------------------------------------------------------------------------
+
   useEffect(() => {
-    const interval = setInterval(() => {
-      const currentBeat = heroBeats[currentBeatIndex];
-      const isCurrentBeatPlaying = currentBeat && isBeatPlaying(currentBeat);
-      
-      if (!isCurrentBeatPlaying) {
-        setCurrentBeatIndex(prevIndex =>
-          prevIndex === heroBeats.length - 1 ? 0 : prevIndex + 1
-        );
-      }
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [heroBeats.length, currentBeatIndex, isBeatPlaying]);
-
-  // Play/pause current beat using global audio context
-  const togglePlay = () => {
     if (heroBeats.length === 0) return;
 
-    const currentBeat = heroBeats[currentBeatIndex];
-    playTrack(currentBeat);
-     
-    console.log('Home togglePlay - currentBeat:', getBeatId(currentBeat));
-    console.log('Home togglePlay - is this beat playing:', isBeatPlaying(currentBeat));
-    
-    // Use the global audio context
-    playTrack(currentBeat);
-
-    // Track play count
-    try {
-      API.post(`/api/beats/${getBeatId(currentBeat)}/play`).catch(err => {
-        console.log("Could not update play count:", err);
+    const interval = setInterval(() => {
+      // Read the current beat at interval tick, not via stale closure
+      setCurrentBeatIndex((prev) => {
+        const currentBeat = heroBeats[prev];
+        if (currentBeat && isBeatPlaying(currentBeat)) return prev; // stay put
+        return prev === heroBeats.length - 1 ? 0 : prev + 1;
       });
-    } catch (error) {
-      // Silently ignore tracking errors
-    }
-  };
+    }, CAROUSEL_INTERVAL_MS);
 
-  // Navigate to previous beat
-  const prevBeat = () => {
-    setCurrentBeatIndex(prevIndex =>
-      prevIndex === 0 ? heroBeats.length - 1 : prevIndex - 1
+    return () => clearInterval(interval);
+    // isBeatPlaying intentionally omitted — it is a stable context function;
+    // including it would cause the interval to reset on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [heroBeats]);
+
+  // -------------------------------------------------------------------------
+  // Carousel controls
+  // -------------------------------------------------------------------------
+
+  const prevBeat = useCallback(() => {
+    setCurrentBeatIndex((prev) =>
+      prev === 0 ? heroBeats.length - 1 : prev - 1
     );
-  };
+  }, [heroBeats.length]);
 
-  // Navigate to next beat
-  const nextBeat = () => {
-    setCurrentBeatIndex(prevIndex =>
-      prevIndex === heroBeats.length - 1 ? 0 : prevIndex + 1
+  const nextBeat = useCallback(() => {
+    setCurrentBeatIndex((prev) =>
+      prev === heroBeats.length - 1 ? 0 : prev + 1
     );
-  };
+  }, [heroBeats.length]);
 
-  // Handle search submission with proper URL parameters
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      // Navigate with search query parameter
-      navigate(`/BeatExplorePage?search=${encodeURIComponent(searchQuery.trim())}`);
-    } else {
-      // If no search term, just go to explore page
-      navigate('/BeatExplorePage');
-    }
-  };
+  // -------------------------------------------------------------------------
+  // Playback
+  // -------------------------------------------------------------------------
 
-  // Handle trending tag clicks with proper navigation
-  const handleTagClick = (tag, isGenre = false) => {
-    if (isGenre) {
-      // For genre filtering, capitalize first letter to match your genre options
-      const formattedGenre = tag.charAt(0).toUpperCase() + tag.slice(1);
-      navigate(`/BeatExplorePage?genre=${encodeURIComponent(formattedGenre)}`);
-    } else {
-      navigate(`/BeatExplorePage?search=${encodeURIComponent(tag)}`);
-    }
-  };
-
-  // Check if current hero beat is playing
-  const isCurrentHeroBeatPlaying = () => {
-    if (heroBeats.length === 0) return false;
+  const togglePlay = useCallback(() => {
+    if (heroBeats.length === 0) return;
     const currentBeat = heroBeats[currentBeatIndex];
-    return isBeatPlaying(currentBeat);
-  };
+    playTrack(currentBeat);
+
+    // Fire-and-forget play count — never block UI
+    API.post(`/api/beats/${getBeatId(currentBeat)}/play`).catch(() => {});
+  }, [heroBeats, currentBeatIndex, playTrack]);
+
+  const isCurrentHeroBeatPlaying = heroBeats.length > 0
+    ? isBeatPlaying(heroBeats[currentBeatIndex])
+    : false;
+
+  // -------------------------------------------------------------------------
+  // Navigation helpers
+  // -------------------------------------------------------------------------
+
+  const handleSearch = useCallback(
+    (e) => {
+      e.preventDefault();
+      const q = searchQuery.trim();
+      navigate(q ? `/BeatExplorePage?search=${encodeURIComponent(q)}` : "/BeatExplorePage");
+    },
+    [navigate, searchQuery]
+  );
+
+  const handleTagClick = useCallback(
+    (value, isGenre) => {
+      const param = isGenre ? "genre" : "search";
+      navigate(`/BeatExplorePage?${param}=${encodeURIComponent(value)}`);
+    },
+    [navigate]
+  );
+
+  // -------------------------------------------------------------------------
+  // Render
+  // -------------------------------------------------------------------------
+
+  const currentBeat = heroBeats[currentBeatIndex];
 
   return (
     <div className="home-container">
-      {/* Hero Banner with Search and Carousel */}
+      {/* ── Hero Banner ─────────────────────────────────────────────────── */}
       <div className="hero-container">
         <div className="hero-background">
           <img src={BannerBackground} alt="Background pattern" />
         </div>
 
         <div className="hero-content">
-          {/* Left Section with Text and Search */}
+          {/* Left — text + search */}
           <div className="hero-left">
-            <h1 className="hero-heading">{settings.heroTitle || "YOUR FIRST HIT STARTS HERE"}</h1>
+            <h1 className="hero-heading">
+              {settings?.heroTitle || "YOUR FIRST HIT STARTS HERE"}
+            </h1>
 
-            {/* BeatStars-style search bar */}
             <div className="hero-search-container">
               <form onSubmit={handleSearch} className="hero-search-form">
                 <div className="search-input-wrapper">
@@ -236,45 +259,46 @@ const Home = () => {
               </form>
             </div>
 
-            {/* Trending tags with proper navigation */}
             <div className="trending-tags">
-              <span className="trending-label">What's trending right now:</span>
+              <span className="trending-label">What&apos;s trending right now:</span>
               <div className="tags-container">
-                <span className="tag-item" onClick={() => handleTagClick("Pop", true)}>pop</span>
-                <span className="tag-item" onClick={() => handleTagClick("Hip-Hop", true)}>hip hop</span>
-                <span className="tag-item" onClick={() => handleTagClick("Trap", true)}>trap</span>
-                <span className="tag-item" onClick={() => handleTagClick("R&B", true)}>rnb</span>
+                {TRENDING_TAGS.map(({ label, value, isGenre }) => (
+                  <span
+                    key={label}
+                    className="tag-item"
+                    onClick={() => handleTagClick(value, isGenre)}
+                  >
+                    {label}
+                  </span>
+                ))}
               </div>
             </div>
           </div>
 
-          {/* Right Section with Carousel */}
+          {/* Right — carousel */}
           <div className="hero-right">
-            {heroBeats.length > 0 && (
+            {heroLoading ? (
+              <HeroCarouselSkeleton />
+            ) : heroBeats.length > 0 ? (
               <div className="hero-carousel">
                 <div
                   className="hero-carousel-slide"
-                  style={{ backgroundImage: `url(${heroBeats[currentBeatIndex].coverImage || "/default-cover.jpg"})` }}
+                  style={{
+                    backgroundImage: `url(${currentBeat?.coverImage ?? "/default-cover.jpg"})`,
+                  }}
                 >
                   <div className="hero-carousel-content">
-                    <button
-                      className="hero-play-button"
-                      onClick={togglePlay}
-                    >
-                      {audioLoading ? (
-                        <div className="loading-spinner"></div>
-                      ) : isCurrentHeroBeatPlaying() ? (
-                        <FaPause />
-                      ) : (
-                        <FaPlay />
-                      )}
+                    <button className="hero-play-button" onClick={togglePlay}>
+                      {isCurrentHeroBeatPlaying ? <FaPause /> : <FaPlay />}
                     </button>
 
                     <div className="hero-beat-info">
-                      <h3>{heroBeats[currentBeatIndex].title}</h3>
+                      <h3>{currentBeat?.title}</h3>
                       <p>
-                        {heroBeats[currentBeatIndex].producer?.name || "Unknown Producer"}
-                        {heroBeats[currentBeatIndex].producer?.verified && <span className="verified-badge">✓</span>}
+                        {currentBeat?.producer?.name ?? "Unknown Producer"}
+                        {currentBeat?.producer?.verified && (
+                          <span className="verified-badge">✓</span>
+                        )}
                       </p>
                     </div>
                   </div>
@@ -291,25 +315,25 @@ const Home = () => {
                   {heroBeats.map((_, index) => (
                     <button
                       key={index}
-                      className={`hero-indicator ${index === currentBeatIndex ? 'active' : ''}`}
-                      onClick={() => {
-                        setCurrentBeatIndex(index);
-                      }}
+                      className={`hero-indicator ${index === currentBeatIndex ? "active" : ""}`}
+                      onClick={() => setCurrentBeatIndex(index)}
                     />
                   ))}
                 </div>
               </div>
-            )}
+            ) : heroError ? (
+              <p className="hero-error">{heroError}</p>
+            ) : null}
           </div>
         </div>
       </div>
 
-      {/* Featured Producers Carousel */}
+      {/* ── Producers ───────────────────────────────────────────────────── */}
       <div className="producers-section">
         <ProducersCarousel />
       </div>
 
-      {/* Trending Beats Section */}
+      {/* ── Trending Beats ──────────────────────────────────────────────── */}
       <div className="trending-beats-section">
         <TrendingBeats />
       </div>
