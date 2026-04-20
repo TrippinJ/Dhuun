@@ -26,6 +26,7 @@ import followRoutes from './routes/followRoutes.js';
 import settingsRoutes from './routes/settingsRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import creatorResourcesRoutes from './routes/creatorResourcesRoutes.js';
+import analyticsRoutes from './routes/analyticsRoutes.js';
 
 
 // Get __dirname equivalent
@@ -115,6 +116,7 @@ app.use('/api/follow', followRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/creator-resources', creatorResourcesRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

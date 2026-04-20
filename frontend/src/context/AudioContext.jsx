@@ -2,6 +2,8 @@
 import React, { createContext, useState, useRef, useEffect, useContext } from 'react';
 import { getBeatId, getBeatAudioUrl } from '../utils/audioUtils';
 import API from '../api/api';
+import useHeartbeat from '../hooks/useHeartbeat';
+
 
 const AudioContext = createContext();
 
@@ -205,6 +207,10 @@ export const AudioProvider = ({ children }) => {
     setIsLoadingBeats(false);
     fetchAvailableBeats();
   };
+
+  const _hbBeatId = currentTrack ? (currentTrack._id || currentTrack.id || null) : null;
+  const _hbPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+  useHeartbeat(_hbBeatId, isPlaying, _hbPercent);
 
   const value = {
     currentTrack,
