@@ -1,628 +1,569 @@
-/* frontend/src/css/PurchasedBeats.module.css */
-
+/* ─── Container ──────────────────────────────────────────────────────────── */
 .purchasedBeatsContainer {
-  padding: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
-  background-color: var(--primary-dark);
-  min-height: 100vh;
+  padding: 0;
 }
 
+/* ─── Header ─────────────────────────────────────────────────────────────── */
 .header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border-gray);
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .header h2 {
-  color: var(--light-text);
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #fff;
   margin: 0;
 }
 
 .totalCount {
-  color: var(--secondary-text);
-  font-size: 1rem;
-  background-color: var(--secondary-dark);
-  padding: 0.5rem 1rem;
+  font-size: 0.8rem;
+  color: #888;
+  background: #252525;
+  border: 1px solid #333;
   border-radius: 20px;
-  border: 1px solid var(--border-gray);
+  padding: 3px 12px;
 }
 
-/* Table Layout */
+/* ─── Table ──────────────────────────────────────────────────────────────── */
 .beatsTable {
-  background-color: var(--secondary-dark);
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
   border-radius: 12px;
   overflow: hidden;
-  border: 1px solid var(--border-gray);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .tableHeader {
   display: grid;
-  grid-template-columns: 2fr 1fr 1.5fr 1fr 1.5fr;
-  gap: 1rem;
-  padding: 1rem 1.5rem;
-  background-color: rgba(123, 44, 191, 0.1);
-  border-bottom: 1px solid var(--border-gray);
+  grid-template-columns: 2fr 1.2fr 1fr 1fr 1.2fr;
+  padding: 12px 20px;
+  background: #141414;
+  border-bottom: 1px solid #2a2a2a;
+  font-size: 0.72rem;
   font-weight: 600;
-  color: var(--light-text);
-  font-size: 0.9rem;
+  color: #666;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.06em;
 }
 
 .beatRow {
   display: grid;
-  grid-template-columns: 2fr 1fr 1.5fr 1fr 1.5fr;
-  gap: 1rem;
-  padding: 1.5rem;
-  border-bottom: 1px solid var(--border-gray);
-  transition: background-color 0.3s ease;
+  grid-template-columns: 2fr 1.2fr 1fr 1fr 1.2fr;
+  padding: 16px 20px;
+  border-bottom: 1px solid #1f1f1f;
   align-items: center;
-}
-
-.beatRow:hover {
-  background-color: rgba(123, 44, 191, 0.05);
+  transition: background 0.15s;
 }
 
 .beatRow:last-child {
   border-bottom: none;
 }
 
-/* Beat Info Column */
-.beatColumn {
-  display: flex;
-  align-items: center;
+.beatRow:hover {
+  background: #1f1f1f;
 }
 
+/* ─── Beat Info Cell ─────────────────────────────────────────────────────── */
 .beatInfo {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  width: 100%;
+  gap: 12px;
 }
 
 .beatImageContainer {
   position: relative;
-  width: 60px;
-  height: 60px;
-  border-radius: 8px;
-  overflow: hidden;
+  width: 46px;
+  height: 46px;
   flex-shrink: 0;
 }
 
 .beatImage {
-  width: 100%;
-  height: 100%;
+  width: 46px;
+  height: 46px;
+  border-radius: 6px;
   object-fit: cover;
+  display: block;
 }
 
 .playOverlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.6);
-  color: white;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
   border: none;
-  cursor: pointer;
+  border-radius: 6px;
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 0.8rem;
+  cursor: pointer;
   opacity: 0;
-  transition: opacity 0.3s ease;
-  font-size: 1.2rem;
+  transition: opacity 0.15s;
 }
 
-.beatImageContainer:hover .playOverlay {
+.beatImageContainer:hover .playOverlay,
+.playOverlay.playing {
   opacity: 1;
 }
 
 .playOverlay.playing {
-  opacity: 1;
-  background-color: rgba(123, 44, 191, 0.8);
-}
-
-.beatDetails {
-  flex: 1;
-  min-width: 0;
+  background: rgba(255, 186, 0, 0.25);
+  color: #ffba00;
 }
 
 .beatTitle {
-  color: var(--light-text);
-  font-size: 1rem;
+  font-size: 0.88rem;
   font-weight: 600;
-  margin: 0 0 0.25rem 0;
+  color: #f0f0f0;
+  margin: 0 0 3px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 180px;
 }
 
 .producerName {
-  color: var(--secondary-text);
-  font-size: 0.9rem;
+  font-size: 0.75rem;
+  color: #777;
   margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-/* Order Info Column */
-.orderColumn {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.orderInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.orderId {
-  color: var(--light-text);
-  font-weight: 600;
-  font-family: 'Courier New', monospace;
-  font-size: 0.9rem;
-}
-
-.paymentStatus {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.8rem;
-  color: var(--secondary-text);
-}
-
-.statusDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: var(--success-green);
-}
-
-.statusDot.pending {
-  background-color: #FF9800;
-}
-
-.statusDot.failed {
-  background-color: #FF1A1A;
-}
-
-/* License Info Column */
-.licenseColumn {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.licenseInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
+/* ─── License Badge ──────────────────────────────────────────────────────── */
 .licenseBadge {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
+  gap: 5px;
+  padding: 4px 10px;
   border-radius: 20px;
-  color: white;
-  font-size: 0.85rem;
+  font-size: 0.72rem;
   font-weight: 600;
-  width: fit-content;
-}
-
-.licenseIcon {
-  font-size: 0.9rem;
-}
-
-.licenseName {
+  color: #fff;
   white-space: nowrap;
 }
 
-.licenseFeatures {
+/* ─── File Pills ─────────────────────────────────────────────────────────── */
+.filePills {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem;
+  gap: 5px;
 }
 
-.featureTag {
-  background-color: rgba(123, 44, 191, 0.2);
-  color: var(--accent-purple);
-  padding: 0.2rem 0.5rem;
-  border-radius: 12px;
-  font-size: 0.7rem;
-  font-weight: 500;
-  border: 1px solid rgba(123, 44, 191, 0.3);
-}
-
-/* Date Column */
-.dateColumn {
-  display: flex;
+.filePill {
+  display: inline-flex;
   align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: #252525;
+  border: 1px solid #333;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #ccc;
+  letter-spacing: 0.04em;
 }
 
+.lockIcon {
+  font-size: 0.6rem;
+  color: #9ae6b4;
+  flex-shrink: 0;
+}
+
+/* ─── Date Cell ──────────────────────────────────────────────────────────── */
 .dateInfo {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  color: var(--secondary-text);
+  gap: 6px;
+  font-size: 0.78rem;
+  color: #888;
 }
 
 .dateIcon {
-  color: var(--accent-purple);
-  font-size: 0.9rem;
+  font-size: 0.7rem;
+  flex-shrink: 0;
 }
 
-.date {
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-/* Actions Column */
-.actionsColumn {
-  display: flex;
-  justify-content: flex-end;
-}
-
+/* ─── Action Buttons ─────────────────────────────────────────────────────── */
 .actionButtons {
   display: flex;
-  gap: 0.5rem;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .actionBtn {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
+  gap: 5px;
+  padding: 7px 12px;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
   cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 500;
-  transition: all 0.3s ease;
+  transition: background 0.15s, transform 0.1s, opacity 0.15s;
+  white-space: nowrap;
+}
+
+.actionBtn:active {
+  transform: scale(0.97);
 }
 
 .downloadBtn {
-  background-color: var(--accent-purple);
-  color: white;
+  background: rgba(255, 186, 0, 0.12);
+  color: #ffba00;
+  border: 1px solid rgba(255, 186, 0, 0.25);
 }
 
-.downloadBtn:hover {
-  background-color: #8E44AD;
-  transform: translateY(-1px);
+.downloadBtn:hover:not(:disabled) {
+  background: rgba(255, 186, 0, 0.22);
+}
+
+.downloadBtn:disabled,
+.downloadBtn.loading {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .infoBtn {
-  background-color: var(--secondary-dark);
-  color: var(--secondary-text);
-  border: 1px solid var(--border-gray);
+  background: rgba(123, 44, 191, 0.12);
+  color: #a855f7;
+  border: 1px solid rgba(123, 44, 191, 0.25);
 }
 
 .infoBtn:hover {
-  background-color: var(--border-gray);
-  color: var(--light-text);
+  background: rgba(123, 44, 191, 0.22);
 }
 
-/* Loading and Error States */
-.loading, .error {
+/* spinning icon for loading state */
+.spin {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── State Screens ──────────────────────────────────────────────────────── */
+.stateContainer {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 300px;
-  color: var(--secondary-text);
-  font-size: 1.1rem;
+  gap: 14px;
+  min-height: 200px;
+  color: #888;
+  font-size: 0.9rem;
 }
 
-.error {
-  color: var(--accent-red);
+.spinner {
+  font-size: 1.4rem;
+  color: #ffba00;
+  animation: spin 0.9s linear infinite;
 }
 
-/* Empty State */
+.errorText {
+  color: #ff7c7c;
+  font-size: 0.9rem;
+}
+
+.retryBtn {
+  padding: 8px 20px;
+  background: #252525;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.retryBtn:hover {
+  background: #2f2f2f;
+}
+
 .emptyState {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 4rem 2rem;
+  gap: 14px;
+  padding: 60px 20px;
   text-align: center;
-  color: var(--secondary-text);
+  color: #888;
 }
 
 .emptyIcon {
-  font-size: 4rem;
-  color: var(--accent-purple);
-  margin-bottom: 1rem;
-  opacity: 0.5;
+  font-size: 2.5rem;
+  color: #333;
 }
 
 .emptyState h3 {
-  color: var(--light-text);
-  margin: 1rem 0;
-  font-size: 1.5rem;
+  font-size: 1rem;
+  color: #ddd;
+  margin: 0;
 }
 
 .emptyState p {
-  margin-bottom: 2rem;
-  font-size: 1.1rem;
+  font-size: 0.85rem;
+  margin: 0;
+  max-width: 280px;
 }
 
 .exploreButton {
-  background-color: var(--accent-purple);
-  color: white;
+  margin-top: 6px;
+  padding: 10px 24px;
+  background: #ffba00;
+  color: #111;
   border: none;
-  padding: 1rem 2rem;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background 0.15s, transform 0.1s;
 }
 
 .exploreButton:hover {
-  background-color: #8E44AD;
-  transform: translateY(-2px);
+  background: #e6a800;
+  transform: translateY(-1px);
 }
 
-/* License Modal */
+/* ─── Modal ──────────────────────────────────────────────────────────────── */
 .modalOverlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.8);
+  inset: 0;
+  background: rgba(0,0,0,0.75);
   display: flex;
-  align-items: center;
+  align-items: flex-end;       /* bottom sheet on mobile */
   justify-content: center;
   z-index: 1000;
-  padding: 2rem;
+  padding: 0;
+}
+
+@media (min-width: 600px) {
+  .modalOverlay {
+    align-items: center;
+    padding: 20px;
+  }
 }
 
 .modalContent {
-  background-color: var(--secondary-dark);
-  border-radius: 12px;
-  max-width: 600px;
+  background: #1e1e1e;
+  border: 1px solid #2a2a2a;
+  border-radius: 16px 16px 0 0;   /* bottom sheet on mobile */
   width: 100%;
+  max-width: 520px;
   max-height: 90vh;
   overflow-y: auto;
-  border: 1px solid var(--border-gray);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 600px) {
+  .modalContent {
+    border-radius: 16px;
+  }
 }
 
 .modalHeader {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid var(--border-gray);
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #2a2a2a;
+  position: sticky;
+  top: 0;
+  background: #1e1e1e;
+  z-index: 1;
 }
 
 .modalHeader h3 {
-  color: var(--light-text);
   margin: 0;
-  font-size: 1.3rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
 }
 
 .closeBtn {
-  background: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #2a2a2a;
   border: none;
-  color: var(--secondary-text);
-  font-size: 1.5rem;
+  color: #aaa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
   cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 4px;
-  transition: color 0.3s ease;
+  transition: background 0.15s;
 }
 
 .closeBtn:hover {
-  color: var(--light-text);
+  background: #333;
+  color: #fff;
 }
 
 .modalBody {
-  padding: 1.5rem;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex: 1;
 }
 
-.licenseHeader {
+.modalBeatRow {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border-gray);
+  gap: 14px;
 }
 
 .modalBeatImage {
-  width: 60px;
-  height: 60px;
+  width: 56px;
+  height: 56px;
   border-radius: 8px;
   object-fit: cover;
-  margin-right: 1rem;
+  flex-shrink: 0;
 }
 
-.licenseBadgeLarge {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border-radius: 25px;
-  color: white;
+.modalBeatRow h4 {
+  font-size: 0.95rem;
   font-weight: 600;
+  color: #fff;
+  margin: 0 0 3px;
 }
 
-.licenseContent h5 {
-  color: var(--light-text);
-  margin: 1.5rem 0 1rem 0;
-  font-size: 1.1rem;
+.modalBeatRow p {
+  font-size: 0.78rem;
+  color: #888;
+  margin: 0 0 8px;
+}
+
+.modalSection h5 {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 10px;
 }
 
 .featuresList {
   list-style: none;
+  margin: 0;
   padding: 0;
-  margin: 0 0 2rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .featuresList li {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem 0;
-  color: var(--secondary-text);
+  gap: 10px;
+  font-size: 0.85rem;
+  color: #ccc;
 }
 
 .checkIcon {
-  color: var(--success-green);
-  font-size: 0.9rem;
-}
-
-.orderDetails {
-  background-color: var(--primary-dark);
-  padding: 1.5rem;
-  border-radius: 8px;
-  border: 1px solid var(--border-gray);
+  color: #ffba00;
+  font-size: 0.75rem;
+  flex-shrink: 0;
 }
 
 .orderGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: 10px;
 }
 
 .orderItem {
+  background: #252525;
+  border: 1px solid #2e2e2e;
+  border-radius: 8px;
+  padding: 10px 14px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .orderItem span:first-child {
-  color: var(--secondary-text);
-  font-size: 0.9rem;
+  font-size: 0.7rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .orderItem span:last-child {
-  color: var(--light-text);
-  font-weight: 600;
+  font-size: 0.85rem;
+  color: #ddd;
+  font-weight: 500;
 }
 
 .statusActive {
-  color: var(--success-green) !important;
+  color: #4ade80 !important;
 }
 
 .modalFooter {
-  padding: 1.5rem;
-  border-top: 1px solid var(--border-gray);
-  text-align: center;
+  padding: 16px 24px;
+  border-top: 1px solid #2a2a2a;
+  position: sticky;
+  bottom: 0;
+  background: #1e1e1e;
 }
 
 .downloadModalBtn {
-  background-color: var(--accent-purple);
-  color: white;
-  border: none;
-  padding: 0.75rem 2rem;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
+  width: 100%;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin: 0 auto;
-  transition: all 0.3s ease;
+  justify-content: center;
+  gap: 10px;
+  padding: 13px;
+  background: #ffba00;
+  color: #111;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
 }
 
-.downloadModalBtn:hover {
-  background-color: #8E44AD;
+.downloadModalBtn:hover:not(:disabled) {
+  background: #e6a800;
   transform: translateY(-1px);
 }
 
-/* Responsive Design */
-@media (max-width: 1200px) {
-  .tableHeader,
-  .beatRow {
-    grid-template-columns: 2fr 0.8fr 1.2fr 0.8fr 1.2fr;
-  }
+.downloadModalBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-@media (max-width: 900px) {
-  .purchasedBeatsContainer {
-    padding: 1rem;
-  }
-
-  .tableHeader,
-  .beatRow {
-    grid-template-columns: 1fr;
-    gap: 0.5rem;
-  }
-
-  .tableHeader {
-    display: none;
-  }
+/* ─── Mobile — card layout replaces table ────────────────────────────────── */
+@media (max-width: 700px) {
+  .tableHeader { display: none; }
 
   .beatRow {
-    background-color: var(--secondary-dark);
-    border-radius: 8px;
-    margin-bottom: 1rem;
-    border: 1px solid var(--border-gray);
-    padding: 1rem;
-    display: block;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 16px;
+    border-bottom: 1px solid #252525;
   }
 
   .beatColumn,
-  .orderColumn,
   .licenseColumn,
+  .filesColumn,
   .dateColumn,
-  .actionsColumn {
-    margin-bottom: 1rem;
-  }
+  .actionsColumn { width: 100%; }
 
-  .beatColumn:last-child,
-  .orderColumn:last-child,
-  .licenseColumn:last-child,
-  .dateColumn:last-child,
-  .actionsColumn:last-child {
-    margin-bottom: 0;
-  }
+  .beatTitle { max-width: 100%; }
 
-  .actionButtons {
-    justify-content: flex-start;
-  }
+  .actionButtons { width: 100%; }
 
-  .modalOverlay {
-    padding: 1rem;
-  }
+  .actionBtn { flex: 1; justify-content: center; }
 
-  .orderGrid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 480px) {
-  .header {
-    flex-direction: column;
-    gap: 1rem;
-    align-items: flex-start;
-  }
-
-  .header h2 {
-    font-size: 1.5rem;
-  }
-
-  .actionBtn {
-    padding: 0.4rem 0.8rem;
-    font-size: 0.8rem;
-  }
-
-  .actionBtn span {
-    display: none;
-  }
+  .orderGrid { grid-template-columns: 1fr; }
 }
