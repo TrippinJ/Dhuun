@@ -191,8 +191,7 @@ const Home = () => {
     const currentBeat = heroBeats[currentBeatIndex];
     playTrack(currentBeat);
 
-    // Fire-and-forget play count — never block UI
-    API.post(`/api/beats/${getBeatId(currentBeat)}/play`).catch(() => {});
+    
   }, [heroBeats, currentBeatIndex, playTrack]);
 
   const isCurrentHeroBeatPlaying = heroBeats.length > 0

@@ -502,25 +502,6 @@ router.delete('/:id', authenticateUser, async (req, res) => {
   }
 });
 
-// Increment play count
-router.post('/:id/play', async (req, res) => {
-  try {
-    const beat = await Beat.findById(req.params.id);
-
-    if (!beat) {
-      return res.status(404).json({ message: 'Beat not found' });
-    }
-
-    // Increment play count
-    beat.plays = (beat.plays || 0) + 1;
-    await beat.save();
-
-    res.json({ plays: beat.plays });
-  } catch (error) {
-    console.error('Error incrementing play count:', error);
-    res.status(500).json({ message: 'Server error while tracking play count' });
-  }
-});
 
 // Like a beat (authorized route)
 router.post('/:id/like', authenticateUser, async (req, res) => {

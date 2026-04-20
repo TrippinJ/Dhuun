@@ -328,13 +328,7 @@ const BeatExplorePage = () => {
       console.log('BeatExplorePage play clicked for beat:', getBeatId(beat));
       playTrack(beat);
 
-      try {
-        API.post(`/api/beats/${getBeatId(beat)}/play`).catch(err => {
-          console.log("Could not update play count, ignoring:", err);
-        });
-      } catch (error) {
-        // Silently ignore tracking errors
-      }
+      
     } catch (error) {
       console.error("Audio playback error:", error);
     }

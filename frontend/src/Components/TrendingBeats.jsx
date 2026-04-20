@@ -106,13 +106,7 @@ const TrendingBeats = () => {
     event.stopPropagation();
     playTrack(beat);
     
-    try {
-      API.post(`/api/beats/${beat._id}/play`).catch(err => {
-        console.log("Could not update play count, ignoring:", err);
-      });
-    } catch (error) {
-      // Silently ignore tracking errors
-    }
+    
   };
 
   // Add to cart functionality

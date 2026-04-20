@@ -433,41 +433,7 @@ export const deleteBeat = async (req, res) => {
   }
 };
 
-/**
- * Increment play count
- * @route POST /api/beats/:id/play
- * @access Public
- */
-export const incrementPlayCount = async (req, res) => {
-  try {
-    const beatId = req.params.id;
 
-    const updatedBeat = await Beat.findByIdAndUpdate(
-      beatId,
-      { $inc: { plays: 1 } }, // Increment plays by 1
-      { new: true }
-    );
-
-    if (!updatedBeat) {
-      return res.status(404).json({
-        success: false,
-        message: 'Beat not found'
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      plays: updatedBeat.plays
-    });
-  } catch (error) {
-    console.error('Error incrementing play count:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error tracking play count',
-      error: error.message
-    });
-  }
-};
 
 /**
  * Get featured beats
