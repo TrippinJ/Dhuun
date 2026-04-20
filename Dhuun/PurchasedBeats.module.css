@@ -1,0 +1,410 @@
+/* PurchasedBeats.module.css — mobile-first
+ * Dhuun design tokens:
+ *   bg:      #1a1a1a
+ *   accent:  #ffba00  (Dhuun yellow)
+ *   purple:  #7b2cbf
+ *   border:  #2a2a2a
+ *   error:   #ff5a5a
+ *   success: #4ade80
+ */
+
+/* ===== Layout ===== */
+.page {
+  min-height: 100dvh;
+  background: #1a1a1a;
+  color: #f5f5f5;
+  padding: 16px;
+  padding-bottom: 96px; /* room for GlobalAudioPlayer on mobile */
+  max-width: 1280px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 20px;
+  padding: 4px 4px 16px;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #a0a0a0;
+  line-height: 1.5;
+  max-width: 56ch;
+}
+
+/* ===== Grid ===== */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+/* ===== Card ===== */
+.card {
+  display: grid;
+  grid-template-columns: 88px 1fr;
+  gap: 14px;
+  padding: 12px;
+  background: #202020;
+  border: 1px solid #2a2a2a;
+  border-radius: 14px;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.card:hover {
+  border-color: #3a3a3a;
+}
+
+.art {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #2a2a2a;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.artFallback {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #7b2cbf 0%, #1a1a1a 100%);
+}
+
+.playBadge {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+}
+
+.art:hover .playBadge,
+.art:focus-visible .playBadge,
+.playBadgeActive {
+  opacity: 1;
+}
+
+.playBadgeActive {
+  background: rgba(123, 44, 191, 0.55);
+  color: #ffba00;
+}
+
+/* ===== Card body ===== */
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0; /* enable text-overflow on children */
+}
+
+.beatTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.producer {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #a0a0a0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ===== Meta (license / paid / date) ===== */
+.meta {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: 4px 14px;
+  margin: 4px 0 0;
+  padding: 0;
+  font-size: 0.75rem;
+  color: #a0a0a0;
+}
+
+.meta > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.meta dt {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6b6b6b;
+  margin: 0;
+}
+
+.meta dd {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #e5e5e5;
+}
+
+.licenseTag {
+  display: inline-block;
+  padding: 2px 8px;
+  background: rgba(123, 44, 191, 0.18);
+  color: #c9a3f5;
+  border: 1px solid rgba(123, 44, 191, 0.4);
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* ===== Actions ===== */
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.primaryBtn,
+.secondaryBtn {
+  flex: 1 1 120px;
+  min-height: 40px;
+  padding: 9px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease,
+    border-color 0.15s ease, transform 0.05s ease;
+  touch-action: manipulation;
+}
+
+.primaryBtn {
+  background: #ffba00;
+  color: #1a1a1a;
+  border: 1px solid #ffba00;
+}
+
+.primaryBtn:hover:not(:disabled) {
+  background: #ffc933;
+  border-color: #ffc933;
+}
+
+.primaryBtn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.secondaryBtn {
+  background: transparent;
+  color: #e5e5e5;
+  border: 1px solid #2a2a2a;
+}
+
+.secondaryBtn:hover:not(:disabled) {
+  background: #2a2a2a;
+  border-color: #3a3a3a;
+}
+
+.secondaryBtn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.primaryBtn:disabled,
+.secondaryBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.primaryBtn:focus-visible,
+.secondaryBtn:focus-visible,
+.art:focus-visible {
+  outline: 2px solid #ffba00;
+  outline-offset: 2px;
+}
+
+/* ===== Empty + error states ===== */
+.emptyState,
+.errorState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+  padding: 48px 20px;
+  background: #202020;
+  border: 1px dashed #2a2a2a;
+  border-radius: 14px;
+}
+
+.emptyState h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #ffffff;
+}
+
+.emptyState p {
+  margin: 0;
+  color: #a0a0a0;
+  max-width: 36ch;
+}
+
+.errorState p {
+  margin: 0;
+  color: #ff5a5a;
+  font-weight: 500;
+}
+
+.emptyState .primaryBtn,
+.errorState .primaryBtn {
+  flex: 0 0 auto;
+  display: inline-block;
+  text-decoration: none;
+  min-width: 160px;
+}
+
+/* ===== Skeleton loader ===== */
+@keyframes shimmer {
+  0% { background-position: -300px 0; }
+  100% { background-position: 300px 0; }
+}
+
+.skeletonCard {
+  pointer-events: none;
+}
+
+.skeletonArt,
+.skeletonLine {
+  background: linear-gradient(
+    90deg,
+    #2a2a2a 0%,
+    #333333 40%,
+    #2a2a2a 80%
+  );
+  background-size: 600px 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: 8px;
+}
+
+.skeletonArt {
+  width: 88px;
+  height: 88px;
+  border-radius: 10px;
+}
+
+.skeletonLine {
+  height: 12px;
+  width: 100%;
+}
+
+.skeletonTitle {
+  height: 16px;
+  width: 70%;
+  margin-top: 4px;
+}
+
+.skeletonSub {
+  height: 10px;
+  width: 45%;
+}
+
+/* ===== Breakpoints ===== */
+
+/* Tablet: denser 2-up cards, a bit more breathing room */
+@media (min-width: 640px) {
+  .page {
+    padding: 24px;
+  }
+
+  .title {
+    font-size: 1.8rem;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .card {
+    grid-template-columns: 104px 1fr;
+    padding: 14px;
+  }
+
+  .art,
+  .skeletonArt {
+    width: 104px;
+    height: 104px;
+  }
+}
+
+/* Desktop: 3-up, richer spacing */
+@media (min-width: 1024px) {
+  .page {
+    padding: 32px;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .card {
+    grid-template-columns: 120px 1fr;
+    padding: 16px;
+  }
+
+  .art,
+  .skeletonArt {
+    width: 120px;
+    height: 120px;
+  }
+
+  .beatTitle {
+    font-size: 1.05rem;
+  }
+}
+
+/* Reduced motion: kill the shimmer */
+@media (prefers-reduced-motion: reduce) {
+  .skeletonArt,
+  .skeletonLine {
+    animation: none;
+  }
+}
