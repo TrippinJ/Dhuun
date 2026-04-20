@@ -1,13 +1,30 @@
-/* BeatStars-inspired Home Page Styles */
+/* ============================================================
+   BeatStars-inspired Home Page Styles
+   ============================================================ */
+
 :root {
-  --primary-dark: #121212;
-  --secondary-dark: #1E1E1E;
-  --light-text: #FFFFFF;
-  --secondary-text: #AAAAAA;
-  --accent-purple: #7B2CBF;
-  --accent-red: #FF1A1A;
-  --border-gray: #333333;
+  --primary-dark:    #121212;
+  --secondary-dark:  #1E1E1E;
+  --light-text:      #FFFFFF;
+  --secondary-text:  #AAAAAA;
+  --accent-purple:   #7B2CBF;
+  --accent-purple-hover: #8E44AD;
+  --accent-red:      #FF1A1A;
+  --border-gray:     #333333;
+
+  /* Skeleton shimmer colours */
+  --skeleton-base:   #1a1a1a;
+  --skeleton-shine:  #2a2a2a;
+
+  /* Transitions */
+  --transition-fast: 0.2s ease;
+  --transition-mid:  0.3s ease;
+  --transition-slow: 0.5s ease;
 }
+
+/* ============================================================
+   Base
+   ============================================================ */
 
 .home-container {
   background-color: var(--primary-dark);
@@ -15,7 +32,10 @@
   min-height: 100vh;
 }
 
-/* Hero Section with Carousel */
+/* ============================================================
+   Hero — layout
+   ============================================================ */
+
 .hero-container {
   position: relative;
   min-height: 600px;
@@ -25,10 +45,7 @@
 
 .hero-background {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   z-index: 0;
   opacity: 0.3;
 }
@@ -49,7 +66,10 @@
   gap: 40px;
 }
 
-/* Left Section (Text and Search) */
+/* ============================================================
+   Hero — left panel (text + search)
+   ============================================================ */
+
 .hero-left {
   flex: 1;
   display: flex;
@@ -69,7 +89,7 @@
   line-height: 1.2;
 }
 
-/* BeatStars-style search bar */
+/* Search bar */
 .hero-search-container {
   width: 100%;
   margin-bottom: 30px;
@@ -94,6 +114,7 @@
   color: #666;
   font-size: 1.2rem;
   margin-right: 10px;
+  flex-shrink: 0;
 }
 
 .hero-search-input {
@@ -119,11 +140,17 @@
   font-size: 1.1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color var(--transition-mid);
+  flex-shrink: 0;
 }
 
 .hero-search-button:hover {
-  background-color: #8E44AD;
+  background-color: var(--accent-purple-hover);
+}
+
+.hero-search-button:focus-visible {
+  outline: 3px solid var(--accent-purple);
+  outline-offset: 2px;
 }
 
 /* Trending tags */
@@ -153,7 +180,9 @@
   border-radius: 20px;
   font-size: 0.9rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background-color var(--transition-mid),
+              transform var(--transition-mid);
+  user-select: none;
 }
 
 .tag-item:hover {
@@ -161,7 +190,15 @@
   transform: translateY(-2px);
 }
 
-/* Right Section (Carousel) */
+.tag-item:focus-visible {
+  outline: 2px solid var(--accent-purple);
+  outline-offset: 2px;
+}
+
+/* ============================================================
+   Hero — right panel (carousel)
+   ============================================================ */
+
 .hero-right {
   flex: 1;
   display: flex;
@@ -170,6 +207,7 @@
   max-width: 600px;
 }
 
+/* ── Carousel ── */
 .hero-carousel {
   width: 100%;
   position: relative;
@@ -182,10 +220,10 @@
   position: relative;
   width: 100%;
   height: 0;
-  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  padding-bottom: 56.25%; /* 16:9 */
   background-size: cover;
   background-position: center;
-  transition: all 0.5s ease;
+  transition: background-image var(--transition-slow);
 }
 
 .hero-carousel-content {
@@ -194,15 +232,17 @@
   left: 0;
   width: 100%;
   padding: 20px;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.85), transparent);
   display: flex;
   align-items: center;
   gap: 20px;
 }
 
+/* Play button */
 .hero-play-button {
   width: 60px;
   height: 60px;
+  flex-shrink: 0;
   border-radius: 50%;
   background-color: var(--accent-purple);
   color: white;
@@ -212,23 +252,34 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: transform var(--transition-mid),
+              background-color var(--transition-mid);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
 .hero-play-button:hover {
   transform: scale(1.1);
-  background-color: #8E44AD;
+  background-color: var(--accent-purple-hover);
 }
 
+.hero-play-button:focus-visible {
+  outline: 3px solid white;
+  outline-offset: 3px;
+}
+
+/* Beat info */
 .hero-beat-info {
   flex: 1;
+  min-width: 0; /* prevent text overflow breaking layout */
 }
 
 .hero-beat-info h3 {
   font-size: 1.5rem;
   margin: 0 0 5px 0;
   color: var(--light-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .hero-beat-info p {
@@ -245,6 +296,7 @@
   font-size: 0.9rem;
 }
 
+/* Nav arrows */
 .hero-nav-button {
   position: absolute;
   top: 50%;
@@ -260,7 +312,7 @@
   justify-content: center;
   font-size: 1.2rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background-color var(--transition-mid);
   z-index: 10;
 }
 
@@ -268,14 +320,15 @@
   background-color: var(--accent-purple);
 }
 
-.hero-nav-button.prev {
-  left: 15px;
+.hero-nav-button:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 2px;
 }
 
-.hero-nav-button.next {
-  right: 15px;
-}
+.hero-nav-button.prev { left: 15px; }
+.hero-nav-button.next { right: 15px; }
 
+/* Dot indicators */
 .hero-carousel-indicators {
   position: absolute;
   bottom: 15px;
@@ -293,7 +346,8 @@
   border: none;
   padding: 0;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background-color var(--transition-mid),
+              transform var(--transition-mid);
 }
 
 .hero-indicator.active {
@@ -301,7 +355,62 @@
   transform: scale(1.2);
 }
 
-/* Loading Spinner */
+.hero-indicator:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+
+/* ============================================================
+   Hero — skeleton loader  (shown while beats are fetching)
+   ============================================================ */
+
+.hero-carousel--skeleton {
+  width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.hero-carousel-slide--skeleton {
+  width: 100%;
+  /* Match the 16:9 slide height without the padding-bottom trick */
+  aspect-ratio: 16 / 9;
+  height: auto;
+  padding-bottom: 0;
+  background: linear-gradient(
+    90deg,
+    var(--skeleton-base) 25%,
+    var(--skeleton-shine) 50%,
+    var(--skeleton-base) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+  border-radius: 10px;
+}
+
+@keyframes shimmer {
+  0%   { background-position:  200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ============================================================
+   Hero — error state
+   ============================================================ */
+
+.hero-error {
+  color: var(--secondary-text);
+  font-size: 0.95rem;
+  text-align: center;
+  padding: 40px 20px;
+  border: 1px solid var(--border-gray);
+  border-radius: 10px;
+  width: 100%;
+}
+
+/* ============================================================
+   Utility — loading spinner (kept for potential reuse)
+   ============================================================ */
+
 .loading-spinner {
   width: 24px;
   height: 24px;
@@ -312,11 +421,14 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
+  0%   { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
 
-/* Section Containers */
+/* ============================================================
+   Section containers
+   ============================================================ */
+
 .producers-section,
 .trending-beats-section {
   max-width: 1200px;
@@ -324,7 +436,10 @@
   padding: 0 20px;
 }
 
-/* Responsive Styles */
+/* ============================================================
+   Responsive
+   ============================================================ */
+
 @media (max-width: 1200px) {
   .hero-content {
     padding: 40px 20px;
@@ -337,15 +452,22 @@
     align-items: center;
     gap: 30px;
   }
-  
-  .hero-left, .hero-right {
+
+  .hero-left,
+  .hero-right {
     max-width: 600px;
     width: 100%;
   }
-  
+
   .hero-container {
     min-height: auto;
     padding-bottom: 40px;
+  }
+
+  /* Skeleton matches full-width layout on tablet */
+  .hero-carousel--skeleton,
+  .hero-carousel-slide--skeleton {
+    width: 100%;
   }
 }
 
@@ -354,42 +476,42 @@
     font-size: 2.5rem;
     text-align: center;
   }
-  
+
   .hero-search-form {
     flex-direction: column;
     border-radius: 15px;
   }
-  
+
   .search-input-wrapper {
     padding: 0 15px;
   }
-  
+
   .hero-search-input {
     height: 50px;
   }
-  
+
   .hero-search-button {
     width: 100%;
     height: 50px;
     border-radius: 0 0 15px 15px;
   }
-  
+
   .trending-tags {
     justify-content: center;
     text-align: center;
   }
-  
+
   .producers-section,
   .trending-beats-section {
     margin: 40px auto;
   }
-  
+
   .hero-play-button {
     width: 50px;
     height: 50px;
     font-size: 1.2rem;
   }
-  
+
   .hero-beat-info h3 {
     font-size: 1.2rem;
   }
@@ -399,24 +521,40 @@
   .hero-heading {
     font-size: 2rem;
   }
-  
+
   .hero-carousel-content {
     padding: 15px;
   }
-  
+
   .hero-play-button {
     width: 40px;
     height: 40px;
     font-size: 1rem;
   }
-  
+
   .hero-beat-info h3 {
     font-size: 1rem;
   }
-  
+
   .hero-nav-button {
     width: 30px;
     height: 30px;
     font-size: 1rem;
+  }
+}
+
+/* Respect reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .hero-carousel-slide--skeleton {
+    animation: none;
+    background: var(--skeleton-base);
+  }
+
+  .tag-item:hover,
+  .hero-play-button:hover,
+  .hero-nav-button:hover,
+  .hero-indicator {
+    transform: none;
+    transition: none;
   }
 }
