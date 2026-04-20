@@ -141,7 +141,27 @@ const generatePDFViewUrl = (publicId) => {
   }
 };
 
-export { 
+/**
+ * Generate a short-lived signed URL for private (authenticated) Cloudinary assets.
+ * Works for WAV and Stems stored with type: 'authenticated'.
+ * @param {string} publicId - Cloudinary public ID
+ * @param {string} resourceType - 'video' for audio/WAV, 'raw' for ZIP stems
+ * @returns {string} Signed URL expiring in 10 minutes
+ */
+export const generateSignedDownloadUrl = (publicId, resourceType = 'video') => {
+  const expiresAt = Math.floor(Date.now() / 1000) + 600; // 10 min
+
+  return cloudinary.url(publicId, {
+    resource_type: resourceType,
+    secure: true,
+    sign_url: true,
+    expires_at: expiresAt,
+    flags: 'attachment', // forces browser download, not inline play
+    type: 'authenticated',
+  });
+};
+
+export {
   cloudinary,
   uploadToCloudinary,
   deleteFromCloudinary,

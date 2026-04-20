@@ -8,149 +8,148 @@ import Beat from '../models/beat.js';
 import User from '../models/user.js';
 import { v2 as cloudinary } from 'cloudinary';
 import * as beatController from '../controllers/beatController.js';
-import { getPopularTags  } from '../controllers/beatController.js';
+import { getPopularTags } from '../controllers/beatController.js';
 
-// Get current file directory equivalent for ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Configure Cloudinary with credentials from environment variables
+// ─── Cloudinary config ────────────────────────────────────────────────────────
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
+  api_key:    process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true
+  secure:     true,
 });
 
-// Setup temporary storage for file uploads before sending to Cloudinary
+// ─── Temp upload directory ────────────────────────────────────────────────────
 const tempDir = path.join(__dirname, '../temp_uploads');
-if (!fs.existsSync(tempDir)) {
-  fs.mkdirSync(tempDir, { recursive: true });
-}
+if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
 
-// Configure multer to temporarily store files before uploading to Cloudinary
+// ─── Multer storage ───────────────────────────────────────────────────────────
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, tempDir);
+  destination: (req, file, cb) => cb(null, tempDir),
+  filename:    (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
   },
-  filename: (req, file, cb) => {
-    // Generate unique filename with timestamp and original extension
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
-  }
 });
 
-// Set up file filter to only accept certain file types
+// ─── File filter ──────────────────────────────────────────────────────────────
+// audio      → tagged MP3  (public preview)
+// audioWav   → full WAV    (private, premium + exclusive buyers)
+// audioStems → stems ZIP   (private, exclusive buyers only)
+// coverImage → JPEG/PNG    (public)
 const fileFilter = (req, file, cb) => {
-  if (file.fieldname === 'audio') {
-    // Accept only audio files
-    if (file.mimetype.startsWith('audio/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only audio files are allowed!'), false);
-    }
-  } else if (file.fieldname === 'coverImage') {
-    // Accept only image files
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only image files are allowed!'), false);
-    }
+  if (file.fieldname === 'audio' || file.fieldname === 'audioWav') {
+    if (file.mimetype.startsWith('audio/')) return cb(null, true);
+    return cb(new Error('Only audio files are allowed for this field'), false);
   }
+  if (file.fieldname === 'audioStems') {
+    const allowed = ['application/zip', 'application/x-zip-compressed', 'application/octet-stream'];
+    if (allowed.includes(file.mimetype) || file.originalname.endsWith('.zip')) return cb(null, true);
+    return cb(new Error('Stems must be uploaded as a ZIP file'), false);
+  }
+  if (file.fieldname === 'coverImage') {
+    if (file.mimetype.startsWith('image/')) return cb(null, true);
+    return cb(new Error('Only image files are allowed for cover art'), false);
+  }
+  cb(new Error('Unexpected upload field: ' + file.fieldname), false);
 };
 
-// Set up multer with storage and file filter
 const upload = multer({
-  storage: storage,
-  fileFilter: fileFilter,
-  limits: { fileSize: 50 * 1024 * 1024 } // Limit file size to 50MB
+  storage,
+  fileFilter,
+  limits: { fileSize: 200 * 1024 * 1024 }, // 200 MB — stems ZIPs can be large
 });
 
-// Error handling middleware for multer
+// ─── Multer error handler ─────────────────────────────────────────────────────
 const handleMulterError = (err, req, res, next) => {
   if (err instanceof multer.MulterError) {
-    // A multer error occurred when uploading
     if (err.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({ message: 'File too large. Maximum size is 50MB.' });
+      return res.status(400).json({ message: 'File too large. Maximum size is 200 MB.' });
     }
     return res.status(400).json({ message: `Upload error: ${err.message}` });
-  } else if (err) {
-    // A different error occurred
-    return res.status(400).json({ message: err.message });
   }
+  if (err) return res.status(400).json({ message: err.message });
   next();
 };
 
-// Helper function to upload file to Cloudinary
-const uploadToCloudinary = async (filePath, folder) => {
+// ─── Cloudinary helpers ───────────────────────────────────────────────────────
+
+/**
+ * Upload a file to Cloudinary.
+ * @param {string} filePath   - Local temp path
+ * @param {string} folder     - Cloudinary folder
+ * @param {string} resourceType - 'video' | 'image' | 'raw'
+ * @param {string} type       - 'upload' (public) | 'authenticated' (private)
+ */
+const uploadToCloudinary = async (filePath, folder, resourceType = 'video', type = 'upload') => {
   try {
-    // Determine resource type based on file extension
-    const ext = path.extname(filePath).toLowerCase();
-    const resourceType = ['.mp3', '.wav', '.ogg'].includes(ext) ? 'video' : 'image';
-
-    // Upload to Cloudinary
     const result = await cloudinary.uploader.upload(filePath, {
-      resource_type: resourceType,
-      folder: folder,
-      use_filename: true,
-      unique_filename: true
+      resource_type:   resourceType,
+      folder,
+      type,             // 'authenticated' = private, requires signed URL to access
+      use_filename:    true,
+      unique_filename: true,
     });
-
-    // Delete the temp file after upload
-    fs.unlinkSync(filePath);
-
+    fs.unlinkSync(filePath); // remove temp file immediately
     return result;
   } catch (error) {
     console.error('Cloudinary upload error:', error);
+    // Try to clean up even on failure
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
     throw error;
   }
 };
 
-// Helper function to delete file from Cloudinary
-const deleteFromCloudinary = async (publicId, resourceType) => {
+/**
+ * Delete a file from Cloudinary.
+ * Works for both public and authenticated assets.
+ */
+const deleteFromCloudinary = async (publicId, resourceType = 'video', type = 'upload') => {
   try {
-    const result = await cloudinary.uploader.destroy(publicId, {
-      resource_type: resourceType
-    });
-    return result;
+    return await cloudinary.uploader.destroy(publicId, { resource_type: resourceType, type });
   } catch (error) {
     console.error('Cloudinary delete error:', error);
     throw error;
   }
 };
 
-// Helper function to extract public ID from Cloudinary URL
-const getPublicIdFromUrl = (url) => {
-  if (!url || typeof url !== 'string') return null;
-  if (!url.includes('cloudinary.com')) return null;
-
- 
-  const urlParts = url.split('/');
-  const uploadIndex = urlParts.indexOf('upload');
-
-  if (uploadIndex === -1) return null;
-
-  // Get everything after "upload" excluding the version and file extension
-  const publicIdWithVersion = urlParts.slice(uploadIndex + 1).join('/');
-  const publicId = publicIdWithVersion.replace(/^v\d+\//, '').replace(/\.[^/.]+$/, '');
-
-  return publicId;
+/**
+ * Generate a short-lived signed URL for a PRIVATE (authenticated) Cloudinary asset.
+ * Used for WAV and Stems downloads — expires in 10 minutes.
+ */
+const generateSignedDownloadUrl = (publicId, resourceType = 'video') => {
+  const expiresAt = Math.floor(Date.now() / 1000) + 600; // 10 minutes
+  return cloudinary.url(publicId, {
+    resource_type: resourceType,
+    secure:        true,
+    sign_url:      true,
+    expires_at:    expiresAt,
+    flags:         'attachment', // forces browser download, not inline playback
+    type:          'authenticated',
+  });
 };
 
+/**
+ * Clean up all temp files for a request (called on error).
+ */
+const cleanupTempFiles = (files) => {
+  if (!files) return;
+  Object.values(files).flat().forEach(file => {
+    if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+  });
+};
+
+// ─── Router ───────────────────────────────────────────────────────────────────
 const router = express.Router();
 
-// Get all beats (public route)
+// ── GET / — all beats (public) ────────────────────────────────────────────────
 router.get('/', async (req, res) => {
   try {
-    const beats = await Beat.find(
-      {
-        isExclusiveSold: { $ne: true }
-      }
-    )
+    const beats = await Beat.find({ isExclusiveSold: { $ne: true } })
       .populate('producer', 'name username')
       .sort({ createdAt: -1 });
-
     res.json(beats);
   } catch (error) {
     console.error('Error fetching beats:', error);
@@ -158,34 +157,67 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get trending beats - IMPORTANT: This must come BEFORE the /:id route
+// ── GET /trending ─────────────────────────────────────────────────────────────
 router.get('/trending', beatController.getTrendingBeats);
 
+// ── GET /tags/popular ─────────────────────────────────────────────────────────
 router.get('/tags/popular', getPopularTags);
 
-// Get beats by producer (authorized route)
+// ── GET /featured ─────────────────────────────────────────────────────────────
+router.get('/featured', beatController.getFeaturedBeats);
+
+// ── GET /producer/beats — logged-in producer's own beats ──────────────────────
 router.get('/producer/beats', authenticateUser, async (req, res) => {
   try {
-    const beats = await Beat.find({ producer: req.user.id })
-      .sort({ createdAt: -1 });
-
+    const beats = await Beat.find({ producer: req.user.id }).sort({ createdAt: -1 });
     res.json(beats);
   } catch (error) {
     console.error('Error fetching producer beats:', error);
     res.status(500).json({ message: 'Server error while fetching beats' });
   }
 });
-router.get('/featured', beatController.getFeaturedBeats);
-// Get a single beat by ID (public route) - This must come AFTER specific routes like /trending
+
+// ── GET /producer/:producerId — public producer page beats ────────────────────
+router.get('/producer/:producerId', async (req, res) => {
+  try {
+    const { producerId } = req.params;
+    const { limit = 20, page = 1 } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const filter = {
+      producer:        producerId,
+      isPublished:     true,
+      isExclusiveSold: { $ne: true },
+    };
+
+    const [beats, total] = await Promise.all([
+      Beat.find(filter)
+        .populate('producer', 'name username')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit)),
+      Beat.countDocuments(filter),
+    ]);
+
+    res.status(200).json({
+      success:     true,
+      count:       beats.length,
+      total,
+      totalPages:  Math.ceil(total / parseInt(limit)),
+      currentPage: parseInt(page),
+      data:        beats,
+    });
+  } catch (error) {
+    console.error('Error fetching producer beats:', error);
+    res.status(500).json({ success: false, message: 'Error fetching producer beats', error: error.message });
+  }
+});
+
+// ── GET /:id — single beat (public) ──────────────────────────────────────────
 router.get('/:id', async (req, res) => {
   try {
-    const beat = await Beat.findById(req.params.id)
-      .populate('producer', 'name username');
-
-    if (!beat) {
-      return res.status(404).json({ message: 'Beat not found' });
-    }
-
+    const beat = await Beat.findById(req.params.id).populate('producer', 'name username');
+    if (!beat) return res.status(404).json({ message: 'Beat not found' });
     res.json(beat);
   } catch (error) {
     console.error('Error fetching beat:', error);
@@ -193,376 +225,334 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Get beats by specific producer ID (public route)
-router.get('/producer/:producerId', async (req, res) => {
-  try {
-    const { producerId } = req.params;
-    const { limit = 20, page = 1 } = req.query;
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-
-    // Build filter
-    const filter = {
-      producer: producerId,
-      isPublished: true,
-      isExclusiveSold: { $ne: true }
-    };
-
-    // Get beats with pagination
-    const beats = await Beat.find(filter)
-      .populate('producer', 'name username')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
-
-    // Get total count
-    const total = await Beat.countDocuments(filter);
-
-    res.status(200).json({
-      success: true,
-      count: beats.length,
-      total,
-      totalPages: Math.ceil(total / parseInt(limit)),
-      currentPage: parseInt(page),
-      data: beats
-    });
-  } catch (error) {
-    console.error('Error fetching producer beats:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching producer beats',
-      error: error.message
-    });
-  }
-});
-// Create new beat (authorized route) with Cloudinary upload
+// ── POST / — upload new beat (3 files) ───────────────────────────────────────
 router.post('/', authenticateUser, upload.fields([
-  { name: 'audio', maxCount: 1 },
-  { name: 'coverImage', maxCount: 1 }
+  { name: 'audio',      maxCount: 1 }, // tagged MP3  — required, PUBLIC
+  { name: 'audioWav',   maxCount: 1 }, // full WAV    — required, PRIVATE
+  { name: 'audioStems', maxCount: 1 }, // stems ZIP   — optional, PRIVATE
+  { name: 'coverImage', maxCount: 1 }, // cover art   — required, PUBLIC
 ]), handleMulterError, async (req, res) => {
   try {
-    // Check user's upload limit based on subscription
+    // ── Auth / limits ───────────────────────────────────────────────────────
     const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // Count user's existing beats
-    const beatCount = await Beat.countDocuments({ producer: req.user.id });
-
-    // Get upload limit from user's subscription (default to 5 if not defined)
+    const beatCount   = await Beat.countDocuments({ producer: req.user.id });
     const uploadLimit = user.subscription?.uploadLimit || 5;
-
-    // Check if user has reached their upload limit
     if (beatCount >= uploadLimit) {
+      cleanupTempFiles(req.files);
       return res.status(403).json({
-        message: `You've reached your upload limit of ${uploadLimit} beats. Please upgrade your subscription to upload more.`
+        message: `You've reached your upload limit of ${uploadLimit} beats. Please upgrade your subscription.`,
       });
     }
 
-    // Process tags if provided
-    let tags = [];
-    if (req.body.tags) {
-      tags = Array.isArray(req.body.tags)
-        ? req.body.tags
-        : req.body.tags.split(',').map(tag => tag.trim());
+    // ── Validate required fields ────────────────────────────────────────────
+    const { title, genre, price, licenseTypes, bpm, key, tags, description } = req.body;
+    if (!title || !genre || !price || !licenseTypes) {
+      cleanupTempFiles(req.files);
+      return res.status(400).json({ message: 'title, genre, price, and licenseTypes are required' });
     }
 
-    // Validate required fields
-    if (!req.body.title || !req.body.genre || !req.body.price || !req.body.licenseTypes) {
-      return res.status(400).json({ message: 'Missing required fields' });
+    // ── Validate required files ─────────────────────────────────────────────
+    if (!req.files?.audio || !req.files?.audioWav || !req.files?.coverImage) {
+      cleanupTempFiles(req.files);
+      return res.status(400).json({
+        message: 'Three files are required: tagged MP3 (audio), full WAV (audioWav), and cover image (coverImage). Stems ZIP (audioStems) is optional.',
+      });
     }
 
-    // Validate files
-    if (!req.files.audio || !req.files.coverImage) {
-      return res.status(400).json({ message: 'Both audio file and cover image are required' });
-    }
-
-    // Upload files to Cloudinary
-    const audioFile = req.files.audio[0];
-    const imageFile = req.files.coverImage[0];
-
-    console.log(`⏳ Uploading audio to Cloudinary: ${audioFile.path}`);
+    // ── 1. Tagged MP3 → PUBLIC (used for streaming on explore page) ─────────
+    console.log('⏳ Uploading tagged MP3 (public)...');
     const audioResult = await uploadToCloudinary(
-      audioFile.path,
-      `dhuun/audio/${req.user.id}`
+      req.files.audio[0].path,
+      `dhuun/audio/preview/${req.user.id}`,
+      'video',
+      'upload', // public
     );
 
-    console.log(`⏳ Uploading cover image to Cloudinary: ${imageFile.path}`);
-    const imageResult = await uploadToCloudinary(
-      imageFile.path,
-      `dhuun/images/${req.user.id}`
+    // ── 2. Full WAV → PRIVATE (premium + exclusive buyers only) ─────────────
+    console.log('⏳ Uploading full WAV (private)...');
+    const wavResult = await uploadToCloudinary(
+      req.files.audioWav[0].path,
+      `dhuun/audio/wav/${req.user.id}`,
+      'video',
+      'authenticated', // private — signed URL required to access
     );
-    let licenseTypes = [];
-    if (req.body.licenseTypes) {
-      try {
-        licenseTypes = JSON.parse(req.body.licenseTypes);
-      } catch (error) {
-        console.error('Error parsing license types:', error);
-      }
+
+    // ── 3. Stems ZIP → PRIVATE (exclusive buyers only) — optional ───────────
+    let stemsPublicId = null;
+    if (req.files.audioStems?.[0]) {
+      console.log('⏳ Uploading stems ZIP (private)...');
+      const stemsResult = await uploadToCloudinary(
+        req.files.audioStems[0].path,
+        `dhuun/audio/stems/${req.user.id}`,
+        'raw',           // ZIP files must use resource_type: raw
+        'authenticated', // private
+      );
+      stemsPublicId = stemsResult.public_id;
     }
 
-    // Create a new beat with Cloudinary URLs and public IDs
+    // ── 4. Cover image → PUBLIC ──────────────────────────────────────────────
+    console.log('⏳ Uploading cover image (public)...');
+    const imageResult = await uploadToCloudinary(
+      req.files.coverImage[0].path,
+      `dhuun/images/${req.user.id}`,
+      'image',
+      'upload', // public
+    );
+
+    // ── Parse tags & license types ───────────────────────────────────────────
+    const processedTags = tags
+      ? (Array.isArray(tags) ? tags : tags.split(',').map(t => t.trim())).filter(Boolean)
+      : [];
+
+    let parsedLicenseTypes = [];
+    try {
+      parsedLicenseTypes = JSON.parse(licenseTypes);
+    } catch {
+      console.error('Error parsing licenseTypes JSON');
+    }
+
+    // ── Save beat ────────────────────────────────────────────────────────────
+    // IMPORTANT: audioWavPublicId and audioStemsPublicId store the Cloudinary
+    // public ID only — never the URL. URLs are generated on-demand (signed, expiring).
     const newBeat = new Beat({
-      title: req.body.title,
-      producer: req.user.id,
-      genre: req.body.genre,
-      bpm: req.body.bpm || null,
-      key: req.body.key || null,
-      tags: tags,
-      price: parseFloat(req.body.price),
-      licenseType: licenseTypes,
-      description: req.body.description || '',
-      // Store Cloudinary URLs
-      isPublished: true,
-      audioFile: audioResult.secure_url,
+      title:       title.trim(),
+      producer:    req.user.id,
+      genre:       genre.trim(),
+      bpm:         bpm ? parseInt(bpm) : null,
+      key:         key || null,
+      tags:        processedTags,
+      price:       parseFloat(price),
+      licenseTypes: parsedLicenseTypes,
+      description: description?.trim() || '',
+      isPublished:  true,
+
+      // Public MP3 — URL is safe to store and serve to the client
+      audioFile:    audioResult.secure_url,
       audioPublicId: audioResult.public_id,
-      coverImage: imageResult.secure_url,
-      imagePublicId: imageResult.public_id
+
+      // Private WAV — store public ID only, never the URL
+      audioWavPublicId: wavResult.public_id,
+
+      // Private Stems — store public ID only (null if not uploaded)
+      audioStemsPublicId: stemsPublicId,
+
+      // Public cover image
+      coverImage:  imageResult.secure_url,
+      imagePublicId: imageResult.public_id,
     });
 
-    // Save the beat
     await newBeat.save();
+    console.log(`✅ Beat saved: ${newBeat._id}`);
 
     res.status(201).json({
       message: 'Beat uploaded successfully',
       beat: {
-        id: newBeat._id,
-        title: newBeat.title,
-        genre: newBeat.genre,
-        price: newBeat.price,
-        audioFile: newBeat.audioFile,
-        coverImage: newBeat.coverImage
-      }
+        id:           newBeat._id,
+        title:        newBeat.title,
+        genre:        newBeat.genre,
+        price:        newBeat.price,
+        audioFile:    newBeat.audioFile,   // public MP3 URL (safe to send)
+        coverImage:   newBeat.coverImage,
+        hasWav:       true,                // always true — WAV is required
+        hasStems:     !!stemsPublicId,     // true if stems were uploaded
+      },
     });
+
   } catch (error) {
     console.error('Error uploading beat:', error);
-
-    // Clean up temp files if they still exist
-    if (req.files) {
-      Object.keys(req.files).forEach(key => {
-        req.files[key].forEach(file => {
-          if (fs.existsSync(file.path)) {
-            fs.unlinkSync(file.path);
-          }
-        });
-      });
-    }
-
+    cleanupTempFiles(req.files);
     res.status(500).json({ message: 'Server error while uploading beat' });
   }
 });
 
-// Update a beat (authorized route)
-router.put('/:id', authenticateUser, upload.fields([
-  { name: 'audio', maxCount: 1 },
-  { name: 'coverImage', maxCount: 1 }
-]), handleMulterError, async (req, res) => {
+// ── GET /:orderId/download/:beatId — secure download (auth required) ──────────
+// Returns signed, expiring URLs based on the buyer's license tier.
+// basic    → tagged MP3 public URL (still gated by order ownership check)
+// premium  → MP3 + signed WAV URL (10 min expiry)
+// exclusive→ MP3 + signed WAV URL + signed Stems URL (10 min expiry each)
+router.get('/:orderId/download/:beatId', authenticateUser, async (req, res) => {
   try {
-    const beat = await Beat.findById(req.params.id);
+    const { orderId, beatId } = req.params;
 
+    // Lazy import to avoid circular dependency
+    const Order = (await import('../models/order.js')).default;
+
+    // Verify this user actually purchased this beat
+    const order = await Order.findOne({ _id: orderId, user: req.user.id });
+    if (!order) {
+      return res.status(403).json({ message: 'Order not found or unauthorized' });
+    }
+
+    // Find the specific item in the order
+    const item = order.items.find(
+      i => (i.beat?.toString() ?? i.beatId?.toString()) === beatId
+    );
+    if (!item) {
+      return res.status(403).json({ message: 'This beat was not part of that order' });
+    }
+
+    const beat = await Beat.findById(beatId)
+      .select('audioFile audioPublicId audioWavPublicId audioStemsPublicId title');
     if (!beat) {
       return res.status(404).json({ message: 'Beat not found' });
     }
 
-    // Check if user is the producer of the beat
+    const license = (item.license || 'basic').toLowerCase();
+    const urls    = {};
+
+    // All tiers get the tagged MP3 (public URL, but access is controlled here)
+    urls.mp3 = beat.audioFile;
+
+    // Premium & Exclusive → full WAV (private, signed URL)
+    if ((license === 'premium' || license === 'exclusive') && beat.audioWavPublicId) {
+      urls.wav = generateSignedDownloadUrl(beat.audioWavPublicId, 'video');
+    }
+
+    // Exclusive only → stems ZIP (private, signed URL)
+    if (license === 'exclusive' && beat.audioStemsPublicId) {
+      urls.stems = generateSignedDownloadUrl(beat.audioStemsPublicId, 'raw');
+    }
+
+    return res.json({
+      success:   true,
+      title:     beat.title,
+      license,
+      urls,        // only contains what this license tier allows
+      expiresIn: 600, // seconds — client should not cache WAV/stems URLs
+    });
+
+  } catch (error) {
+    console.error('[download]', error);
+    res.status(500).json({ message: 'Failed to generate download link' });
+  }
+});
+
+// ── PUT /:id — update beat (authorized) ──────────────────────────────────────
+router.put('/:id', authenticateUser, upload.fields([
+  { name: 'audio',      maxCount: 1 },
+  { name: 'audioWav',   maxCount: 1 },
+  { name: 'audioStems', maxCount: 1 },
+  { name: 'coverImage', maxCount: 1 },
+]), handleMulterError, async (req, res) => {
+  try {
+    const beat = await Beat.findById(req.params.id);
+    if (!beat) return res.status(404).json({ message: 'Beat not found' });
+
     if (beat.producer.toString() !== req.user.id) {
+      cleanupTempFiles(req.files);
       return res.status(403).json({ message: 'You are not authorized to update this beat' });
     }
 
-    // Process tags if provided
-    let tags = beat.tags;
+    // Update metadata fields
+    if (req.body.title)       beat.title       = req.body.title.trim();
+    if (req.body.genre)       beat.genre       = req.body.genre.trim();
+    if (req.body.bpm)         beat.bpm         = parseInt(req.body.bpm);
+    if (req.body.key)         beat.key         = req.body.key;
+    if (req.body.price)       beat.price       = parseFloat(req.body.price);
+    if (req.body.description) beat.description = req.body.description.trim();
     if (req.body.tags) {
-      tags = Array.isArray(req.body.tags)
+      beat.tags = Array.isArray(req.body.tags)
         ? req.body.tags
-        : req.body.tags.split(',').map(tag => tag.trim());
+        : req.body.tags.split(',').map(t => t.trim()).filter(Boolean);
+    }
+    if (req.body.licenseTypes) {
+      try { beat.licenseTypes = JSON.parse(req.body.licenseTypes); } catch {}
     }
 
-    // Update allowed fields
-    if (req.body.title) beat.title = req.body.title;
-    if (req.body.genre) beat.genre = req.body.genre;
-    if (req.body.bpm) beat.bpm = req.body.bpm;
-    if (req.body.key) beat.key = req.body.key;
-    if (req.body.price) beat.price = parseFloat(req.body.price);
-    if (req.body.licenseType) beat.licenseType = req.body.licenseType;
-    if (req.body.description) beat.description = req.body.description;
-    beat.tags = tags;
-
-    // Handle file updates if new files are provided
     if (req.files) {
-      // Update audio file if provided
-      if (req.files.audio && req.files.audio[0]) {
-        const audioFile = req.files.audio[0];
-
-        // Upload new audio to Cloudinary
-        const audioResult = await uploadToCloudinary(
-          audioFile.path,
-          `dhuun/audio/${req.user.id}`
-        );
-
-        // Delete old audio file from Cloudinary if it exists
-        if (beat.audioPublicId) {
-          await deleteFromCloudinary(beat.audioPublicId, 'video');
-        }
-
-        // Update beat with new audio info
-        beat.audioFile = audioResult.secure_url;
-        beat.audioPublicId = audioResult.public_id;
+      // Replace tagged MP3 (public)
+      if (req.files.audio?.[0]) {
+        if (beat.audioPublicId) await deleteFromCloudinary(beat.audioPublicId, 'video', 'upload');
+        const r = await uploadToCloudinary(req.files.audio[0].path, `dhuun/audio/preview/${req.user.id}`, 'video', 'upload');
+        beat.audioFile    = r.secure_url;
+        beat.audioPublicId = r.public_id;
       }
 
-      // Update cover image if provided
-      if (req.files.coverImage && req.files.coverImage[0]) {
-        const imageFile = req.files.coverImage[0];
+      // Replace full WAV (private)
+      if (req.files.audioWav?.[0]) {
+        if (beat.audioWavPublicId) await deleteFromCloudinary(beat.audioWavPublicId, 'video', 'authenticated');
+        const r = await uploadToCloudinary(req.files.audioWav[0].path, `dhuun/audio/wav/${req.user.id}`, 'video', 'authenticated');
+        beat.audioWavPublicId = r.public_id; // store public ID only
+      }
 
-        // Upload new image to Cloudinary
-        const imageResult = await uploadToCloudinary(
-          imageFile.path,
-          `dhuun/images/${req.user.id}`
-        );
+      // Replace stems ZIP (private)
+      if (req.files.audioStems?.[0]) {
+        if (beat.audioStemsPublicId) await deleteFromCloudinary(beat.audioStemsPublicId, 'raw', 'authenticated');
+        const r = await uploadToCloudinary(req.files.audioStems[0].path, `dhuun/audio/stems/${req.user.id}`, 'raw', 'authenticated');
+        beat.audioStemsPublicId = r.public_id; // store public ID only
+      }
 
-        // Delete old image from Cloudinary if it exists
-        if (beat.imagePublicId) {
-          await deleteFromCloudinary(beat.imagePublicId, 'image');
-        }
-
-        // Update beat with new image info
-        beat.coverImage = imageResult.secure_url;
-        beat.imagePublicId = imageResult.public_id;
+      // Replace cover image (public)
+      if (req.files.coverImage?.[0]) {
+        if (beat.imagePublicId) await deleteFromCloudinary(beat.imagePublicId, 'image', 'upload');
+        const r = await uploadToCloudinary(req.files.coverImage[0].path, `dhuun/images/${req.user.id}`, 'image', 'upload');
+        beat.coverImage  = r.secure_url;
+        beat.imagePublicId = r.public_id;
       }
     }
 
-    // Save the updated beat
     await beat.save();
 
     res.json({
       message: 'Beat updated successfully',
       beat: {
-        id: beat._id,
-        title: beat.title,
-        genre: beat.genre,
-        price: beat.price,
+        id:        beat._id,
+        title:     beat.title,
+        genre:     beat.genre,
+        price:     beat.price,
         audioFile: beat.audioFile,
-        coverImage: beat.coverImage
-      }
+        coverImage: beat.coverImage,
+        hasWav:    !!beat.audioWavPublicId,
+        hasStems:  !!beat.audioStemsPublicId,
+      },
     });
   } catch (error) {
     console.error('Error updating beat:', error);
-
-    // Clean up temp files if they still exist
-    if (req.files) {
-      Object.keys(req.files).forEach(key => {
-        req.files[key].forEach(file => {
-          if (fs.existsSync(file.path)) {
-            fs.unlinkSync(file.path);
-          }
-        });
-      });
-    }
-
+    cleanupTempFiles(req.files);
     res.status(500).json({ message: 'Server error while updating beat' });
   }
 });
 
-// Delete a beat (authorized route)
+// ── DELETE /:id — delete beat (authorized) ────────────────────────────────────
 router.delete('/:id', authenticateUser, async (req, res) => {
   try {
     const beat = await Beat.findById(req.params.id);
+    if (!beat) return res.status(404).json({ message: 'Beat not found' });
 
-    if (!beat) {
-      return res.status(404).json({ message: 'Beat not found' });
-    }
-
-    // Check if user is the producer of the beat
     if (beat.producer.toString() !== req.user.id) {
       return res.status(403).json({ message: 'You are not authorized to delete this beat' });
     }
 
-    // Delete files from Cloudinary
-    try {
-      // Delete audio file from Cloudinary
-      if (beat.audioPublicId) {
-        await deleteFromCloudinary(beat.audioPublicId, 'video');
-      }
+    // Delete all Cloudinary assets — failures are logged but don't block deletion
+    await Promise.allSettled([
+      beat.audioPublicId      && deleteFromCloudinary(beat.audioPublicId,      'video', 'upload'),
+      beat.audioWavPublicId   && deleteFromCloudinary(beat.audioWavPublicId,   'video', 'authenticated'),
+      beat.audioStemsPublicId && deleteFromCloudinary(beat.audioStemsPublicId, 'raw',   'authenticated'),
+      beat.imagePublicId      && deleteFromCloudinary(beat.imagePublicId,      'image', 'upload'),
+    ].filter(Boolean));
 
-      // Delete image file from Cloudinary
-      if (beat.imagePublicId) {
-        await deleteFromCloudinary(beat.imagePublicId, 'image');
-      }
-    } catch (cloudinaryError) {
-      console.error('Error deleting files from Cloudinary:', cloudinaryError);
-      // Continue with beat deletion even if Cloudinary deletion fails
-    }
-
-    // Delete the beat from the database
     await Beat.findByIdAndDelete(req.params.id);
-
     res.json({ message: 'Beat deleted successfully' });
+
   } catch (error) {
     console.error('Error deleting beat:', error);
     res.status(500).json({ message: 'Server error while deleting beat' });
   }
 });
 
-
-// Like a beat (authorized route)
+// ── POST /:id/like — like a beat ──────────────────────────────────────────────
 router.post('/:id/like', authenticateUser, async (req, res) => {
   try {
     const beat = await Beat.findById(req.params.id);
-
-    if (!beat) {
-      return res.status(404).json({ message: 'Beat not found' });
-    }
-
-    // Increment likes
+    if (!beat) return res.status(404).json({ message: 'Beat not found' });
     beat.likes = (beat.likes || 0) + 1;
     await beat.save();
-
     res.json({ likes: beat.likes });
   } catch (error) {
     console.error('Error liking beat:', error);
     res.status(500).json({ message: 'Server error while liking beat' });
-  }
-});
-
-// Add this new route to beatRoutes.js
-// Get beats by specific producer ID (public route)
-router.get('/producer/:producerId', async (req, res) => {
-  try {
-    const { producerId } = req.params;
-    const { limit = 20, page = 1 } = req.query;
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-
-    // Build filter
-    const filter = {
-      producer: producerId,
-      // isPublished: true,
-      isExclusiveSold: { $ne: true }
-    };
-
-    // Get beats with pagination
-    const beats = await Beat.find(filter)
-      .populate('producer', 'name username')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
-
-    // Get total count
-    const total = await Beat.countDocuments(filter);
-
-    res.status(200).json({
-      success: true,
-      count: beats.length,
-      total,
-      totalPages: Math.ceil(total / parseInt(limit)),
-      currentPage: parseInt(page),
-      data: beats
-    });
-  } catch (error) {
-    console.error('Error fetching producer beats:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching producer beats',
-      error: error.message
-    });
   }
 });
 

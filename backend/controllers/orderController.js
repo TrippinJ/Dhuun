@@ -8,6 +8,7 @@ import { addTransaction } from './walletController.js';
 import { LICENSE_CONFIG, REVENUE_SHARE } from "../utils/licenseConfig.js";
 import { generateLicenseContract } from "../utils/contractGenerator.js";
 import { sendContractEmail } from "../utils/emailService.js";
+import { generateSignedDownloadUrl } from '../utils/cloudinaryConfig.js';
 
 // Create a new order
 export const createOrder = async (req, res) => {
@@ -365,5 +366,84 @@ export const getProducerSalesAnalytics = async (req, res) => {
   } catch (error) {
     console.error('Error fetching producer analytics:', error);
     res.status(500).json({ message: 'Failed to fetch analytics' });
+  }
+};
+
+import { generateSignedDownloadUrl } from '../utils/cloudinaryConfig.js';
+
+/**
+ * GET /api/orders/:orderId/download/:beatId
+ * Returns a 10-minute signed download URL based on the license tier.
+ * basic    → tagged MP3 (public, but still auth-gated via order check)
+ * premium  → full WAV (private, signed URL)
+ * exclusive→ WAV + Stems (both private, signed URLs)
+ */
+export const getSecureDownloadUrl = async (req, res) => {
+  try {
+    const { orderId, beatId } = req.params;
+
+    // 1. Verify user actually owns this purchase
+    const order = await Order.findOne({
+      _id: orderId,
+      user: req.user.id,
+    }).populate('items.beat');
+
+    if (!order) {
+      return res.status(403).json({ message: 'Order not found or unauthorized' });
+    }
+
+    const item = order.items.find(
+      i => i.beat?._id.toString() === beatId || i.beat?.toString() === beatId
+    );
+
+    if (!item) {
+      return res.status(403).json({ message: 'Beat not part of this order' });
+    }
+
+    const beat = await Beat.findById(beatId)
+      .select('audioFile audioPublicId audioWavPublicId audioStemsPublicId title');
+
+    if (!beat) {
+      return res.status(404).json({ message: 'Beat not found' });
+    }
+
+    const license = item.license?.toLowerCase();
+    const urls = {};
+
+    // basic → just the tagged MP3 (public file, but access is controlled here)
+    if (license === 'basic') {
+      urls.mp3 = beat.audioFile; // public Cloudinary URL is fine for basic
+    }
+
+    // premium → WAV + MP3
+    if (license === 'premium') {
+      urls.mp3 = beat.audioFile;
+      if (beat.audioWavPublicId) {
+        urls.wav = generateSignedDownloadUrl(beat.audioWavPublicId, 'video');
+      }
+    }
+
+    // exclusive → WAV + MP3 + Stems
+    if (license === 'exclusive') {
+      urls.mp3 = beat.audioFile;
+      if (beat.audioWavPublicId) {
+        urls.wav = generateSignedDownloadUrl(beat.audioWavPublicId, 'video');
+      }
+      if (beat.audioStemsPublicId) {
+        urls.stems = generateSignedDownloadUrl(beat.audioStemsPublicId, 'raw');
+      }
+    }
+
+    return res.json({
+      success:  true,
+      title:    beat.title,
+      license,
+      urls,          // only contains what this license tier allows
+      expiresIn: 600, // seconds — tell frontend to not cache these
+    });
+
+  } catch (err) {
+    console.error('[getSecureDownloadUrl]', err);
+    res.status(500).json({ message: 'Failed to generate download link' });
   }
 };

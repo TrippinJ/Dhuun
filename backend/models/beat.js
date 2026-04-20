@@ -1,25 +1,25 @@
 import mongoose from "mongoose";
 
 const BeatSchema = new mongoose.Schema({
-  title: { 
-    type: String, 
+  title: {
+    type: String,
     required: [true, 'Please provide a title'],
     trim: true
   },
-  genre: { 
-    type: String, 
+  genre: {
+    type: String,
     required: [true, 'Please specify the genre'],
     trim: true
   },
-  bpm: { 
+  bpm: {
     type: Number
   },
-  key: { 
+  key: {
     type: String,
     trim: true
   },
-  price: { 
-    type: Number, 
+  price: {
+    type: Number,
     required: true,
     min: 0
   },
@@ -31,41 +31,47 @@ const BeatSchema = new mongoose.Schema({
       selected: { type: Boolean, default: true }
     }],
     default: []
-    
+
   },
-  description: { 
+  description: {
     type: String,
     trim: true
   },
-  producer: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: "User", 
-    required: true 
+  producer: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true
   },
   // Cloudinary audio file URL
-  audioFile: { 
-    type: String, 
+  audioFile: {
+    type: String,
     required: true
   },
   // Cloudinary audio file public ID for deletion
-  audioPublicId: { 
-    type: String, 
+  audioPublicId: {
+    type: String,
     required: true
   },
   // Cloudinary cover image URL
-  coverImage: { 
-    type: String, 
+  coverImage: {
+    type: String,
     required: true
   },
+
+  // Full WAV — private, buyers with premium/exclusive license
+  audioWavPublicId: { type: String, default: null }, // NEVER store URL
+  // Stems ZIP — private, exclusive license only  
+  audioStemsPublicId: { type: String, default: null }, // NEVER store URL
+
   // Cloudinary cover image public ID for deletion
-  imagePublicId: { 
-    type: String, 
+  imagePublicId: {
+    type: String,
     required: true
   },
   tags: [String],
-  plays: { 
-    type: Number, 
-    default: 0 
+  plays: {
+    type: Number,
+    default: 0
   },
   likes: {
     type: Number,
@@ -75,38 +81,38 @@ const BeatSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  exclusiveSoldTo: { 
-    type: mongoose.Schema.Types.ObjectId, 
+  exclusiveSoldTo: {
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     default: null
   },
-  exclusiveSoldDate: { 
+  exclusiveSoldDate: {
     type: Date,
     default: null
   },
-  exclusiveOrderId: { 
-    type: mongoose.Schema.Types.ObjectId, 
+  exclusiveOrderId: {
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'Order',
     default: null
   },
   isFeatured: {
     type: Boolean,
-    default: false  
+    default: false
   },
   // Track purchases
   purchases: {
     type: Number,
     default: 0
   }
-}, { 
+}, {
   timestamps: true
 });
 
 // Add text search index
-BeatSchema.index({ 
-  title: 'text', 
-  genre: 'text', 
-  tags: 'text' 
+BeatSchema.index({
+  title: 'text',
+  genre: 'text',
+  tags: 'text'
 });
 
 const Beat = mongoose.model("Beat", BeatSchema);

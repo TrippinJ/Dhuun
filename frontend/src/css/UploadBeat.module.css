@@ -1,782 +1,346 @@
+/* ─── Base Container ─────────────────────────────────────────────────────── */
 .uploadContainer {
-  max-width: 900px;
+  max-width: 860px;
   margin: 0 auto;
-  padding: 30px 20px;
+  padding: 32px 20px;
 }
 
 .uploadForm {
-  background-color: #222222;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(160deg, #1a1a1a 0%, #1e1e1e 100%);
+  border-radius: 16px;
+  border: 1px solid #2a2a2a;
   overflow: hidden;
   color: #f0f0f0;
 }
 
+/* ─── Section ────────────────────────────────────────────────────────────── */
 .formSection {
-  padding: 25px;
-  border-bottom: 1px solid #333;
+  padding: 28px 32px;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.formSection:last-of-type {
+  border-bottom: none;
 }
 
 .formSection h3 {
-  margin-top: 0;
-  margin-bottom: 20px;
-  font-size: 1.2rem;
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  font-weight: 600;
   color: #ffba00;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
+.sectionNote {
+  font-size: 0.82rem;
+  color: #888;
+  margin: 0 0 22px;
+  line-height: 1.5;
+}
+
+/* ─── File Upload Grid ───────────────────────────────────────────────────── */
 .fileUploads {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-}
-
-.fileUpload {
-  flex: 1;
-  min-width: 250px;
-}
-
-.fileUpload label {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border: 2px dashed #ffba00;
-  border-radius: 8px;
-  padding: 30px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  background-color: rgba(255, 186, 0, 0.05);
-}
-
-.fileUpload label:hover {
-  background-color: rgba(255, 186, 0, 0.1);
-}
-
-.fileUpload input[type="file"] {
-  display: none;
-}
-
-.icon {
-  font-size: 2rem;
-  margin-bottom: 10px;
-  color: #ffba00;
-}
-
-.preview {
-  margin-top: 15px;
-  border-radius: 8px;
-  overflow: hidden;
-  background-color: #333;
-  padding: 10px;
-}
-
-.preview img {
-  width: 100%;
-  height: auto;
-  max-height: 200px;
-  object-fit: contain;
-  display: block;
-  border-radius: 8px;
-}
-
-.preview audio {
-  width: 100%;
-}
-
-.formGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 20px;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
 }
 
-.formGroup {
-  margin-bottom: 20px;
+@media (max-width: 640px) {
+  .fileUploads { grid-template-columns: 1fr; }
 }
 
-.formGroup label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 500;
-  color: #f0f0f0;
+/* ─── Individual File Slot ───────────────────────────────────────────────── */
+.fileUpload {
+  background: #252525;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 18px;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.formGroup input,
-.formGroup select,
-.formGroup textarea {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #444;
-  border-radius: 6px;
-  font-size: 1rem;
-  transition: border-color 0.3s;
-  background-color: #333;
+.fileUpload:hover {
+  border-color: #444;
+}
+
+/* ─── File Slot Header (icon + label + hint) ─────────────────────────────── */
+.fileUploadLabel {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.fileUploadLabel .icon {
+  font-size: 1.3rem;
+  color: #ffba00;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.fileUploadLabel strong {
+  font-size: 0.9rem;
   color: #fff;
-}
-
-.formGroup input:focus,
-.formGroup select:focus,
-.formGroup textarea:focus {
-  border-color: #ffba00;
-  outline: none;
-}
-
-.submitSection {
-  padding: 25px;
-  display: flex;
-  justify-content: flex-end;
-  gap: 15px;
-}
-
-.submitBtn {
-  background-color: #ffba00;
-  color: #0f0f0f;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 6px;
-  font-size: 1rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  transition: background-color 0.3s;
   font-weight: 600;
 }
 
-.submitBtn:hover {
-  background-color: #e48f0f;
-  transform: scale(1.02);
+.fileHint {
+  font-size: 0.75rem;
+  color: #777;
+  margin: 3px 0 0;
+  line-height: 1.4;
 }
 
-.submitBtn:disabled {
-  background-color: #666;
-  cursor: not-allowed;
-  transform: none;
+/* ─── Required / Optional labels ────────────────────────────────────────── */
+.required {
+  color: #ff5a5a;
+  font-weight: 700;
 }
 
-.errorMessage,
-.successMessage {
-  padding: 15px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  font-weight: 500;
-}
-
-.errorMessage {
-  background-color: rgba(255, 59, 48, 0.1);
-  border: 1px solid rgba(255, 59, 48, 0.3);
-  color: #ff3b30;
-}
-
-.successMessage {
-  background-color: rgba(52, 199, 89, 0.1);
-  border: 1px solid rgba(52, 199, 89, 0.3);
-  color: #34c759;
-}
-
-.fieldError {
-  color: #ff3b30;
+.optional {
+  color: #888;
   font-size: 0.8rem;
-  margin-top: 5px;
+  font-weight: 400;
 }
 
-.errorInput,
-.errorBorder {
-  border-color: #ff3b30 !important;
-}
-
-.filePreview {
-  background-color: #333;
+/* ─── File Input Trigger Button ──────────────────────────────────────────── */
+.fileInputLabel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 11px 16px;
+  border: 1.5px dashed #444;
   border-radius: 8px;
-  padding: 15px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #aaa;
+  background: transparent;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+  text-align: center;
+}
+
+.fileInputLabel:hover {
+  border-color: #ffba00;
+  color: #ffba00;
+  background: rgba(255, 186, 0, 0.04);
+}
+
+.fileInputLabel.errorBorder {
+  border-color: #ff5a5a;
+  color: #ff5a5a;
+}
+
+/* ─── File Preview Card ──────────────────────────────────────────────────── */
+.filePreview {
+  background: #1e1e1e;
+  border-radius: 8px;
+  padding: 12px 14px;
   position: relative;
 }
 
 .fileInfo {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-right: 32px; /* space for remove button */
+}
+
+.fileIcon {
+  font-size: 1.1rem;
+  color: #ffba00;
+  flex-shrink: 0;
+}
+
+.fileName {
+  font-size: 0.82rem;
+  color: #ddd;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
 }
 
 .fileSize {
-  font-size: 0.8rem;
-  color: #999;
+  font-size: 0.75rem;
+  color: #666;
 }
 
+/* ─── File Type Badges ───────────────────────────────────────────────────── */
+.fileBadge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.fileBadge[data-type="mp3"] {
+  background: rgba(255, 186, 0, 0.15);
+  color: #ffba00;
+  border: 1px solid rgba(255, 186, 0, 0.3);
+}
+
+.fileBadge[data-type="wav"] {
+  background: rgba(99, 179, 237, 0.15);
+  color: #63b3ed;
+  border: 1px solid rgba(99, 179, 237, 0.3);
+}
+
+.fileBadge[data-type="zip"] {
+  background: rgba(154, 230, 180, 0.15);
+  color: #9ae6b4;
+  border: 1px solid rgba(154, 230, 180, 0.3);
+}
+
+.privateBadge {
+  font-size: 0.7rem;
+  color: #9ae6b4;
+  flex-shrink: 0;
+}
+
+/* ─── Remove Button ──────────────────────────────────────────────────────── */
 .removeFile {
   position: absolute;
   top: 10px;
   right: 10px;
-  background-color: rgba(255, 59, 48, 0.8);
-  color: white;
-  border: none;
-  width: 25px;
-  height: 25px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
+  background: rgba(255, 90, 90, 0.15);
+  color: #ff5a5a;
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 0.7rem;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background 0.2s, transform 0.15s;
+  flex-shrink: 0;
 }
 
 .removeFile:hover {
-  background-color: #ff3b30;
+  background: rgba(255, 90, 90, 0.3);
+  transform: scale(1.1);
 }
 
-/* Add these styles to your UploadBeat.module.css file */
-
-.licenseOptions {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 20px;
-  margin-top: 15px;
-}
-
-.licenseOption {
-  background-color: #2A2A2A;
-  border-radius: 10px;
-  padding: 20px;
-  border: 1px solid #444444;
-  transition: all 0.3s ease;
-}
-
-.licenseOption.selectedLicense {
-  border-color: #7B2CBF;
-  box-shadow: 0 0 10px rgba(123, 44, 191, 0.2);
-}
-
-.licenseHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.licenseHeader h4 {
-  margin: 0;
-  color: #FFFFFF;
-}
-
-.licenseToggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  color: #AAAAAA;
-  font-size: 0.9rem;
-}
-
-.licenseToggle input {
-  margin: 0;
-  cursor: pointer;
-}
-
-.licenseContent {
-  padding-top: 15px;
-  border-top: 1px solid #333333;
-}
-
-.licensePrice {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.licensePrice label {
-  color: #AAAAAA;
-  font-size: 0.9rem;
-}
-
-.licensePrice input {
-  padding: 10px;
-  background-color: #333333;
-  border: 1px solid #444444;
-  border-radius: 5px;
-  color: #FFFFFF;
-  transition: all 0.3s ease;
-}
-
-.licensePrice input:focus {
-  border-color: #7B2CBF;
-  outline: none;
-}
-
-.licensePrice input:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Enhanced License Feature Styles */
-.licenseSection {
-  margin-top: 20px;
-}
-
-.licenseTypesContainer {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
-  margin-top: 15px;
-}
-
-.licenseCard {
-  background-color: #2A2A2A;
-  border: 2px solid #444444;
-  border-radius: 12px;
-  padding: 20px;
-  transition: all 0.3s ease;
-  position: relative;
-  cursor: pointer;
-}
-
-.licenseCard:hover {
-  border-color: #7B2CBF;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(123, 44, 191, 0.15);
-}
-
-.licenseCard.selected {
-  border-color: #7B2CBF;
-  background-color: rgba(123, 44, 191, 0.08);
-  box-shadow: 0 0 15px rgba(123, 44, 191, 0.2);
-}
-
-.licenseCardHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 15px;
-}
-
-.licenseInfo {
-  flex: 1;
-}
-
-.licenseName {
-  color: #FFFFFF;
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 5px;
-}
-
-.licenseType {
-  color: #AAAAAA;
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.licenseToggleContainer {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.licenseCheckbox {
-  width: 18px;
-  height: 18px;
-  border: 2px solid #666666;
-  border-radius: 4px;
-  background-color: transparent;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
-  outline: none;
-}
-
-.licenseCheckbox:checked {
-  background-color: #7B2CBF;
-  border-color: #7B2CBF;
-}
-
-.licenseCheckbox:checked::after {
-  content: '✓';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: white;
-  font-size: 12px;
-  font-weight: bold;
-}
-
-.licensePriceSection {
-  margin-bottom: 15px;
-}
-
-.licensePriceLabel {
-  color: #AAAAAA;
-  font-size: 0.9rem;
-  margin-bottom: 5px;
-  display: block;
-}
-
-.licensePriceInputContainer {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.licensePriceInput {
-  background-color: #333333;
-  border: 1px solid #555555;
-  border-radius: 6px;
-  padding: 8px 12px;
-  color: #FFFFFF;
-  font-size: 1rem;
-  font-weight: 600;
-  width: 100px;
-  transition: all 0.3s ease;
-}
-
-.licensePriceInput:focus {
-  border-color: #7B2CBF;
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(123, 44, 191, 0.2);
-}
-
-.licensePriceInput:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  background-color: #222222;
-}
-
-.currencySymbol {
-  position: absolute;
-  left: 8px;
-  color: #AAAAAA;
-  font-weight: 600;
-  pointer-events: none;
-}
-
-.licensePriceInput {
-  padding-left: 20px;
-}
-
-.licenseFeatures {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  border-top: 1px solid #333333;
-  padding-top: 15px;
-}
-
-.licenseFeature {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-  color: #CCCCCC;
-  font-size: 0.9rem;
-}
-
-.licenseFeature:last-child {
-  margin-bottom: 0;
-}
-
-.featureIcon {
-  color: #7B2CBF;
-  font-size: 0.8rem;
-  width: 12px;
-  height: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.licenseFeatureText {
-  flex: 1;
-}
-
-/* License validation states */
-.licenseCard.error {
-  border-color: #FF1A1A;
-  background-color: rgba(255, 26, 26, 0.05);
-}
-
-.licenseCard.disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.licenseCard.disabled:hover {
-  transform: none;
-  box-shadow: none;
-}
-
-/* License summary (optional) */
-.licenseSummary {
-  background-color: #1A1A1A;
-  border-radius: 8px;
-  padding: 15px;
-  margin-top: 20px;
-  border: 1px solid #333333;
-}
-
-.licenseSummaryTitle {
-  color: #FFFFFF;
-  font-size: 0.95rem;
-  font-weight: 600;
-  margin-bottom: 10px;
-}
-
-.licenseSummaryItem {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 5px;
-  font-size: 0.85rem;
-}
-
-.licenseSummaryName {
-  color: #CCCCCC;
-}
-
-.licenseSummaryPrice {
-  color: #7B2CBF;
-  font-weight: 600;
-}
-
-/* Add these styles for the license features */
-.licenseFeatures {
-  margin-top: 15px;
-  padding-top: 15px;
-  border-top: 1px solid #333333;
-}
-
-.licenseFeatures h5 {
-  color: #FFFFFF;
-  font-size: 0.9rem;
-  margin: 0 0 10px 0;
-  font-weight: 600;
-}
-
-.featuresList {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.featureItem {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-  color: #CCCCCC;
-  font-size: 0.85rem;
-}
-
-.featureItem:last-child {
-  margin-bottom: 0;
-}
-
-.featureIcon {
-  color: #7B2CBF;
-  font-weight: bold;
-  font-size: 0.8rem;
-  width: 12px;
-  height: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-/* Optional: Add some hover effects for better UX */
-.licenseOption:hover .featureIcon {
-  color: #8E44AD;
-}
-
-.licenseOption.selectedLicense .featureIcon {
-  color: #9C42E5;
-}
-
-/* Responsive adjustments for licenses */
-@media (max-width: 768px) {
-  .licenseTypesContainer {
-    grid-template-columns: 1fr;
-  }
-
-  .licenseCardHeader {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-
-  .licenseToggleContainer {
-    align-self: flex-end;
-  }
-}
-
-@media (max-width: 480px) {
-  .licenseCard {
-    padding: 15px;
-  }
-
-  .licensePriceInput {
-    width: 80px;
-    font-size: 0.9rem;
-  }
-}
-
-/* Enhanced file preview styles */
-.filePreview {
-  background-color: #222222;
-  border-radius: 10px;
-  padding: 20px;
-  margin-top: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-}
-
-.fileInfo {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-  font-size: 0.9rem;
-}
-
-.fileSize {
-  color: #AAAAAA;
-  font-weight: 500;
-}
-
+/* ─── Image Preview Actions ──────────────────────────────────────────────── */
 .previewActions {
   display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-bottom: 15px;
+  gap: 8px;
+  margin-top: 10px;
 }
 
-.removeFile,
 .cropButton {
-  background-color: transparent;
-  border: none;
-  color: #FFFFFF;
-  font-size: 0.9rem;
   display: flex;
   align-items: center;
   gap: 5px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: none;
+  background: rgba(123, 44, 191, 0.15);
+  color: #a855f7;
+  font-size: 0.8rem;
   cursor: pointer;
-  padding: 5px 10px;
-  border-radius: 4px;
-  transition: all 0.3s ease;
-}
-
-.removeFile {
-  background-color: rgba(255, 26, 26, 0.1);
-  color: #FF1A1A;
-}
-
-.removeFile:hover {
-  background-color: rgba(255, 26, 26, 0.2);
-}
-
-.cropButton {
-  background-color: rgba(123, 44, 191, 0.1);
-  color: #7B2CBF;
+  transition: background 0.2s;
 }
 
 .cropButton:hover {
-  background-color: rgba(123, 44, 191, 0.2);
+  background: rgba(123, 44, 191, 0.28);
 }
 
-/* Enhanced audio player */
-.audioPlayerContainer {
-  margin-top: 15px;
-  padding: 15px;
-  background-color: #1E1E1E;
+.imagePreviewContainer {
+  margin-top: 10px;
   border-radius: 8px;
-  border: 1px solid #333333;
+  overflow: hidden;
+}
+
+.imagePreview {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  display: block;
+}
+
+/* ─── Audio Player ───────────────────────────────────────────────────────── */
+.audioPlayerContainer {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: #181818;
+  border-radius: 8px;
+  border: 1px solid #2e2e2e;
 }
 
 .audioPlayerControls {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 12px;
 }
 
 .playPauseButton {
-  width: 40px;
-  height: 40px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  background-color: #7B2CBF;
-  color: white;
+  background: #ffba00;
+  color: #111;
   border: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  font-size: 0.85rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background 0.2s, transform 0.15s;
+  flex-shrink: 0;
 }
 
 .playPauseButton:hover {
-  background-color: #8E44AD;
-  transform: scale(1.05);
+  background: #e0a600;
+  transform: scale(1.08);
 }
 
 .audioProgress {
   flex: 1;
   display: flex;
   flex-direction: column;
+  gap: 4px;
 }
 
 .progressBar {
   width: 100%;
-  height: 6px;
+  height: 4px;
   -webkit-appearance: none;
   appearance: none;
-  background: #333333;
-  border-radius: 3px;
-  outline: none;
+  background: #333;
+  border-radius: 2px;
   cursor: pointer;
 }
 
 .progressBar::-webkit-slider-thumb {
   -webkit-appearance: none;
-  appearance: none;
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  background: #7B2CBF;
+  background: #ffba00;
   cursor: pointer;
 }
 
 .timeDisplay {
   display: flex;
   justify-content: space-between;
-  font-size: 0.8rem;
-  color: #AAAAAA;
-  margin-top: 5px;
+  font-size: 0.72rem;
+  color: #666;
 }
 
-/* Enhanced image preview */
-.imagePreviewContainer {
-  margin-top: 15px;
-  width: 100%;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-}
-
-.imagePreview {
-  width: 100%;
-  height: auto;
-  max-height: 300px;
-  object-fit: contain;
-  display: block;
-}
-
-/* Image cropper styles */
+/* ─── Cropper Modal ──────────────────────────────────────────────────────── */
 .cropperModal {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.8);
+  inset: 0;
+  background: rgba(0, 0, 0, 0.88);
   display: flex;
   flex-direction: column;
   z-index: 1000;
@@ -785,12 +349,13 @@
 .cropperContainer {
   position: relative;
   flex: 1;
-  background-color: #1A1A1A;
+  background: #111;
 }
 
 .cropperControls {
-  background-color: #222222;
-  padding: 20px;
+  background: #1e1e1e;
+  border-top: 1px solid #2a2a2a;
+  padding: 18px 24px;
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
@@ -800,34 +365,31 @@
 .cropperControls label {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
   flex: 1;
-  min-width: 150px;
+  min-width: 140px;
 }
 
 .cropperControls span {
-  font-size: 0.9rem;
-  color: #AAAAAA;
+  font-size: 0.8rem;
+  color: #888;
 }
 
 .cropperControls input[type="range"] {
   -webkit-appearance: none;
-  appearance: none;
   width: 100%;
-  height: 6px;
-  background: #333333;
-  border-radius: 3px;
-  outline: none;
+  height: 4px;
+  background: #333;
+  border-radius: 2px;
   cursor: pointer;
 }
 
 .cropperControls input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  appearance: none;
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
-  background: #7B2CBF;
+  background: #7b2cbf;
   cursor: pointer;
 }
 
@@ -839,38 +401,95 @@
 
 .cancelCropButton,
 .applyCropButton {
-  padding: 8px 16px;
-  border-radius: 4px;
+  padding: 8px 18px;
+  border-radius: 6px;
   border: none;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 5px;
-  transition: all 0.3s ease;
+  gap: 6px;
+  transition: all 0.2s;
 }
 
 .cancelCropButton {
-  background-color: transparent;
-  border: 1px solid #333333;
-  color: #FFFFFF;
+  background: transparent;
+  border: 1px solid #333;
+  color: #aaa;
 }
 
 .cancelCropButton:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+  background: rgba(255,255,255,0.05);
+  color: #fff;
 }
 
 .applyCropButton {
-  background-color: #7B2CBF;
-  color: #FFFFFF;
+  background: #7b2cbf;
+  color: #fff;
 }
 
 .applyCropButton:hover {
-  background-color: #8E44AD;
+  background: #9333ea;
 }
 
-/* Enhanced Tags Styling */
+/* ─── Form Grid ──────────────────────────────────────────────────────────── */
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formGroup label {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #aaa;
+  letter-spacing: 0.02em;
+}
+
+.formGroup input,
+.formGroup select,
+.formGroup textarea {
+  width: 100%;
+  padding: 11px 14px;
+  background: #252525;
+  border: 1px solid #333;
+  border-radius: 8px;
+  color: #f0f0f0;
+  font-size: 0.9rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.formGroup input:focus,
+.formGroup select:focus,
+.formGroup textarea:focus {
+  border-color: #ffba00;
+  box-shadow: 0 0 0 3px rgba(255, 186, 0, 0.1);
+  outline: none;
+}
+
+.formGroup select option {
+  background: #252525;
+}
+
+.formGroup textarea {
+  resize: vertical;
+  min-height: 90px;
+  line-height: 1.5;
+}
+
+.errorInput {
+  border-color: #ff5a5a !important;
+  box-shadow: 0 0 0 3px rgba(255, 90, 90, 0.12) !important;
+}
+
+/* ─── Tags ───────────────────────────────────────────────────────────────── */
 .tagsPreview {
   display: flex;
   flex-wrap: wrap;
@@ -879,65 +498,293 @@
 }
 
 .tagPreview {
-  background-color: #7B2CBF;
-  color: white;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  animation: fadeIn 0.3s ease;
+  background: rgba(123, 44, 191, 0.25);
+  color: #c084fc;
+  border: 1px solid rgba(123, 44, 191, 0.4);
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  animation: popIn 0.2s ease;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 .tagsSuggestions {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid #333;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #2a2a2a;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
 }
 
 .tagsSuggestions small {
-  color: #AAAAAA;
-  display: block;
-  margin-bottom: 6px;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
+  color: #666;
+  width: 100%;
 }
 
 .tagSuggestion {
-  background-color: #444;
-  color: #CCCCCC;
-  border: none;
-  padding: 3px 8px;
-  border-radius: 10px;
+  background: #2a2a2a;
+  color: #888;
+  border: 1px solid #333;
+  padding: 3px 10px;
+  border-radius: 20px;
   font-size: 0.75rem;
   cursor: pointer;
-  margin-right: 6px;
-  margin-bottom: 4px;
-  transition: all 0.2s ease;
+  transition: all 0.18s;
 }
 
 .tagSuggestion:hover {
-  background-color: #7B2CBF;
-  color: white;
+  background: rgba(123, 44, 191, 0.2);
+  border-color: #7b2cbf;
+  color: #c084fc;
   transform: translateY(-1px);
 }
 
-/* Responsive styles */
-@media (max-width: 768px) {
-  .formGrid {
-    grid-template-columns: 1fr;
-  }
+/* ─── License Options ────────────────────────────────────────────────────── */
+.licenseOptions {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
 
-  .fileUploads {
-    flex-direction: column;
-  }
+.licenseOption {
+  background: #252525;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 20px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.licenseOption.selectedLicense {
+  border-color: #7b2cbf;
+  box-shadow: 0 0 0 1px rgba(123, 44, 191, 0.3), inset 0 0 40px rgba(123, 44, 191, 0.04);
+}
+
+.licenseHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.licenseHeader h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.licenseToggle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  color: #888;
+  font-size: 0.8rem;
+}
+
+.licenseToggle input {
+  accent-color: #7b2cbf;
+  cursor: pointer;
+}
+
+.licenseContent {
+  padding-top: 14px;
+  border-top: 1px solid #2e2e2e;
+}
+
+.licensePrice {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.licensePrice label {
+  font-size: 0.78rem;
+  color: #888;
+}
+
+.licensePrice input {
+  padding: 9px 12px;
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: border-color 0.2s;
+}
+
+.licensePrice input:focus {
+  border-color: #7b2cbf;
+  outline: none;
+}
+
+.licensePrice input:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.licenseFeatures h5 {
+  font-size: 0.78rem;
+  color: #777;
+  font-weight: 500;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.featuresList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.featureItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: #bbb;
+}
+
+.featureIcon {
+  color: #7b2cbf;
+  font-weight: 700;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.selectedLicense .featureIcon {
+  color: #a855f7;
+}
+
+/* ─── Progress Message ───────────────────────────────────────────────────── */
+.progressMessage {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: rgba(255, 186, 0, 0.07);
+  border: 1px solid rgba(255, 186, 0, 0.2);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 0.85rem;
+  color: #ffba00;
+}
+
+.progressSpinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 186, 0, 0.3);
+  border-top-color: #ffba00;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── Alerts ─────────────────────────────────────────────────────────────── */
+.errorMessage,
+.successMessage {
+  padding: 13px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.errorMessage {
+  background: rgba(255, 90, 90, 0.09);
+  border: 1px solid rgba(255, 90, 90, 0.25);
+  color: #ff7c7c;
+}
+
+.successMessage {
+  background: rgba(52, 199, 89, 0.09);
+  border: 1px solid rgba(52, 199, 89, 0.25);
+  color: #4ade80;
+}
+
+.fieldError {
+  font-size: 0.75rem;
+  color: #ff7c7c;
+  margin-top: 4px;
+}
+
+/* ─── Submit Section ─────────────────────────────────────────────────────── */
+.submitSection {
+  padding: 24px 32px;
+  display: flex;
+  justify-content: flex-end;
+  background: #181818;
+  border-top: 1px solid #2a2a2a;
+}
+
+.submitBtn {
+  background: #ffba00;
+  color: #0f0f0f;
+  border: none;
+  padding: 13px 28px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  letter-spacing: 0.02em;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  box-shadow: 0 4px 14px rgba(255, 186, 0, 0.25);
+}
+
+.submitBtn:hover:not(:disabled) {
+  background: #e6a800;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(255, 186, 0, 0.35);
+}
+
+.submitBtn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.submitBtn:disabled {
+  background: #3a3a3a;
+  color: #666;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btnIcon {
+  font-size: 0.9rem;
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .formSection { padding: 20px; }
+  .submitSection { padding: 20px; }
+  .formGrid { grid-template-columns: 1fr; }
+  .licenseOptions { grid-template-columns: 1fr; }
+  .cropperActions { flex-direction: column; }
+}
+
+@media (max-width: 480px) {
+  .uploadContainer { padding: 16px 12px; }
+  .fileUploads { grid-template-columns: 1fr; }
+  .submitBtn { width: 100%; justify-content: center; }
 }
