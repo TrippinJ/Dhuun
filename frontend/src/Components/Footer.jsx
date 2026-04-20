@@ -13,7 +13,7 @@ const Footer = () => {
       <div className="footer-section-one">
         <div className="footer-logo-container">
           <img src={settings.logoUrl || Logo} alt={settings.siteName || "Dhuun"} />
-        <img src="" alt="" />
+        
         </div>
         <div className="footer-icons">
           <BsTwitter />
