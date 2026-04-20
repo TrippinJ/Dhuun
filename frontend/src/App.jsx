@@ -96,86 +96,97 @@ function App() {
                         <Route path="wallet" element={<SellerWallet />} />
                         <Route path="purchases" element={<PurchasedBeats />} />
                         <Route path="verification" element={<DocumentVerification />} />
-                        <Route path="/dashboard" element={<Dashboard />}/>
-                    
-                        </Route>
+                        <Route path="/dashboard" element={<Dashboard />} />
 
-                        {/* Other Protected Routes */}
-                        <Route
-                          path="/subscription"
-                          element={
-                            <PrivateRoute>
-                              <SubscriptionPage />
-                            </PrivateRoute>
-                          }
-                        />
+                      </Route>
 
-                        <Route
-                          path="/edit-beat/:beatId"
-                          element={
-                            <PrivateRoute>
-                              <EditBeat />
-                            </PrivateRoute>
-                          }
-                        />
-
-                        <Route
-                          path="/admin/dashboard"
-                          element={
-                            <PrivateRoute adminOnly={true}>
-                              <AdminDashboard />
-                            </PrivateRoute>
-                          }
-                        />
-
-                        {/* User Account Protected Routes */}
-                        <Route path="/favorites" element={
+                      {/* Other Protected Routes */}
+                      <Route
+                        path="/subscription"
+                        element={
                           <PrivateRoute>
-                            <Favorites />
+                            <SubscriptionPage />
                           </PrivateRoute>
-                        } />
+                        }
+                      />
 
-                        <Route path="/cart" element={
+                      <Route
+                        path="/edit-beat/:beatId"
+                        element={
                           <PrivateRoute>
-                            <Cart />
+                            <EditBeat />
                           </PrivateRoute>
-                        } />
+                        }
+                      />
 
-                        <Route path="/transactions" element={
+                      <Route
+                        path="/admin/dashboard"
+                        element={
+                          <PrivateRoute adminOnly={true}>
+                            <AdminDashboard />
+                          </PrivateRoute>
+                        }
+                      />
+
+                      {/* User Account Protected Routes */}
+                      <Route path="/favorites" element={
+                        <PrivateRoute>
+                          <Favorites />
+                        </PrivateRoute>
+                      } />
+
+                      <Route path="/cart" element={
+                        <PrivateRoute>
+                          <Cart />
+                        </PrivateRoute>
+                      } />
+
+                      <Route path="/transactions" element={
+                        <PrivateRoute>
+                          <Transactions />
+                        </PrivateRoute>
+                      } />
+
+                      {/* Checkout Routes */}
+                      <Route
+                        path="/checkout"
+                        element={
                           <PrivateRoute>
-                            <Transactions />
+                            <Checkout />
                           </PrivateRoute>
-                        } />
-
-                        {/* Checkout Routes */}
-                        <Route
-                          path="/checkout"
-                          element={
-                            <PrivateRoute>
-                              <Checkout />
-                            </PrivateRoute>
-                          }
-                        />
-                        <Route
-                          path="/checkout-success"
-                          element={
-                            <PrivateRoute>
-                              <CheckoutSuccess />
-                            </PrivateRoute>
-                          }
-                        />
+                        }
+                      />
+                      <Route
+                        path="/checkout-success"
+                        element={
+                          <PrivateRoute>
+                            <CheckoutSuccess />
+                          </PrivateRoute>
+                        }
+                      />
                     </Routes>
                     <ToastContainer
-                      position="top-right"
-                      autoClose={2000}
+                      position="bottom-center"
+                      autoClose={3500}
                       hideProgressBar={false}
-                      newestOnTop={false}
+                      newestOnTop
                       closeOnClick
                       rtl={false}
                       pauseOnFocusLoss
                       draggable
                       pauseOnHover
-                      theme="light"
+                      theme="dark"
+                      toastStyle={{
+                        background: '#1e1e1e',
+                        border: '1px solid #2a2a2a',
+                        borderRadius: '10px',
+                        color: '#f0f0f0',
+                        fontSize: '0.875rem',
+                        boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+                        minHeight: '52px',
+                      }}
+                      progressStyle={{ background: '#ffba00' }}
+                      style={{ bottom: '90px', zIndex: 9999 }}
                     />
                     <GlobalAudioPlayer />
                   </BrowserRouter>
