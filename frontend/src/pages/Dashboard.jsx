@@ -13,7 +13,7 @@ import PurchasedBeats from "../Components/PurchasedBeats";
 import SellerWallet from "../Components/SellerWallet";
 import EditProfile from "../Components/EditProfile";
 import DocumentVerification from '../Components/DocumentVerification';
-import { showToast } from '../utils/toast';
+import { toast } from '../utils/toast';
 import { useAuth } from '../context/AuthContext';
 
 const Dashboard = () => {

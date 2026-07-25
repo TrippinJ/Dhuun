@@ -23,7 +23,7 @@ import { useWishlist } from '../context/WishlistContext';
 import LicenseSelectionModal from '../Components/LicenseSelectionModal';
 import ProducerProfile from '../Components/ProducerProfile';
 import { getBeatId } from '../utils/audioUtils';
-import { showToast } from '../utils/toast';
+import { toast } from '../utils/toast';
 
 const BeatExplorePage = () => {
   // State variables 

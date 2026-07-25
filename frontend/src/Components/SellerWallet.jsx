@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FaWallet, FaMoneyBillWave, FaExchangeAlt, FaChevronRight } from "react-icons/fa";
 import API from "../api/api";
 import styles from "../css/SellerWallet.module.css";
-import { showToast } from "../utils/toast";
+import { toast } from "../utils/toast";
 
 const SellerWallet = () => {
   const navigate = useNavigate();

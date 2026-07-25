@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import SingleBeatModal from './Singlebeatmodal';
 import LicenseSelectionModal from './LicenseSelectionModal';
 import ProducerProfile from './ProducerProfile';
-import { showToast } from '../utils/toast';
+import { toast } from '../utils/toast';
 
 const TrendingBeats = () => {
   const [trendingBeats, setTrendingBeats] = useState([]);

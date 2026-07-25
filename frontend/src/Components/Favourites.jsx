@@ -5,7 +5,7 @@ import styles from "../css/Favorites.module.css";
 import NavbarBeatExplore from '../Components/NavbarBeatExplore';
 import LicenseSelectionModal from '../Components/LicenseSelectionModal';
 import { getBeatId } from '../utils/audioUtils';
-import { showToast } from '../utils/toast';
+import { toast } from '../utils/toast';
 
 const Favorites = () => {
   const [favorites, setFavorites] = useState([]);

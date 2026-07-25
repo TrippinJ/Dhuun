@@ -17,8 +17,8 @@ import {
   FaMinus
 } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import { showToast } from '../utils/toast';
-import { getTransposedMetadata } from '../utils/transposedMetadata';
+import { toast } from '../utils/toast.jsx';
+import { getTransposedMetadata } from '../utils/transposedMetadata.jsx';
 
 const SingleBeatModal = ({
   beat,

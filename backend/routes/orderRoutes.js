@@ -20,7 +20,7 @@ router.get('/:id', orderController.getOrderById);
 // Verify a Khalti payment
 router.post('/verify-payment', orderController.verifyPaymentOrder);
 
-router.get('/:orderId/download/:beatId', authenticateUser, getSecureDownloadUrl);
+router.get('/:orderId/download/:beatId', authenticateUser, orderController.getSecureDownloadUrl);
 
 
 export default router;

@@ -3,7 +3,7 @@ import { FaChevronLeft, FaChevronRight, FaCheckCircle, FaHeart } from 'react-ico
 import styles from '../css/ProducersCarousel.module.css';
 import API from '../api/api';
 import ProducerProfile from './ProducerProfile';
-import { showToast } from '../utils/toast';
+import { toast } from '../utils/toast';
 
 const ProducersCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
